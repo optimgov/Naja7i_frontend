@@ -1,0 +1,82 @@
+{
+  "marque": {
+    "promesse": "Comprendre ses erreurs, pas seulement les compter.",
+    "precision": "Chaque correction explique pourquoi la bonne réponse est juste, et pourquoi chaque autre option est fausse."
+  },
+  "champs": {
+    "email": "Adresse e-mail",
+    "mot_de_passe": "Mot de passe",
+    "confirmation": "Confirmer le mot de passe"
+  },
+  "inscription": {
+    "titre": "Créer un compte",
+    "sous_titre": "Quelques secondes, et vous commencez votre diagnostic.",
+    "aide_mot_de_passe": "12 caractères minimum. Une phrase que vous retenez vaut mieux qu'un mot compliqué.",
+    "actes_legende": "Vos choix",
+    "cgu": "J'accepte les conditions générales d'utilisation.",
+    "cgu_lien": "Les lire",
+    "confidentialite": "J'ai pris connaissance de la politique de confidentialité.",
+    "confidentialite_lien": "La lire",
+    "rappels": "Je souhaite recevoir des rappels et des conseils de révision.",
+    "rappels_aide": "Par e-mail et WhatsApp. Vous pouvez changer d'avis à tout moment.",
+    "action": "Créer mon compte",
+    "envoi": "Création en cours…",
+    "deja_inscrit": "Vous avez déjà un compte ?",
+    "se_connecter": "Se connecter"
+  },
+  "connexion": {
+    "titre": "Se connecter",
+    "sous_titre": "Reprenez votre préparation là où vous l'avez laissée.",
+    "rester_connecte": "Rester connecté sur cet appareil",
+    "action": "Se connecter",
+    "envoi": "Connexion en cours…",
+    "mot_de_passe_oublie": "Mot de passe oublié ?",
+    "pas_de_compte": "Pas encore de compte ?",
+    "creer": "En créer un"
+  },
+  "verification": {
+    "titre": "Confirmer votre adresse",
+    "en_cours": "Vérification du lien…",
+    "reussi": "Votre adresse est confirmée.",
+    "continuer": "Continuer",
+    "echec_aide": "Les liens expirent après 24 heures. Demandez-en un nouveau, il arrivera dans la minute.",
+    "attente": "Nous avons envoyé un lien à {email}. Ouvrez-le pour activer votre compte.",
+    "renvoyer": "Envoyer un nouveau lien",
+    "renvoye": "Lien envoyé",
+    "renvoye_detail": "Un nouveau lien vient de partir. Pensez à regarder vos courriers indésirables."
+  },
+  "oubli": {
+    "titre": "Mot de passe oublié",
+    "sous_titre": "Indiquez votre adresse : nous vous enverrons un lien pour en choisir un nouveau.",
+    "action": "Envoyer le lien",
+    "envoi": "Envoi en cours…",
+    "confirme": "Si cette adresse correspond à un compte, un lien vient d'être envoyé.",
+    "confirme_aide": "Le lien est valable une heure.",
+    "retour": "Retour à la connexion"
+  },
+  "nouveau": {
+    "titre": "Choisir un nouveau mot de passe",
+    "sous_titre": "Pour le compte {email}.",
+    "champ": "Nouveau mot de passe",
+    "action": "Enregistrer",
+    "envoi": "Enregistrement…",
+    "reussi": "Votre mot de passe est à jour.",
+    "se_connecter": "Se connecter",
+    "lien_incomplet": "Ce lien est incomplet. Ouvrez-le directement depuis l'e-mail reçu.",
+    "redemander": "Demander un nouveau lien"
+  },
+  "espace": {
+    "titre": "Votre compte",
+    "intro": "Cet écran confirme que votre session fonctionne. Votre espace de préparation arrive au prochain lot.",
+    "verification": "Adresse e-mail",
+    "verifie": "Confirmée",
+    "non_verifie": "En attente",
+    "roles": "Rôles",
+    "identifiant": "Identifiant",
+    "deconnexion": "Se déconnecter"
+  },
+  "errors": {
+    "network": "La connexion au serveur a échoué. Vérifiez votre réseau et réessayez.",
+    "reference": "Référence :"
+  }
+}
