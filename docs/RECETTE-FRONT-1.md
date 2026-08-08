@@ -7,6 +7,10 @@ navigateur → Nitro → Laravel → retour.
 partiellement conforme : le comportement frontend est correct, le défaut
 restant est côté API et sort du périmètre de ce lot.
 
+**Depuis :** ce défaut a été corrigé le jour même côté API — `89edadb`,
+PAS-3.1. Les onze points sont conformes. Le corps de ce document reste le
+constat daté du 8 août 2026 ; la résolution est consignée à l'écart n°5.
+
 ---
 
 ## Conditions d'exécution
@@ -67,7 +71,7 @@ Comptes créés lors de la passe de référence :
 | 7 | Se reconnecter | Retour à l'espace | Retour sur `/fr/app`, session rétablie | **Conforme** |
 | 8 | Mot de passe oublié → lien → nouveau mot de passe | Connexion possible avec le nouveau | E-mail « Réinitialiser votre mot de passe », « Votre mot de passe est à jour. », connexion réussie avec le nouveau | **Conforme** |
 | 9 | Reprendre en `/ar/inscription` | Interface arabe, lecture de droite à gauche, e-mail en arabe | `dir="rtl"` `lang="ar"`, titre « تأكيد بريدك الإلكتروني », e-mail « أكد بريدك الإلكتروني ». **Mise en page réellement inversée** : le panneau de marque passe à droite, la bascule de langue à gauche (`09-arabe-rtl.png`) | **Conforme** |
-| 10 | Saisir un mot de passe de 8 caractères | Message d'erreur sous le champ, dans la bonne langue | Refus **422**. Message affiché **au bon endroit**, sous le champ mot de passe. Mais le texte est la **clé brute `validation.min.string`**, pas une phrase traduite — en arabe comme en français | **Partiel — voir écart n°3** |
+| 10 | Saisir un mot de passe de 8 caractères | Message d'erreur sous le champ, dans la bonne langue | Refus **422**. Message affiché **au bon endroit**, sous le champ mot de passe. Mais le texte est la **clé brute `validation.min.string`**, pas une phrase traduite — en arabe comme en français | **Partiel — voir écart n°5**, résolu depuis |
 | 11 | Décocher les CGU et soumettre | Refus, message sous la case | Refus **422**, message sous la case : « Vous devez accepter les conditions générales pour créer un compte. » | **Conforme** |
 
 ---
@@ -142,10 +146,13 @@ Le script existe dans `package.json` mais l'overlay ne fournit pas de
 `tsconfig.json` : `Cannot find matching tsconfig.json`. Ajout d'un
 `tsconfig.json` racine étendant `./.nuxt/tsconfig.json`.
 
-### Ouverts — hors périmètre de ce lot
+### Résolu depuis la recette
 
 **Écart n°5 — messages de validation non traduits (côté API)**
-*Sévérité : majeur. Non corrigé : dépôt backend.*
+*Sévérité : majeur. Constaté le 8 août 2026, hors périmètre de ce lot.*
+**Résolu le 8 août 2026** — `89edadb`, PAS-3.1, dépôt `Naja7i_backend_front`.
+
+#### Constat d'origine, tel que relevé pendant la recette
 
 C'est ce qui empêche le point 10 d'être pleinement conforme. L'API renvoie la
 clé de traduction brute au lieu du texte :
@@ -166,6 +173,29 @@ Cause : `lang/fr/` et `lang/ar/` contiennent `auth.php`, `errors.php` et
 Correction attendue côté `Naja7i_backend_front` : ajouter
 `lang/fr/validation.php` et `lang/ar/validation.php`. Le frontend est prêt — il
 affichera le texte au bon endroit dès que l'API l'enverra, sans modification.
+
+#### Résolution
+
+Le correctif PAS-3.1 a créé les deux fichiers, traduits **intégralement** —
+135 clés chacun, parité exacte avec le catalogue Laravel de référence — et non
+pour les seules règles employées alors : une règle ajoutée plus tard dans un
+FormRequest aurait sinon réintroduit le défaut sans que rien ne le signale. Une
+table `attributes` nomme les champs en clair, et un test de non-régression
+parcourt tout le catalogue pour faire échouer la CI dès qu'une clé n'est pas
+traduite.
+
+Vérifié de bout en bout à travers le BFF, dans les deux langues :
+
+```
+fr  Le mot de passe doit contenir au moins 12 caractères.
+ar  يجب أن تحتوي كلمة المرور على 12 أحرف على الأقل.
+```
+
+**Le point 10 est pleinement conforme depuis.** Le tableau des onze points, plus
+haut, conserve délibérément le verdict du jour de la recette : c'est un
+constat daté, pas un état courant.
+
+### Ouverts — hors périmètre de ce lot
 
 **Écart n°6 — 500 au lieu de 401 sur requête non-JSON**
 *Sévérité : mineur. Non corrigé : dépôt backend.*
@@ -217,9 +247,15 @@ le BFF n'est jamais court-circuité.
 Le bilinguisme tient au-delà de l'affichage : la mise en page s'inverse
 réellement, et les e-mails partent dans la langue du candidat (points 2 et 9).
 
-Le seul défaut résiduel visible par un candidat est l'écart n°5 — un message de
-validation affiché en clé technique. Il est localisé, compris, et se corrige
-côté API sans toucher au frontend.
+**Aucun défaut résiduel n'est visible par un candidat.** Le seul qui l'était —
+l'écart n°5, un message de validation affiché en clé technique — a été corrigé
+côté API le jour même par `89edadb`, sans qu'une ligne du frontend ait à
+changer, et vérifié à travers le BFF dans les deux langues.
+
+Les écarts qui restent ouverts ne se voient pas depuis l'interface : un code de
+statut incorrect sur une requête que le BFF n'émet jamais (n°6), des
+avertissements de typage sans effet à l'exécution (n°7), et des doublons de
+configuration sans conséquence sur les valeurs résolues (n°8).
 
 ---
 
