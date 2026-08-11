@@ -42,7 +42,10 @@ const demo = computed(() => data.value?.data ?? null)
 /** Vide si le serveur ne la fournit pas. Aucune valeur de substitution. */
 const mention = computed(() => data.value?.meta?.notice?.trim() ?? '')
 
-const indisponible = computed(() => error.value !== null || demo.value === null)
+/* Véracité, non identité : selon les versions, `useAsyncData` place `null` ou
+   `undefined` dans `error` en cas de succès — comparer à `null` faisait
+   basculer le bloc en repli alors que l'API répondait. */
+const indisponible = computed(() => Boolean(error.value) || demo.value === null)
 </script>
 
 <template>

@@ -96,10 +96,25 @@ export function useCatalogue() {
  */
 export function useChiffresReels() {
   const { filieres } = useCatalogue()
-  const { data } = filieres()
+  const { data, error } = filieres()
 
+  /*
+   * `null` quand le catalogue n'a pas pu être lu — jamais des zéros.
+   *
+   * Rendre 0 lorsque l'API est injoignable, c'est afficher une valeur de
+   * secours : « 0 filière » est une affirmation FAUSSE sur le catalogue, là où
+   * l'absence du bloc ne dit rien. La consigne est que les compteurs
+   * disparaissent, pas qu'ils se rabattent sur un chiffre.
+   *
+   * Un catalogue réellement vide reste distinct d'un catalogue illisible : le
+   * premier rend un tableau, donc des zéros légitimes.
+   */
   return computed(() => {
-    const liste = data.value ?? []
+    if (error.value || data.value == null) {
+      return null
+    }
+
+    const liste = data.value
     const familles = liste.flatMap((f) => f.families ?? [])
 
     return {

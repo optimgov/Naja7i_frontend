@@ -40,12 +40,12 @@ useSeoCatalogue({
             « 4 200 questions justifiées » sur une banque vide : à ce stade,
             une phrase vérifiable vaut mieux qu'un chiffre flatteur.
           -->
-          <dl class="assise">
-            <div><dt>{{ t('accueil.chiffre_filieres') }}</dt><dd>{{ chiffres.filieres }}</dd></div>
-            <div><dt>{{ t('accueil.chiffre_familles') }}</dt><dd>{{ chiffres.familles }}</dd></div>
-            <div><dt>{{ t('accueil.chiffre_ouvertes') }}</dt><dd>{{ chiffres.ouvertes }}</dd></div>
+          <dl v-if="chiffres" class="assise">
+            <div><dt>{{ t('accueil.chiffre_filieres') }}</dt><dd>{{ chiffres!.filieres }}</dd></div>
+            <div><dt>{{ t('accueil.chiffre_familles') }}</dt><dd>{{ chiffres!.familles }}</dd></div>
+            <div><dt>{{ t('accueil.chiffre_ouvertes') }}</dt><dd>{{ chiffres!.ouvertes }}</dd></div>
           </dl>
-          <p class="assise__note">{{ t('accueil.assise_note') }}</p>
+          <p v-if="chiffres" class="assise__note">{{ t('accueil.assise_note') }}</p>
         </div>
 
         <ProofDemonstration />
