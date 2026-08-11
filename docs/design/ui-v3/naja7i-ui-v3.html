@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>naja7i.ma — Système d'interface v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>/* ==== tokens-v3.css ==== */
+/* =====================================================================
+   naja7i.ma — Jetons de conception v3
+   Identifiant : NAJA7I-UI-V3 · 8 août 2026
+   ---------------------------------------------------------------------
+   v3 = v2 (rampes, thème sombre, sens pédagogique des couleurs)
+      + les corrections mesurées sur la v2
+      + une couche d'alias vers les noms de `assets/css/tokens.css`
+        pour migrer écran par écran, sans gros commit.
+
+   CE QUI CHANGE PAR RAPPORT À LA v2 — trois corrections, chacune mesurée :
+
+   1. L'ERREUR SYSTÈME EST SÉPARÉE DE L'ERREUR PÉDAGOGIQUE.
+      En v2, `--err` valait la terre cuite et servait à la fois au
+      `.champ__erreur` d'un formulaire et à une mauvaise réponse de QCM.
+      La note de direction interdisait précisément cette confusion.
+      v3 : `--sys-err` (rouge) pour le système, `--peda-faux` (terre) pour
+      la pédagogie. Deux familles, deux teintes, aucun recouvrement.
+
+   2. TROIS CONTRASTES RELEVÉS SOUS LE SEUIL, CORRIGÉS.
+        .champ__erreur      terre-600 sur sable   4,13:1  →  terre-700  6,52:1
+        placeholder         encre-400 #7d8175     3,76:1  →  #6b6f64    4,85:1
+        contour de champ    sable-300 #d2ccbb     1,60:1  →  #9d9483    3,00:1
+      (le contour trop pâle existait déjà en production : #c9c5b8, 1,73:1)
+
+   3. UNE PALETTE DE DONNÉES CATÉGORIELLE, VALIDÉE EN DICHROMATIE.
+      Le couple de marque vert/terre s'effondre en protanopie — distance
+      mesurée 47 sur 255. Inutilisable pour distinguer trois piliers dans
+      un radar. v3 ajoute un violet RÉSERVÉ AUX DONNÉES : le triplet
+      vert / safran-700 / violet tient à ≥68 dans les trois dichromaties.
+
+   RÈGLE QUI NE SE NÉGOCIE PAS : la couleur ne porte jamais seule une
+   information. Correct/incorrect, acquis/fragile, ouvert/clos portent
+   TOUJOURS une icône et un libellé écrit. Les jetons ci-dessous rendent
+   la règle possible ; ils ne la garantissent pas — voir composants-v3.
+
+   Bidirectionnalité : propriétés logiques uniquement, jamais left/right.
+   ===================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Rampe verte — la maîtrise, la structure, la marque ---------- */
+  --vert-900: #052a22;
+  --vert-800: #084a3b;
+  --vert-700: #0b6b57;
+  --vert-600: #0e8a70;
+  --vert-500: #12a181;
+  --vert-400: #45b89d;
+  --vert-300: #85cfba;
+  --vert-200: #b9e3d6;
+  --vert-100: #d9f0e8;
+  --vert-50:  #eef8f4;
+
+  /* ---- Terre cuite — l'erreur PÉDAGOGIQUE, le piège, le distracteur */
+  --terre-800: #6d2f16;
+  --terre-700: #94411f;
+  --terre-600: #c25a2e;
+  --terre-500: #dd7047;
+  --terre-200: #f4c9b3;
+  --terre-100: #fae4d8;
+  --terre-50:  #fdf3ee;
+
+  /* ---- Safran — l'échéance, la remédiation, l'attention ------------ */
+  --safran-800: #7a5409;
+  --safran-700: #a3710d;
+  --safran-600: #d99a16;
+  --safran-500: #e8b243;
+  --safran-100: #fbecc9;
+  --safran-50:  #fdf7e8;
+
+  /* ---- Rouge — l'erreur SYSTÈME, et rien d'autre ------------------- *
+   * Panne, saisie invalide, quota dépassé, réseau perdu.              *
+   * Ne sert JAMAIS à une mauvaise réponse : celle-ci est en terre.    */
+  --rouge-700: #8c1d18;
+  --rouge-600: #b3261e;
+  --rouge-100: #f9dedc;
+  --rouge-50:  #fdf0ef;
+
+  /* ---- Violet — RÉSERVÉ AUX GRAPHIQUES ----------------------------- *
+   * N'apparaît dans aucun composant d'interface. Sa seule raison       *
+   * d'être : donner une 3ᵉ série distinguable en dichromatie.          */
+  --violet-600: #7b3fa0;
+  --violet-400: #b586e0;
+
+  /* ---- Sable — le papier ; jamais de blanc pur en fond de lecture -- */
+  --sable-0:   #ffffff;
+  --sable-25:  #fdfcfa;
+  --sable-50:  #faf8f3;
+  --sable-100: #f3efe6;
+  --sable-200: #e6e1d4;
+  --sable-300: #d2ccbb;   /* décoratif uniquement — 1,60:1, jamais un contour */
+  --sable-400: #b0a996;
+  --sable-500: #9d9483;   /* v3 : contour de champ, 3,00:1 sur blanc */
+
+  /* ---- Encre ------------------------------------------------------- */
+  --encre-900: #14150f;
+  --encre-700: #33362c;
+  --encre-500: #5c6053;
+  --encre-450: #6b6f64;   /* v3 : placeholder et texte ténu, 4,85:1 */
+  --encre-400: #7d8175;   /* décoratif uniquement — 3,76:1, jamais du texte */
+
+  /* ================================================================= *
+   * RÔLES — thème clair                                               *
+   * ================================================================= */
+
+  /* Surfaces */
+  --fond: var(--sable-50);
+  --surface: var(--sable-0);
+  --surface-douce: var(--sable-100);
+  --surface-marque: var(--vert-800);
+  --surface-marque-2: var(--vert-900);
+  --bordure: var(--sable-200);
+  --bordure-forte: var(--sable-500);
+  --bordure-marque: rgb(255 255 255 / 14%);
+
+  /* Texte */
+  --texte: var(--encre-900);
+  --texte-doux: var(--encre-500);
+  --texte-tenu: var(--encre-450);
+  --texte-inverse: var(--sable-50);
+  --texte-inverse-doux: rgb(233 244 240 / 72%);
+
+  /* Action */
+  --accent: var(--vert-700);
+  --accent-fort: var(--vert-800);
+  --accent-doux: var(--vert-50);
+  --lien: var(--vert-700);
+  --focus: var(--vert-500);
+
+  /* ---- Rôles SYSTÈME — état de la machine ------------------------- */
+  --sys-err: var(--rouge-600);
+  --sys-err-texte: var(--rouge-700);
+  --sys-err-fond: var(--rouge-50);
+  --sys-err-bordure: var(--rouge-100);
+  --sys-ok: var(--vert-600);
+  --sys-ok-texte: var(--vert-800);
+  --sys-ok-fond: var(--vert-50);
+  --sys-ok-bordure: var(--vert-200);
+  --sys-att: var(--safran-700);
+  --sys-att-texte: var(--safran-800);
+  --sys-att-fond: var(--safran-50);
+  --sys-att-bordure: var(--safran-100);
+  --neutre-fond: var(--sable-100);
+
+  /* ---- Rôles PÉDAGOGIQUES — état du savoir ------------------------ *
+   * juste   : la réponse correcte, la maîtrise acquise                *
+   * faux    : la réponse choisie et fausse, le distracteur            *
+   * piege   : le piège documenté, la confusion fréquente              *
+   * remede  : l'action de remédiation, l'échéance, le rappel dû       *
+   * neutre  : l'option ni choisie ni correcte                         */
+  --peda-juste: var(--vert-600);
+  --peda-juste-texte: var(--vert-800);
+  --peda-juste-fond: var(--vert-50);
+  --peda-juste-bordure: var(--vert-200);
+  --peda-faux: var(--terre-600);
+  --peda-faux-texte: var(--terre-700);
+  --peda-faux-fond: var(--terre-50);
+  --peda-faux-bordure: var(--terre-200);
+  --peda-piege: var(--terre-700);
+  --peda-piege-fond: var(--terre-50);
+  --peda-remede: var(--safran-700);
+  --peda-remede-texte: var(--safran-800);
+  --peda-remede-fond: var(--safran-50);
+  --peda-remede-bordure: var(--safran-100);
+  --peda-neutre-fond: var(--sable-100);
+
+  /* ---- Certitude déclarée (F02) ------------------------------------ *
+   * Volontairement ACHROMATIQUE : la certitude n'est ni juste ni       *
+   * fausse. Lui donner du vert ou du rouge, c'est préjuger avant la    *
+   * correction. Le niveau se lit à la graisse du trait et au libellé.  */
+  --certitude-sur: var(--encre-900);
+  --certitude-hesitant: var(--encre-500);
+  --certitude-hasard: var(--encre-450);
+
+  /* ---- Données — catégoriel, validé en dichromatie ------------------ *
+   * Distances minimales mesurées : protanopie 91, deutéranopie 68,     *
+   * tritanopie 77. Contrastes sur sable : 6,08 / 4,02 / 6,46.          */
+  --serie-1: var(--vert-700);
+  --serie-2: var(--safran-700);
+  --serie-3: var(--violet-600);
+  --serie-grille: var(--sable-200);
+  /* Séquentiel — un seul concept, du moins au plus (niveau de maîtrise) */
+  --seq-1: var(--vert-100);
+  --seq-2: var(--vert-300);
+  --seq-3: var(--vert-500);
+  --seq-4: var(--vert-700);
+  --seq-0: var(--sable-200);   /* non couvert : absence, pas zéro */
+
+  /* ================================================================= *
+   * TYPOGRAPHIE                                                       *
+   * ================================================================= */
+  --f-latine: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --f-arabe: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+  --f-titre: var(--f-latine);
+  --f-corps: var(--f-latine);
+
+  --t-2xs: 0.6875rem;
+  --t-xs:  0.78125rem;
+  --t-s:   0.875rem;
+  --t-m:   0.9688rem;
+  --t-l:   1.0625rem;
+  --t-xl:  1.25rem;
+  --t-2xl: 1.5rem;
+  --t-3xl: clamp(1.65rem, 1.2rem + 1.9vw, 2.15rem);
+  --t-4xl: clamp(2rem, 1.35rem + 2.8vw, 3rem);
+  --t-5xl: clamp(2.5rem, 1.4rem + 4.6vw, 4.15rem);
+
+  /* ================================================================= *
+   * RYTHME, FORMES, MOUVEMENT                                         *
+   * ================================================================= */
+  --e-1: 0.25rem;  --e-2: 0.5rem;   --e-3: 0.75rem;  --e-4: 1rem;
+  --e-5: 1.5rem;   --e-6: 2rem;     --e-7: 3rem;     --e-8: 4.5rem;  --e-9: 6.5rem;
+
+  --r-xs: 6px; --r-s: 10px; --r-m: 14px; --r-l: 20px; --r-xl: 28px; --r-pilule: 999px;
+
+  --ombre-1: 0 1px 2px rgb(8 74 59 / 5%), 0 2px 6px -3px rgb(8 74 59 / 8%);
+  --ombre-2: 0 1px 2px rgb(8 74 59 / 4%), 0 10px 26px -12px rgb(8 74 59 / 16%);
+  --ombre-3: 0 2px 6px rgb(8 74 59 / 5%), 0 28px 60px -26px rgb(8 74 59 / 26%);
+  --ombre-marque: 0 18px 44px -20px rgb(5 42 34 / 55%);
+
+  /* Durées : fonctionnelles, jamais décoratives. Le mode examen les
+     réduit — voir [data-zone='examen'] plus bas. */
+  --d-instant: 120ms;
+  --d-court: 180ms;
+  --d-correction: 280ms;   /* déploiement d'une correction */
+  --d-maitrise: 450ms;     /* barre de maîtrise, une seule fois */
+  --courbe: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --transition: var(--d-court) var(--courbe);
+
+  /* Cible tactile minimale — 44 px, pas négociable sur téléphone. */
+  --cible: 44px;
+
+  --zellige: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.1'%3E%3Crect x='16' y='16' width='40' height='40'/%3E%3Crect x='16' y='16' width='40' height='40' transform='rotate(45 36 36)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ===================================================================== *
+ * THÈME SOMBRE — choisi pas à pas, jamais une inversion automatique     *
+ * Le sélecteur reste `sombre` (français), conformément au code existant. *
+ * ===================================================================== */
+:root[data-theme='sombre'] {
+  color-scheme: dark;
+
+  --fond: #0c1411;
+  --surface: #121d19;
+  --surface-douce: #17241f;
+  --surface-marque: #0a1512;
+  --surface-marque-2: #060d0b;
+  --bordure: #223028;
+  --bordure-forte: #5e7869;   /* v3 : 3,59:1 sur --surface — le #46584e de la v2 tombait à 2,28:1 */
+  --bordure-marque: rgb(255 255 255 / 10%);
+
+  --texte: #eaf0ec;
+  --texte-doux: #9dab9f;
+  --texte-tenu: #8d9a8f;
+  --texte-inverse: #eaf0ec;
+  --texte-inverse-doux: rgb(226 238 232 / 68%);
+
+  --accent: var(--vert-400);
+  --accent-fort: var(--vert-300);
+  --accent-doux: #12251f;
+  --lien: var(--vert-300);
+  --focus: var(--vert-400);
+
+  --sys-err: #f2837c;
+  --sys-err-texte: #f2837c;
+  --sys-err-fond: #2b1211;
+  --sys-err-bordure: #4d201d;
+  --sys-ok: var(--vert-400);
+  --sys-ok-texte: var(--vert-300);
+  --sys-ok-fond: #10241d;
+  --sys-ok-bordure: #1d453a;
+  --sys-att: var(--safran-500);
+  --sys-att-texte: var(--safran-500);
+  --sys-att-fond: #29200c;
+  --sys-att-bordure: #4a3a14;
+  --neutre-fond: #1a2620;
+
+  --peda-juste: var(--vert-400);
+  --peda-juste-texte: var(--vert-300);
+  --peda-juste-fond: #10241d;
+  --peda-juste-bordure: #1d453a;
+  --peda-faux: #f0916a;
+  --peda-faux-texte: #f0916a;
+  --peda-faux-fond: #2a1610;
+  --peda-faux-bordure: #4d2717;
+  --peda-piege: #f0916a;
+  --peda-piege-fond: #2a1610;
+  --peda-remede: var(--safran-500);
+  --peda-remede-texte: var(--safran-500);
+  --peda-remede-fond: #29200c;
+  --peda-remede-bordure: #4a3a14;
+  --peda-neutre-fond: #1a2620;
+
+  --certitude-sur: #eaf0ec;
+  --certitude-hesitant: #9dab9f;
+  --certitude-hasard: #8d9a8f;
+
+  --serie-1: var(--vert-400);
+  --serie-2: var(--safran-500);
+  --serie-3: var(--violet-400);
+  --serie-grille: #223028;
+  --seq-0: #223028;
+  --seq-1: #1d453a;
+  --seq-2: #2c6b58;
+  --seq-3: var(--vert-500);
+  --seq-4: var(--vert-300);
+
+  --ombre-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --ombre-2: 0 10px 26px -12px rgb(0 0 0 / 70%);
+  --ombre-3: 0 28px 60px -26px rgb(0 0 0 / 80%);
+  --ombre-marque: 0 18px 44px -20px rgb(0 0 0 / 70%);
+}
+
+/* ===================================================================== *
+ * ZONES — trois univers, un seul jeu de jetons                          *
+ * L'univers ne change pas les couleurs : il change la densité et le      *
+ * mouvement. C'est ce qui évite d'avoir trois systèmes à maintenir.      *
+ * ===================================================================== */
+[data-zone='acquisition'] { --densite: 1.15; --rayon-zone: var(--r-l); }
+[data-zone='apprentissage'] { --densite: 1; --rayon-zone: var(--r-m); }
+[data-zone='examen'] {
+  --densite: 0.9;
+  --rayon-zone: var(--r-s);
+  --d-court: 120ms;
+  --d-correction: 0ms;      /* aucune correction pendant une épreuve (R06) */
+  --d-maitrise: 0ms;
+  --transition: 120ms linear;
+}
+
+/* ===================================================================== *
+ * COUCHE D'ALIAS — compatibilité avec `assets/css/tokens.css`           *
+ * Permet de poser v3 SANS réécrire les écrans existants, puis de migrer  *
+ * composant par composant. À supprimer quand plus aucun `--vert-profond` *
+ * ne subsiste dans le dépôt : `grep -r "--vert-profond\|--taille-\|--espace-" app/`
+ * ===================================================================== */
+:root {
+  --vert-profond: var(--vert-700);
+  --vert-fonce: var(--vert-800);
+  --vert-clair: var(--vert-500);
+  --terre-cuite: var(--terre-600);
+  --safran: var(--safran-600);
+  --encre: var(--encre-900);
+
+  --fond-eleve: var(--surface);
+
+  /* Attention : en production `--erreur` désignait l'erreur système.
+     L'alias pointe donc vers --sys-err, PAS vers la terre cuite. */
+  --erreur: var(--sys-err);
+  --erreur-fond: var(--sys-err-fond);
+  --succes: var(--sys-ok);
+
+  --police-latine: var(--f-latine);
+  --police-arabe: var(--f-arabe);
+
+  --taille-xs: var(--t-xs);
+  --taille-s: var(--t-s);
+  --taille-m: var(--t-m);
+  --taille-l: var(--t-xl);
+  --taille-xl: var(--t-3xl);
+  --taille-xxl: var(--t-4xl);
+
+  --espace-1: var(--e-1);
+  --espace-2: var(--e-2);
+  --espace-3: var(--e-3);
+  --espace-4: var(--e-5);
+  --espace-5: var(--e-6);
+  --espace-6: var(--e-7);
+
+  --rayon: var(--r-s);
+  --rayon-s: var(--r-xs);
+  --ombre: var(--ombre-2);
+}
+
+/* ===================================================================== *
+ * BASE                                                                  *
+ * ===================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--f-corps);
+  font-size: var(--t-m);
+  line-height: 1.6;
+  color: var(--texte);
+  background: var(--fond);
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--transition), color var(--transition);
+}
+
+html[dir='rtl'] body { font-family: var(--f-arabe); }
+
+h1, h2, h3, h4 {
+  margin: 0 0 var(--e-3);
+  font-family: var(--f-titre);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+}
+
+/* L'interlettrage négatif du latin casse les ligatures arabes. */
+html[dir='rtl'] :is(h1, h2, h3, h4) {
+  font-weight: 700;
+  letter-spacing: normal;
+  line-height: 1.35;
+}
+
+h1 { font-size: var(--t-4xl); }
+h2 { font-size: var(--t-3xl); }
+h3 { font-size: var(--t-xl); }
+h4 { font-size: var(--t-l); }
+
+p { margin: 0 0 var(--e-4); }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--lien); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::selection { background: var(--vert-200); color: var(--vert-900); }
+
+/* Les nombres en contexte RTL : l'espace fine insécable évite que
+   « 4 200 » se lise « 200 4 ». Utiliser &#8239; dans le contenu. */
+.nombre { font-variant-numeric: tabular-nums; }
+</style>
+<style>/* ==== composants-v3.css ==== */
+/* =====================================================================
+   naja7i.ma — Composants v3
+   Identifiant : NAJA7I-UI-V3 · 8 août 2026
+   Dépend de tokens-v3.css.
+
+   Couvre les composants C01 à C12 de `NAJAH-INV-001` dans leurs huit
+   états — normal, sélectionné, correct, incorrect, verrouillé, vide,
+   chargement, indisponible — et les SEPT COMPOSANTS SIGNATURE qui
+   n'existaient jusqu'ici ni dans le code ni dans aucune maquette :
+   Certitude+ (F02), Autopsie (F03), « Pourquoi pas B ? » (F04),
+   Question miroir (F05), Ordonnance (F06), Rendez-vous Mémoire (F07),
+   Mission du jour (F09).
+
+   TROIS RÈGLES STRUCTURELLES, appliquées partout :
+   1. Aucune information portée par la seule couleur : icône + libellé.
+   2. Aucun score sans son volume de preuve (C12).
+   3. Propriétés logiques uniquement : le RTL est natif, pas une surcouche.
+   ===================================================================== */
+
+/* ===================== Primitives ==================================== */
+
+.pile   { display: flex; flex-direction: column; gap: var(--e-3); }
+.rangee { display: flex; align-items: center; gap: var(--e-2); flex-wrap: wrap; }
+.pousse { margin-inline-start: auto; }
+.petit  { font-size: var(--t-s); color: var(--texte-doux); }
+.tenu   { font-size: var(--t-xs); color: var(--texte-tenu); }
+.sr {
+  position: absolute; inline-size: 1px; block-size: 1px;
+  padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+
+/* --- Boutons --------------------------------------------------------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2);
+  min-block-size: var(--cible); padding: 0 var(--e-5);
+  font: inherit; font-size: var(--t-s); font-weight: 700; line-height: 1;
+  color: var(--texte-inverse); background: var(--accent);
+  border: 1px solid transparent; border-radius: var(--r-pilule);
+  cursor: pointer; text-decoration: none;
+  transition: background var(--transition), border-color var(--transition);
+}
+.btn:hover:not(:disabled) { background: var(--accent-fort); }
+.btn:disabled, .btn[aria-disabled='true'] { opacity: .5; cursor: not-allowed; }
+.btn--fantome { color: var(--texte); background: transparent; border-color: var(--bordure-forte); }
+.btn--fantome:hover:not(:disabled) { background: var(--surface-douce); border-color: var(--accent); }
+.btn--discret { min-block-size: 34px; padding: 0 var(--e-3); font-size: var(--t-xs); font-weight: 600;
+  color: var(--texte-doux); background: transparent; border-color: var(--bordure); }
+.btn--discret:hover:not(:disabled) { color: var(--texte); background: var(--surface-douce); }
+.btn--bloc { inline-size: 100%; }
+.btn--grand { min-block-size: 52px; font-size: var(--t-l); padding: 0 var(--e-6); }
+
+/* --- Champs ---------------------------------------------------------- */
+.champ { display: block; margin-block-end: var(--e-4); }
+.champ__label { display: block; margin-block-end: var(--e-1); font-size: var(--t-s); font-weight: 600; }
+.champ__saisie {
+  inline-size: 100%; min-block-size: var(--cible); padding: 0 var(--e-4);
+  font: inherit; font-size: var(--t-m); color: var(--texte);
+  background: var(--surface);
+  border: 1px solid var(--bordure-forte);      /* 3:1 — exigence 1.4.11 */
+  border-radius: var(--r-s);
+  transition: border-color var(--transition);
+}
+.champ__saisie::placeholder { color: var(--texte-tenu); }   /* 4,85:1 */
+.champ__saisie:focus { border-color: var(--accent); }
+/* L'erreur de SAISIE est une erreur système : rouge, jamais terre cuite. */
+.champ__saisie[aria-invalid='true'] { border-color: var(--sys-err); }
+.champ__aide { display: block; margin-block-start: var(--e-1); font-size: var(--t-xs); color: var(--texte-doux); }
+.champ__erreur {
+  display: flex; gap: var(--e-1); align-items: baseline;
+  margin-block-start: var(--e-1); font-size: var(--t-xs); font-weight: 700; color: var(--sys-err-texte);
+}
+.champ__erreur::before { content: '⚠'; }   /* jamais la couleur seule */
+
+/* --- Puces ----------------------------------------------------------- */
+.puce {
+  display: inline-flex; align-items: center; gap: var(--e-1);
+  padding: 3px var(--e-2); font-size: var(--t-2xs); font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid transparent; border-radius: var(--r-pilule);
+  background: var(--neutre-fond); color: var(--texte-doux);
+}
+.puce--juste  { color: var(--peda-juste-texte);  background: var(--peda-juste-fond);  border-color: var(--peda-juste-bordure); }
+.puce--faux   { color: var(--peda-faux-texte);   background: var(--peda-faux-fond);   border-color: var(--peda-faux-bordure); }
+.puce--remede { color: var(--peda-remede-texte); background: var(--peda-remede-fond); border-color: var(--peda-remede-bordure); }
+.puce--sys-err{ color: var(--sys-err-texte);     background: var(--sys-err-fond);     border-color: var(--sys-err-bordure); }
+.puce--sys-ok { color: var(--sys-ok-texte);      background: var(--sys-ok-fond);      border-color: var(--sys-ok-bordure); }
+
+/* --- Cartes ---------------------------------------------------------- */
+.carte {
+  background: var(--surface); border: 1px solid var(--bordure);
+  border-radius: var(--rayon-zone, var(--r-m)); padding: var(--e-5);
+}
+.carte--douce { background: var(--surface-douce); border-color: transparent; }
+.carte__titre { font-size: var(--t-2xs); font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--texte-doux); margin-block-end: var(--e-3); }
+
+/* --- Alertes (état système) ------------------------------------------ */
+.alerte {
+  display: flex; gap: var(--e-2); padding: var(--e-3) var(--e-4);
+  font-size: var(--t-s); border: 1px solid var(--sys-err-bordure);
+  border-inline-start-width: 3px; border-radius: var(--r-s);
+  background: var(--sys-err-fond); color: var(--sys-err-texte);
+}
+.alerte--ok  { border-color: var(--sys-ok-bordure);  background: var(--sys-ok-fond);  color: var(--sys-ok-texte); }
+.alerte--att { border-color: var(--sys-att-bordure); background: var(--sys-att-fond); color: var(--sys-att-texte); }
+
+/* ===================== C01 · questionBlock ============================ *
+ * Les états ne sont JAMAIS portés par la seule couleur : chaque option
+ * révélée reçoit un jeton (icône) et un libellé écrit.
+ * ===================================================================== */
+
+.q { display: block; }
+.q__meta { display: flex; flex-wrap: wrap; gap: var(--e-2); margin-block-end: var(--e-3); }
+.q__enonce { font-size: var(--t-l); font-weight: 700; line-height: 1.45; margin-block-end: var(--e-4); }
+.q__options { display: flex; flex-direction: column; gap: var(--e-2); }
+
+.opt {
+  --opt-bordure: var(--bordure);
+  --opt-fond: var(--surface);
+  display: flex; gap: var(--e-3); align-items: flex-start; inline-size: 100%;
+  padding: var(--e-3) var(--e-4); font: inherit; color: inherit; text-align: start;
+  background: var(--opt-fond); border: 1.5px solid var(--opt-bordure);
+  border-radius: var(--r-s); cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+.opt:hover:not([disabled]) { --opt-bordure: var(--bordure-forte); }
+.opt__cle {
+  flex: 0 0 28px; block-size: 28px; display: grid; place-items: center;
+  font-size: var(--t-xs); font-weight: 800; border-radius: var(--r-xs);
+  background: var(--neutre-fond); color: var(--texte-doux);
+}
+.opt__corps { flex: 1; min-inline-size: 0; }
+.opt__texte { display: block; font-size: var(--t-m); line-height: 1.45; }
+.opt__verdict {
+  display: flex; inline-size: fit-content; align-items: center; gap: var(--e-1);
+  margin-block-start: var(--e-2); font-size: var(--t-2xs); font-weight: 800;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+
+/* — état : sélectionné (avant validation) */
+.opt[aria-checked='true'] { --opt-bordure: var(--accent); --opt-fond: var(--accent-doux); }
+.opt[aria-checked='true'] .opt__cle { background: var(--accent); color: var(--texte-inverse); }
+
+/* — état : rayé (élimination active — porte d'entrée de F04) */
+.opt[data-raye='true'] { opacity: .5; }
+.opt[data-raye='true'] .opt__texte { text-decoration: line-through; }
+
+/* — état : correct */
+.opt[data-etat='juste'] { --opt-bordure: var(--peda-juste); --opt-fond: var(--peda-juste-fond); }
+.opt[data-etat='juste'] .opt__cle { background: var(--peda-juste); color: #fff; }
+.opt[data-etat='juste'] .opt__verdict { color: var(--peda-juste-texte); }
+
+/* — état : incorrect (choisi par le candidat) */
+.opt[data-etat='faux'] { --opt-bordure: var(--peda-faux); --opt-fond: var(--peda-faux-fond); }
+.opt[data-etat='faux'] .opt__cle { background: var(--peda-faux); color: #fff; }
+.opt[data-etat='faux'] .opt__verdict { color: var(--peda-faux-texte); }
+
+/* — état : incorrect non choisi (neutre, mais justifié quand même) */
+.opt[data-etat='autre'] .opt__verdict { color: var(--texte-tenu); }
+
+/* — état : verrouillé (premium) */
+.opt[data-etat='verrouille'] { --opt-fond: var(--surface-douce); cursor: not-allowed; }
+.opt[data-etat='verrouille'] .opt__texte { filter: blur(3px); user-select: none; }
+
+/* — état : chargement */
+.opt[data-etat='chargement'] { pointer-events: none; }
+.opt[data-etat='chargement'] .opt__texte {
+  color: transparent; border-radius: var(--r-xs);
+  background: linear-gradient(90deg, var(--surface-douce) 25%, var(--neutre-fond) 37%, var(--surface-douce) 63%);
+  background-size: 400% 100%; animation: glisse 1.2s infinite linear;
+}
+@keyframes glisse { from { background-position: 100% 0 } to { background-position: 0 0 } }
+
+.rayer {
+  flex: 0 0 auto; min-inline-size: 30px; min-block-size: 30px;
+  border: 0; background: transparent; color: var(--texte-tenu);
+  border-radius: var(--r-xs); cursor: pointer; font-size: var(--t-s);
+}
+.rayer:hover { background: var(--neutre-fond); color: var(--peda-faux); }
+
+/* ===================== C02 · rationale ================================ */
+.why {
+  margin-block-start: var(--e-2); padding-inline-start: var(--e-3);
+  border-inline-start: 2px solid var(--bordure);
+  font-size: var(--t-s); color: var(--texte-doux); line-height: 1.55;
+}
+.piege {
+  margin-block-start: var(--e-4); padding: var(--e-3) var(--e-4);
+  background: var(--peda-piege-fond);
+  border: 1px solid var(--peda-faux-bordure); border-radius: var(--r-s);
+}
+.piege__titre { display: flex; align-items: center; gap: var(--e-2);
+  font-size: var(--t-2xs); font-weight: 800; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--peda-faux-texte); }
+.source {
+  display: flex; gap: var(--e-2); margin-block-start: var(--e-4);
+  padding-block-start: var(--e-3); border-block-start: 1px dashed var(--bordure-forte);
+  font-size: var(--t-xs); color: var(--texte-doux); line-height: 1.5;
+}
+
+/* ===================== C03 · masteryRow + C12 · evidence ============== */
+.maitrise { display: block; margin-block-end: var(--e-4); }
+.maitrise__ligne { display: flex; align-items: baseline; gap: var(--e-2); margin-block-end: var(--e-2); }
+.maitrise__nom { font-weight: 700; font-size: var(--t-s); }
+.maitrise__etat {
+  font-size: var(--t-2xs); font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  padding: 2px var(--e-2); border-radius: var(--r-pilule);
+  background: var(--neutre-fond); color: var(--texte-doux);
+}
+/* Quatre états NOMMÉS, réversibles — un chiffre seul n'appelle pas l'action. */
+.maitrise[data-etat='acquis']      .maitrise__etat { background: var(--peda-juste-fond); color: var(--peda-juste-texte); }
+.maitrise[data-etat='fragile']     .maitrise__etat { background: var(--peda-remede-fond); color: var(--peda-remede-texte); }
+.maitrise[data-etat='ancien']      .maitrise__etat { background: var(--peda-faux-fond); color: var(--peda-faux-texte); }
+.maitrise[data-etat='non-couvert'] .maitrise__etat { background: var(--neutre-fond); color: var(--texte-doux); }
+
+.jauge { block-size: 8px; border-radius: var(--r-pilule); background: var(--seq-0); overflow: hidden; }
+.jauge__remplissage {
+  block-size: 100%; border-radius: inherit; background: var(--seq-4);
+  transition: inline-size var(--d-maitrise) var(--courbe);
+}
+.maitrise[data-etat='fragile'] .jauge__remplissage { background: var(--seq-2); }
+.maitrise[data-etat='ancien']  .jauge__remplissage { background: var(--seq-1); }
+
+/* C12 — le volume de preuve n'est JAMAIS dissocié du score. */
+.preuve { display: flex; align-items: center; gap: var(--e-2); margin-block-start: var(--e-2);
+  font-size: var(--t-xs); color: var(--texte-doux); }
+.preuve__points { display: inline-flex; gap: 3px; }
+.preuve__point { inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--bordure-forte); }
+.preuve__point[data-plein='true'] { background: var(--texte-doux); }
+
+/* ===================== C04 · reco ===================================== */
+.reco { display: flex; gap: var(--e-3); padding: var(--e-4); background: var(--surface);
+  border: 1px solid var(--bordure); border-radius: var(--r-m); }
+.reco__pourquoi { margin-block-start: var(--e-2); font-size: var(--t-xs); color: var(--texte-doux); }
+.reco__pourquoi::before { content: 'Pourquoi · '; font-weight: 700; color: var(--texte); }
+html[dir='rtl'] .reco__pourquoi::before { content: 'لماذا · '; }
+
+/* ===================== C05 · paywall ================================== *
+ * Un contenu premium n'est pas « introuvable ». Le mur doit dire ce qui
+ * existe, pourquoi c'est fermé, et ce qu'on obtient — sinon la règle
+ * serveur « 404 jamais 403 » supprime le moment de conversion.
+ * ===================================================================== */
+.mur {
+  position: relative; padding: var(--e-5); border-radius: var(--r-m);
+  background: var(--surface-douce); border: 1px dashed var(--bordure-forte); text-align: center;
+}
+.mur__cadenas { font-size: var(--t-2xl); }
+.mur__raison { font-size: var(--t-s); color: var(--texte-doux); margin-block: var(--e-2) var(--e-4); }
+
+/* ===================== C06 · exambar + qnav =========================== */
+.exambar {
+  display: flex; align-items: center; gap: var(--e-4);
+  padding: var(--e-3) var(--e-4); background: var(--surface);
+  border-block-end: 1px solid var(--bordure);
+}
+.chrono { font-family: var(--f-mono); font-size: var(--t-xl); font-weight: 700; font-variant-numeric: tabular-nums; }
+.chrono[data-urgent='true'] { color: var(--sys-err-texte); }
+.qnav { display: flex; flex-wrap: wrap; gap: 6px; }
+.qnav__case {
+  inline-size: 32px; block-size: 32px; display: grid; place-items: center;
+  font-size: var(--t-2xs); font-weight: 700; border-radius: var(--r-xs);
+  border: 1px solid var(--bordure-forte); background: var(--surface); cursor: pointer;
+}
+.qnav__case[data-etat='repondu'] { background: var(--accent); color: var(--texte-inverse); border-color: transparent; }
+.qnav__case[data-etat='marque']  { border-color: var(--peda-remede); border-width: 2px; }
+.qnav__case[data-etat='courant'] { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ===================== C07 · rubric =================================== */
+.critere { display: block; padding-block: var(--e-3); border-block-end: 1px solid var(--bordure); }
+.critere__note { font-variant-numeric: tabular-nums; font-weight: 700; }
+.machine {
+  display: flex; gap: var(--e-2); padding: var(--e-3);
+  background: var(--sys-att-fond); border: 1px solid var(--sys-att-bordure);
+  border-radius: var(--r-s); font-size: var(--t-xs); color: var(--sys-att-texte);
+}
+
+/* ===================== C09 · graphiques =============================== */
+.graphe { inline-size: 100%; block-size: auto; }
+.graphe .axe { stroke: var(--serie-grille); stroke-width: 1; }
+.graphe .s1 { stroke: var(--serie-1); fill: var(--serie-1); }
+.graphe .s2 { stroke: var(--serie-2); fill: var(--serie-2); }
+.graphe .s3 { stroke: var(--serie-3); fill: var(--serie-3); }
+/* La légende porte la forme ET le libellé : la couleur ne suffit jamais. */
+.legende { display: flex; flex-wrap: wrap; gap: var(--e-4); font-size: var(--t-xs); color: var(--texte-doux); }
+.legende__item { display: inline-flex; align-items: center; gap: var(--e-2); }
+.legende__marque { inline-size: 12px; block-size: 12px; }
+
+/* ===================== C11 · door ===================================== */
+.porte { display: block; padding: var(--e-5); background: var(--surface);
+  border: 1px solid var(--bordure); border-radius: var(--r-m); text-decoration: none; color: inherit; }
+.porte:hover { border-color: var(--accent); }
+
+/* ===================== États transverses ============================== */
+.vide {
+  padding: var(--e-6) var(--e-4); text-align: center; color: var(--texte-doux);
+  border: 1px dashed var(--bordure-forte); border-radius: var(--r-m);
+}
+.indispo {
+  padding: var(--e-4); border-radius: var(--r-m);
+  background: var(--sys-att-fond); border: 1px solid var(--sys-att-bordure); color: var(--sys-att-texte);
+  font-size: var(--t-s);
+}
+.squelette {
+  border-radius: var(--r-xs); color: transparent !important;
+  background: linear-gradient(90deg, var(--surface-douce) 25%, var(--neutre-fond) 37%, var(--surface-douce) 63%);
+  background-size: 400% 100%; animation: glisse 1.2s infinite linear;
+}
+
+/* ##################################################################### *
+ *                     LES SEPT COMPOSANTS SIGNATURE                     *
+ * ##################################################################### */
+
+/* ---- F02 · Certitude+ ------------------------------------------------ *
+ * Achromatique à dessein : déclarer sa certitude n'est ni juste ni faux.
+ * Le niveau se lit à la graisse du trait et au libellé, pas à la teinte.
+ * ---------------------------------------------------------------------- */
+.certitude { display: flex; flex-direction: column; gap: var(--e-2); }
+.certitude__question { font-size: var(--t-s); font-weight: 600; }
+.certitude__choix { display: flex; gap: var(--e-2); flex-wrap: wrap; }
+.cert-opt {
+  display: inline-flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  min-block-size: var(--cible); padding: var(--e-2) var(--e-4);
+  font: inherit; font-size: var(--t-s); font-weight: 600; color: var(--texte-doux);
+  background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r-s); cursor: pointer;
+}
+.cert-opt__trait { inline-size: 40px; block-size: 3px; border-radius: 2px; background: var(--certitude-hasard); }
+.cert-opt[data-niveau='2'] .cert-opt__trait { block-size: 5px; background: var(--certitude-hesitant); }
+.cert-opt[data-niveau='3'] .cert-opt__trait { block-size: 7px; background: var(--certitude-sur); }
+.cert-opt[aria-checked='true'] { color: var(--texte); border-color: var(--texte); border-width: 2px; }
+
+/* ---- F03 · Autopsie de l'erreur -------------------------------------- *
+ * Présentée comme HYPOTHÈSE, jamais comme verdict. Le composant impose
+ * typographiquement le doute : le mot « probablement » n'est pas un choix
+ * rédactionnel, c'est une classe.
+ * ---------------------------------------------------------------------- */
+.autopsie { padding: var(--e-4); border-radius: var(--r-m);
+  background: var(--peda-faux-fond); border: 1px solid var(--peda-faux-bordure); }
+.autopsie__hypothese {
+  display: inline-flex; align-items: center; gap: var(--e-1);
+  font-size: var(--t-2xs); font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--peda-faux-texte);
+}
+.autopsie__hypothese::after { content: '· hypothèse'; font-weight: 600; opacity: .8; }
+html[dir='rtl'] .autopsie__hypothese::after { content: '· فرضية'; }
+.autopsie__cause { font-size: var(--t-l); font-weight: 700; margin-block: var(--e-2); }
+.autopsie__accord { display: flex; gap: var(--e-2); margin-block-start: var(--e-3); }
+
+/* ---- F04 · « Pourquoi pas B ? » — correction progressive ------------- */
+.progressive { display: flex; flex-direction: column; gap: var(--e-2); }
+.palier {
+  display: flex; gap: var(--e-3); padding: var(--e-3) var(--e-4);
+  border: 1px solid var(--bordure); border-radius: var(--r-s); background: var(--surface);
+}
+.palier[data-ouvert='false'] { border-style: dashed; color: var(--texte-tenu); }
+.palier__rang {
+  flex: 0 0 22px; block-size: 22px; display: grid; place-items: center;
+  font-size: var(--t-2xs); font-weight: 800; border-radius: 50%;
+  background: var(--neutre-fond); color: var(--texte-doux);
+}
+.palier[data-ouvert='true'] .palier__rang { background: var(--accent); color: var(--texte-inverse); }
+
+/* ---- F05 · Question miroir ------------------------------------------- */
+.miroir { padding: var(--e-4); border-radius: var(--r-m);
+  background: var(--accent-doux); border: 1px solid var(--peda-juste-bordure); }
+.miroir__bandeau { display: flex; align-items: center; gap: var(--e-2);
+  font-size: var(--t-2xs); font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--peda-juste-texte); margin-block-end: var(--e-2); }
+.miroir__note { font-size: var(--t-xs); color: var(--texte-doux); margin-block-start: var(--e-2); }
+
+/* ---- F06 · Ordonnance Najah ------------------------------------------ */
+.ordonnance { padding: var(--e-4); border-radius: var(--r-m);
+  background: var(--peda-remede-fond); border: 1px solid var(--peda-remede-bordure); }
+.ordonnance__entete { display: flex; align-items: baseline; gap: var(--e-2); margin-block-end: var(--e-3); }
+.ordonnance__duree {
+  font-family: var(--f-mono); font-size: var(--t-2xs); font-weight: 700;
+  padding: 2px var(--e-2); border-radius: var(--r-pilule);
+  background: var(--peda-remede); color: #1b1403;
+}
+.ordonnance__acte { display: flex; gap: var(--e-3); align-items: flex-start; padding-block: var(--e-2);
+  border-block-start: 1px solid var(--peda-remede-bordure); }
+.ordonnance__acte:first-of-type { border-block-start: 0; }
+.ordonnance__etat { font-size: var(--t-2xs); font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--peda-remede-texte); }
+
+/* ---- F07 · Rendez-vous Mémoire --------------------------------------- */
+.memoire { display: flex; flex-direction: column; gap: var(--e-3); }
+.memoire__frise { display: flex; align-items: center; gap: 0; }
+.memoire__jalon {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--e-1);
+  font-size: var(--t-2xs); color: var(--texte-tenu); position: relative;
+}
+.memoire__pastille {
+  inline-size: 18px; block-size: 18px; border-radius: 50%;
+  border: 2px solid var(--bordure-forte); background: var(--surface);
+  display: grid; place-items: center; font-size: 10px; line-height: 1;
+}
+.memoire__jalon[data-etat='fait'] .memoire__pastille { background: var(--peda-juste); border-color: var(--peda-juste); color: #fff; }
+.memoire__jalon[data-etat='du'] .memoire__pastille { border-color: var(--peda-remede); border-width: 3px; }
+.memoire__jalon[data-etat='du'] { color: var(--peda-remede-texte); font-weight: 700; }
+.memoire__jalon::before {
+  content: ''; position: absolute; inset-block-start: 8px; inset-inline-start: -50%;
+  inline-size: 100%; block-size: 2px; background: var(--bordure); z-index: -1;
+}
+.memoire__jalon:first-child::before { content: none; }
+
+/* ---- F09 · Mission du jour ------------------------------------------- *
+ * Trois actions au maximum, chacune avec sa raison. Le composant refuse
+ * structurellement d'en afficher davantage — voir `.mission__liste`.
+ * ---------------------------------------------------------------------- */
+.mission { display: flex; flex-direction: column; gap: var(--e-3); }
+.mission__liste { display: flex; flex-direction: column; gap: var(--e-2); }
+.mission__liste > :nth-child(n + 4) { display: none; }   /* garde-fou F09 */
+.mission__acte {
+  display: flex; gap: var(--e-3); align-items: flex-start; padding: var(--e-4);
+  background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r-m);
+}
+.mission__rang {
+  flex: 0 0 26px; block-size: 26px; display: grid; place-items: center;
+  font-size: var(--t-xs); font-weight: 800; border-radius: var(--r-xs);
+  background: var(--accent-doux); color: var(--accent-fort);
+}
+.mission__raison { margin-block-start: var(--e-1); font-size: var(--t-xs); color: var(--texte-doux); }
+.mission__pret {
+  display: inline-flex; align-items: center; gap: var(--e-1); margin-block-start: var(--e-2);
+  font-size: var(--t-2xs); font-weight: 700; color: var(--peda-juste-texte);
+}
+
+/* ===================== Zones ========================================== */
+[data-zone='examen'] .carte,
+[data-zone='examen'] .opt { box-shadow: none; }
+[data-zone='examen'] .why,
+[data-zone='examen'] .piege,
+[data-zone='examen'] .autopsie,
+[data-zone='examen'] .ordonnance { display: none !important; }  /* R06 */
+</style>
+<style>
+/* Habillage de la maquette — n'existe pas en production. */
+[hidden]{display:none !important}
+.barre{position:sticky;top:0;z-index:50;display:flex;gap:var(--e-3);align-items:center;flex-wrap:wrap;
+  padding:var(--e-2) var(--e-4);background:var(--encre-900);color:#fff;font-size:var(--t-xs)}
+.barre b{font-weight:800}
+.barre select,.barre button{font:inherit;font-size:var(--t-xs);background:transparent;color:#fff;
+  border:1px solid rgba(255,255,255,.32);border-radius:var(--r-pilule);padding:5px 11px;cursor:pointer}
+.barre select option{color:#000}
+.page{max-width:1100px;margin-inline:auto;padding:var(--e-6) var(--e-4) var(--e-9)}
+.sec{margin-block-end:var(--e-8);scroll-margin-top:70px}
+.sec>h2{padding-block-end:var(--e-2);border-block-end:2px solid var(--bordure)}
+.sec__intro{color:var(--texte-doux);max-inline-size:70ch;margin-block-end:var(--e-5)}
+.grille{display:grid;gap:var(--e-4)}
+@media(min-width:820px){.grille--2{grid-template-columns:1fr 1fr}.grille--3{grid-template-columns:repeat(3,1fr)}}
+.ref{display:inline-block;font-family:var(--f-mono);font-size:var(--t-2xs);font-weight:700;
+  padding:2px 7px;border-radius:var(--r-xs);background:var(--neutre-fond);color:var(--texte-doux)}
+.nuancier{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:var(--e-2)}
+.nuance{border:1px solid var(--bordure);border-radius:var(--r-s);overflow:hidden;font-size:var(--t-2xs)}
+.nuance__aplat{block-size:52px}
+.nuance__pied{padding:var(--e-2);background:var(--surface)}
+.nuance__ratio{font-family:var(--f-mono);font-weight:700}
+.ok{color:var(--sys-ok-texte)}.ko{color:var(--sys-err-texte);font-weight:800}
+.demo{padding:var(--e-4);background:var(--fond);border:1px solid var(--bordure);border-radius:var(--r-m)}
+.etat-titre{font-size:var(--t-2xs);font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--texte-tenu);margin-block:var(--e-4) var(--e-2)}
+.note{padding:var(--e-3) var(--e-4);border-inline-start:3px solid var(--accent);
+  background:var(--accent-doux);border-radius:var(--r-s);font-size:var(--t-s)}
+</style>
+</head>
+<body data-zone="apprentissage">
+
+<div class="barre">
+  <b>naja7i.ma</b> <span>système d'interface v3 · maquette</span>
+  <label>Zone
+    <select id="zone">
+      <option value="apprentissage">Apprentissage</option>
+      <option value="acquisition">Acquisition</option>
+      <option value="examen">Examen</option>
+    </select>
+  </label>
+  <span class="pousse"></span>
+  <button id="bLang">العربية</button>
+  <button id="bTheme">Sombre</button>
+</div>
+
+<div class="page">
+
+<h1>Système d'interface v3</h1>
+<p class="sec__intro">Un seul jeu de jetons, trois univers, et les sept composants qui portent la
+méthode Najah. Chaque section renvoie à l'identifiant de <span class="ref">NAJAH-INV-001</span>
+qu'elle satisfait. Les valeurs de contraste affichées sont <b>calculées dans la page</b>, pas recopiées :
+si un jeton change, le chiffre change.</p>
+
+<!-- ================= JETONS ================= -->
+<section class="sec" id="s-jetons">
+  <h2>1 · Jetons</h2>
+  <p class="sec__intro">Le vert est la maîtrise, la terre cuite l'erreur pédagogique, le safran
+  l'échéance et la remédiation. <b>Le rouge est l'erreur système, et rien d'autre</b> — c'est la
+  correction principale apportée à la v2, où un mot de passe trop court et une mauvaise réponse
+  partageaient la même teinte.</p>
+
+  <h3>Rôles sémantiques — contraste mesuré sur le fond courant</h3>
+  <div class="nuancier" id="nuancier"></div>
+
+  <h3 style="margin-block-start:var(--e-6)">Séries de données</h3>
+  <p class="sec__intro">Le couple de marque vert/terre s'effondre en protanopie — distance 47 sur 255.
+  Inutilisable pour trois piliers. Le triplet ci-dessous tient à ≥64 dans les trois dichromaties.
+  Le violet ne sert <b>qu'aux graphiques</b> : il n'apparaît dans aucun composant d'interface.</p>
+  <div class="legende">
+    <span class="legende__item"><span class="legende__marque" style="background:var(--serie-1)"></span> Sciences de l'éducation</span>
+    <span class="legende__item"><span class="legende__marque" style="background:var(--serie-2);border-radius:50%"></span> Didactique</span>
+    <span class="legende__item"><span class="legende__marque" style="background:var(--serie-3);clip-path:polygon(50% 0,100% 100%,0 100%)"></span> Spécialité</span>
+  </div>
+  <p class="tenu" style="margin-block-start:var(--e-2)">Chaque série porte une <b>forme</b> distincte en plus de sa couleur — carré, disque, triangle.</p>
+</section>
+
+<!-- ================= C01 / C02 ================= -->
+<section class="sec" id="s-question">
+  <h2>2 · Question et correction <span class="ref">C01 · C02</span></h2>
+  <p class="sec__intro">Répondez, rayez ce que vous éliminez, puis vérifiez. La révélation se fait
+  <b>en deux temps</b> — le verdict d'abord, les justifications ensuite. C'est le premier palier de la
+  correction progressive de <span class="ref">F04</span>, et c'est la mécanique d'AMBOSS relevée au benchmark.</p>
+
+  <div class="demo" id="demoQ">
+    <div class="q">
+      <div class="q__meta">
+        <span class="puce">Sciences de l'éducation</span>
+        <span class="puce">Évaluation des apprentissages</span>
+        <span class="puce">Niveau · application</span>
+      </div>
+      <p class="q__enonce">Un enseignant fait passer un court test au milieu d'une séquence. Il ne note
+      pas les élèves et réorganise ses groupes de travail à partir des résultats. De quel type
+      d'évaluation s'agit-il&nbsp;?</p>
+
+      <div class="q__options" id="opts">
+        <button class="opt" role="checkbox" aria-checked="false" data-k="A">
+          <span class="opt__cle">A</span>
+          <span class="opt__corps"><span class="opt__texte">Une évaluation sommative</span></span>
+          <span class="rayer" title="Rayer">✕</span>
+        </button>
+        <button class="opt" role="checkbox" aria-checked="false" data-k="B">
+          <span class="opt__cle">B</span>
+          <span class="opt__corps"><span class="opt__texte">Une évaluation formative</span></span>
+          <span class="rayer" title="Rayer">✕</span>
+        </button>
+        <button class="opt" role="checkbox" aria-checked="false" data-k="C">
+          <span class="opt__cle">C</span>
+          <span class="opt__corps"><span class="opt__texte">Une évaluation diagnostique</span></span>
+          <span class="rayer" title="Rayer">✕</span>
+        </button>
+        <button class="opt" role="checkbox" aria-checked="false" data-k="D">
+          <span class="opt__cle">D</span>
+          <span class="opt__corps"><span class="opt__texte">Une évaluation certificative</span></span>
+          <span class="rayer" title="Rayer">✕</span>
+        </button>
+      </div>
+
+      <div class="rangee" style="margin-block-start:var(--e-4)">
+        <button class="btn" id="bVerifier">Vérifier ma réponse</button>
+        <button class="btn btn--fantome" id="bTout" hidden>Voir toutes les explications</button>
+        <span class="petit" id="astuce">Rayez d'abord les options que vous éliminez.</span>
+      </div>
+
+      <div id="apres" hidden>
+        <div class="piege">
+          <div class="piege__titre">⚠ Piège fréquent</div>
+          <p class="petit" style="margin-block-start:var(--e-2)">Confondre formative et diagnostique,
+          parce que les deux servent à adapter l'enseignement. Le critère décisif n'est pas l'intention,
+          c'est le moment : <b>avant</b> la séquence, l'évaluation est diagnostique ; <b>pendant</b>, elle est formative.</p>
+        </div>
+        <div class="source"><span>📌</span><span>Source · distinction formatif / sommatif introduite par
+        M.&nbsp;Scriven (1967). <b>Référence officielle marocaine à rattacher par l'équipe éditoriale</b> —
+        passeport de source <span class="ref">F11a</span>.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="etat-titre">Les autres états du même composant</div>
+  <div class="grille grille--3">
+    <div><p class="tenu">Verrouillé — premium</p>
+      <button class="opt" data-etat="verrouille"><span class="opt__cle">C</span>
+      <span class="opt__corps"><span class="opt__texte">La justification complète de ce distracteur</span></span></button></div>
+    <div><p class="tenu">Chargement</p>
+      <button class="opt" data-etat="chargement"><span class="opt__cle">·</span>
+      <span class="opt__corps"><span class="opt__texte">Chargement de l'option</span></span></button></div>
+    <div><p class="tenu">Indisponible</p>
+      <div class="indispo">Question retirée du catalogue pendant votre série. Elle ne compte pas dans votre score.</div></div>
+  </div>
+</section>
+
+<!-- ================= SIGNATURE ================= -->
+<section class="sec" id="s-signature">
+  <h2>3 · Les sept composants signature</h2>
+  <p class="sec__intro">Ce sont les fonctions <span class="ref">F02</span> à <span class="ref">F09</span> :
+  spécifiées, jamais implémentées, et absentes de toutes les maquettes produites jusqu'ici. C'est
+  pourtant là qu'est la différenciation — aucune plateforme du benchmark ne dit au candidat
+  <i>pourquoi</i> il s'est probablement trompé.</p>
+
+  <div class="grille grille--2">
+    <div class="carte">
+      <div class="carte__titre">F02 · Certitude+</div>
+      <div class="certitude">
+        <p class="certitude__question">Avant de valider — à quel point êtes-vous sûr&nbsp;?</p>
+        <div class="certitude__choix" id="cert">
+          <button class="cert-opt" data-niveau="3" role="radio" aria-checked="false"><span class="cert-opt__trait"></span>Sûr</button>
+          <button class="cert-opt" data-niveau="2" role="radio" aria-checked="false"><span class="cert-opt__trait"></span>Hésitant</button>
+          <button class="cert-opt" data-niveau="1" role="radio" aria-checked="false"><span class="cert-opt__trait"></span>Au hasard</button>
+        </div>
+        <p class="tenu">Achromatique à dessein : une certitude n'est ni juste ni fausse. Lui donner du
+        vert ou du rouge, ce serait préjuger avant la correction.</p>
+      </div>
+      <div class="note" style="margin-block-start:var(--e-4)">Une bonne réponse déclarée « au hasard »
+      <b>ne compte pas comme preuve de maîtrise</b> : le volume d'évidence est pondéré par la certitude.</div>
+    </div>
+
+    <div class="carte">
+      <div class="carte__titre">F03 · Autopsie de l'erreur</div>
+      <div class="autopsie">
+        <span class="autopsie__hypothese">Cause probable</span>
+        <p class="autopsie__cause">Confusion de critère : vous avez retenu le <i>moment</i> là où la
+        définition porte sur la <i>fonction</i>.</p>
+        <p class="petit">Appuyée sur le distracteur choisi et sur vos trois dernières erreurs de la
+        même compétence.</p>
+        <div class="autopsie__accord">
+          <button class="btn btn--discret">C'est bien ça</button>
+          <button class="btn btn--discret">Non, autre chose</button>
+        </div>
+      </div>
+      <p class="tenu" style="margin-block-start:var(--e-3)">Le mot « hypothèse » est ajouté par le CSS,
+      pas par la rédaction : aucun contenu ne peut l'oublier.</p>
+    </div>
+
+    <div class="carte">
+      <div class="carte__titre">F04 · « Pourquoi pas B ? » — correction progressive</div>
+      <div class="progressive">
+        <div class="palier" data-ouvert="true"><span class="palier__rang">1</span>
+          <span>Le critère à interroger est la <b>fonction</b> de l'évaluation, pas son moment.</span></div>
+        <div class="palier" data-ouvert="true"><span class="palier__rang">2</span>
+          <span>Deux options citent un moment, deux citent une fonction. Éliminez d'abord celles qui parlent du moment.</span></div>
+        <div class="palier" data-ouvert="false"><span class="palier__rang">3</span>
+          <span>Voir pourquoi A est faux</span></div>
+        <div class="palier" data-ouvert="false"><span class="palier__rang">4</span>
+          <span>Voir pourquoi C et D sont faux</span></div>
+        <div class="palier" data-ouvert="false"><span class="palier__rang">5</span>
+          <span>Voir la réponse et son raisonnement complet</span></div>
+      </div>
+      <p class="tenu" style="margin-block-start:var(--e-3)">Cinq paliers ; le candidat s'arrête dès qu'il
+      a compris. Deux suffisent à livrer le principe.</p>
+    </div>
+
+    <div class="carte">
+      <div class="carte__titre">F06 · Ordonnance Najah</div>
+      <div class="ordonnance">
+        <div class="ordonnance__entete">
+          <b>Pour cette confusion</b><span class="ordonnance__duree">10 min</span>
+        </div>
+        <div class="ordonnance__acte"><span>1</span><span>Relire la fiche « les quatre fonctions de
+          l'évaluation »<br><span class="ordonnance__etat">Fait</span></span></div>
+        <div class="ordonnance__acte"><span>2</span><span>Trois situations à classer par fonction<br>
+          <span class="ordonnance__etat">En cours</span></span></div>
+        <div class="ordonnance__acte"><span>3</span><span>Une question miroir en contexte différent<br>
+          <span class="ordonnance__etat">À faire</span></span></div>
+      </div>
+      <p class="tenu" style="margin-block-start:var(--e-3)">Calibrée sur 3, 10 ou 20 minutes. La durée
+      est un engagement affiché, pas une estimation cachée.</p>
+    </div>
+
+    <div class="carte">
+      <div class="carte__titre">F05 · Question miroir</div>
+      <div class="miroir">
+        <div class="miroir__bandeau">↻ Transfert — autre contexte</div>
+        <p style="font-weight:700">Une inspectrice demande à un enseignant de lui remettre, en fin
+        d'année, une appréciation chiffrée par élève destinée au conseil de classe. De quelle nature
+        est cette évaluation&nbsp;?</p>
+        <p class="miroir__note">Même microcompétence, situation différente. Réussir ici, c'est avoir
+        transféré — pas avoir mémorisé un énoncé.</p>
+      </div>
+    </div>
+
+    <div class="carte">
+      <div class="carte__titre">F07 · Rendez-vous Mémoire</div>
+      <div class="memoire">
+        <div class="memoire__frise">
+          <div class="memoire__jalon" data-etat="fait"><span class="memoire__pastille">✓</span>J+1</div>
+          <div class="memoire__jalon" data-etat="fait"><span class="memoire__pastille">✓</span>J+3</div>
+          <div class="memoire__jalon" data-etat="du"><span class="memoire__pastille"></span>J+7</div>
+          <div class="memoire__jalon"><span class="memoire__pastille"></span>J+15</div>
+        </div>
+        <p class="petit">Deux preuves espacées obtenues. La troisième est due aujourd'hui&nbsp;: tant
+        qu'elle n'est pas obtenue, la compétence reste <b>fragile</b>, pas acquise.</p>
+      </div>
+      <p class="tenu" style="margin-block-start:var(--e-3)">Cadence J+1 / J+3 / J+7 / J+15, conforme à la
+      source de vérité. Les variables difficulté / stabilité / récupérabilité sont stockées dès
+      maintenant, même si l'ordonnanceur v1 les ignore — pour éviter une migration plus tard.</p>
+    </div>
+  </div>
+
+  <div class="carte" style="margin-block-start:var(--e-4)">
+    <div class="carte__titre">F09 · Mission du jour</div>
+    <div class="mission">
+      <p class="petit">Trois actions au maximum — le composant en masque structurellement toute quatrième.
+      Et ce ne sont pas vos trois points les plus faibles : ce sont les trois que
+      <b>vous êtes prêt à apprendre</b>, parce que leurs prérequis sont acquis.</p>
+      <div class="mission__liste">
+        <div class="mission__acte"><span class="mission__rang">1</span><div>
+          <b>Rendez-vous mémoire dû</b> — Fonctions de l'évaluation
+          <div class="mission__raison">Deux preuves espacées obtenues, la troisième est due aujourd'hui.</div></div></div>
+        <div class="mission__acte"><span class="mission__rang">2</span><div>
+          <b>Ordonnance à terminer</b> — Confusion critère / moment
+          <div class="mission__raison">Prescrite après votre erreur de mardi ; il reste l'étape de transfert.</div></div></div>
+        <div class="mission__acte"><span class="mission__rang">3</span><div>
+          <b>Nouvelle compétence</b> — Construire une grille critériée
+          <div class="mission__raison">Vos prérequis sont acquis : c'est le prochain palier atteignable.</div>
+          <span class="mission__pret">✓ Prêt à apprendre</span></div></div>
+        <div class="mission__acte"><span class="mission__rang">4</span><div><b>Cette quatrième carte
+          existe dans le HTML</b><div class="mission__raison">Elle est masquée par le CSS. La règle des
+          trois actions n'est pas une consigne rédactionnelle, c'est une propriété du composant.</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MAÎTRISE ================= -->
+<section class="sec" id="s-maitrise">
+  <h2>4 · Maîtrise et preuve <span class="ref">C03 · C12</span></h2>
+  <p class="sec__intro">Quatre états <b>nommés et réversibles</b> plutôt qu'un pourcentage. Un chiffre
+  invite à la comparaison, un état invite à l'action. Et la maîtrise redescend — c'est ce qui la rend
+  honnête. Aucun score n'apparaît jamais sans son volume de preuve.</p>
+
+  <div class="carte">
+    <div class="maitrise" data-etat="acquis">
+      <div class="maitrise__ligne"><span class="maitrise__nom">Fonctions de l'évaluation</span>
+        <span class="maitrise__etat">Acquis</span><span class="pousse petit nombre">82&#8239;%</span></div>
+      <div class="jauge"><div class="jauge__remplissage" style="inline-size:82%"></div></div>
+      <div class="preuve"><span class="preuve__points">
+        <span class="preuve__point" data-plein="true"></span><span class="preuve__point" data-plein="true"></span>
+        <span class="preuve__point" data-plein="true"></span><span class="preuve__point" data-plein="true"></span>
+        <span class="preuve__point"></span></span> 34 questions · 3 preuves espacées · dernière il y a 4 jours</div>
+    </div>
+    <div class="maitrise" data-etat="fragile">
+      <div class="maitrise__ligne"><span class="maitrise__nom">Grille critériée</span>
+        <span class="maitrise__etat">Fragile</span><span class="pousse petit nombre">61&#8239;%</span></div>
+      <div class="jauge"><div class="jauge__remplissage" style="inline-size:61%"></div></div>
+      <div class="preuve"><span class="preuve__points">
+        <span class="preuve__point" data-plein="true"></span><span class="preuve__point" data-plein="true"></span>
+        <span class="preuve__point"></span><span class="preuve__point"></span><span class="preuve__point"></span></span>
+        11 questions · assise faible · aucune preuve différée</div>
+    </div>
+    <div class="maitrise" data-etat="ancien">
+      <div class="maitrise__ligne"><span class="maitrise__nom">Docimologie</span>
+        <span class="maitrise__etat">Ancien</span><span class="pousse petit nombre">74&#8239;%</span></div>
+      <div class="jauge"><div class="jauge__remplissage" style="inline-size:74%"></div></div>
+      <div class="preuve"><span class="preuve__points">
+        <span class="preuve__point" data-plein="true"></span><span class="preuve__point" data-plein="true"></span>
+        <span class="preuve__point" data-plein="true"></span><span class="preuve__point"></span><span class="preuve__point"></span></span>
+        22 questions · dernière preuve il y a 47 jours</div>
+    </div>
+    <div class="maitrise" data-etat="non-couvert">
+      <div class="maitrise__ligne"><span class="maitrise__nom">Évaluation des compétences transversales</span>
+        <span class="maitrise__etat">Non couvert</span><span class="pousse petit">—</span></div>
+      <div class="jauge"><div class="jauge__remplissage" style="inline-size:0"></div></div>
+      <div class="preuve"><span class="preuve__points">
+        <span class="preuve__point"></span><span class="preuve__point"></span><span class="preuve__point"></span>
+        <span class="preuve__point"></span><span class="preuve__point"></span></span>
+        Aucune question posée — absence de mesure, pas un zéro</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MUR / EXAMEN / VIDES ================= -->
+<section class="sec" id="s-etats">
+  <h2>5 · Mur payant, examen, états vides <span class="ref">C05 · C06</span></h2>
+
+  <div class="grille grille--2">
+    <div>
+      <p class="tenu">Mur payant — <span class="ref">C05</span></p>
+      <div class="mur">
+        <div class="mur__cadenas">🔒</div>
+        <b>La justification de chaque distracteur</b>
+        <p class="mur__raison">Vous voyez la bonne réponse. L'explication de chaque option fausse,
+        le piège et la source sont réservés à l'abonnement.</p>
+        <button class="btn">Voir l'offre</button>
+      </div>
+      <div class="note" style="margin-block-start:var(--e-3)">Contrainte d'architecture : la règle
+      serveur <b>« 404, jamais 403 »</b> vaut pour une ressource d'un <i>autre tenant</i>. Appliquée au
+      premium, elle rendrait ce mur impossible — le candidat verrait « introuvable » au lieu de l'offre.
+      Il faut un contrat distinct pour « existe, mais réservé ».</div>
+    </div>
+
+    <div>
+      <p class="tenu">Barre d'examen — <span class="ref">C06</span></p>
+      <div class="exambar" style="border-radius:var(--r-m);border:1px solid var(--bordure)">
+        <span class="chrono" data-urgent="true">04:12</span>
+        <span class="petit">Section 2 / 3 · navigation verrouillée</span>
+        <span class="pousse petit">Sauvegarde ✓</span>
+      </div>
+      <div class="qnav" style="margin-block-start:var(--e-3)">
+        <span class="qnav__case" data-etat="repondu">1</span><span class="qnav__case" data-etat="repondu">2</span>
+        <span class="qnav__case" data-etat="marque">3</span><span class="qnav__case" data-etat="courant">4</span>
+        <span class="qnav__case">5</span><span class="qnav__case">6</span><span class="qnav__case">7</span>
+        <span class="qnav__case">8</span>
+      </div>
+      <p class="tenu" style="margin-block-start:var(--e-2)">Basculez la <b>zone</b> sur « Examen » dans la
+      barre du haut : les durées tombent sous 120&nbsp;ms et tout bloc de correction disparaît — <span class="ref">R06</span>
+      devient une propriété du CSS, pas une consigne.</p>
+    </div>
+
+    <div>
+      <p class="tenu">Vide</p>
+      <div class="vide">Aucune erreur dans votre carnet pour cette compétence.<br>
+        <span class="tenu">C'est une bonne nouvelle — ou vous n'avez pas encore été interrogé dessus.</span></div>
+    </div>
+
+    <div>
+      <p class="tenu">Erreur système</p>
+      <div class="alerte">⚠ <span>Impossible d'enregistrer votre réponse. Elle est conservée sur cet
+        appareil et sera renvoyée automatiquement. <span class="tenu">réf. a91f-2c</span></span></div>
+      <p class="tenu" style="margin-block-start:var(--e-2)">Rouge, pas terre cuite. Le candidat doit
+      pouvoir distinguer « je me suis trompé » de « la machine a un problème ».</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FORMULAIRE ================= -->
+<section class="sec" id="s-form">
+  <h2>6 · Formulaire</h2>
+  <div class="carte" style="max-width:460px">
+    <label class="champ"><span class="champ__label">Adresse e-mail</span>
+      <input class="champ__saisie" type="email" placeholder="vous@exemple.ma" value="candidat@naja7i">
+      <span class="champ__erreur">Cette adresse ne semble pas valide.</span></label>
+    <label class="champ"><span class="champ__label">Mot de passe</span>
+      <input class="champ__saisie" type="password" placeholder="12 caractères minimum">
+      <span class="champ__aide">12 caractères minimum, sans autre contrainte.</span></label>
+    <button class="btn btn--bloc">Créer mon compte</button>
+  </div>
+</section>
+
+<!-- ================= DÉCISIONS OUVERTES ================= -->
+<section class="sec" id="s-decisions">
+  <h2>7 · Les décisions encore ouvertes</h2>
+  <p class="sec__intro">Une interface ne tranche pas une décision produit — et si elle le fait en
+  silence, elle la grave. Ces trois-là restent ouvertes dans <span class="ref">NAJAH-INV-001</span> :
+  elles sont donc <b>exposées</b>, pas arbitrées.</p>
+
+  <div class="grille grille--3">
+    <div class="carte"><div class="carte__titre">D05 · Diagnostic gratuit</div>
+      <p class="petit">Complet, ou représentatif&nbsp;? La matrice des droits accorde le diagnostic
+      complet au compte gratuit ; la note de négociation recommande l'inverse. <b>Contradiction
+      documentaire non levée.</b></p>
+      <p class="tenu" style="margin-block-start:var(--e-2)">Observation du benchmark : le meilleur acteur
+      premium donne un essai très court, et ce qu'il démontre est la <i>profondeur d'une explication</i>,
+      pas la largeur du catalogue.</p></div>
+
+    <div class="carte"><div class="carte__titre">D06 · Déclencheur de Certitude+</div>
+      <p class="petit">Sur toutes les questions, ou seulement au diagnostic et sur les situations à
+      forte valeur&nbsp;? Une friction systématique use ; une friction rare ne mesure rien.</p>
+      <p class="tenu" style="margin-block-start:var(--e-2)">Le composant fonctionne dans les deux cas —
+      c'est un réglage, pas une refonte.</p></div>
+
+    <div class="carte"><div class="carte__titre">D09 · Place du Coach</div>
+      <p class="petit">La maquette v2 le laisse en <b>entrée de premier niveau</b> de la navigation
+      latérale. D09 et A15 recommandent de le rétrograder en aide contextuelle.</p>
+      <p class="tenu" style="margin-block-start:var(--e-2)">Ce n'est pas un détail visuel : la navigation
+      dit au candidat ce qui compte.</p></div>
+  </div>
+</section>
+
+<p class="tenu">Maquette de validation · 8 août 2026 · les contenus sont des exemples, les mécaniques
+sont réelles. Validateur : <code>node valider-jetons.mjs</code> — 51 règles.</p>
+
+</div>
+
+<script>
+/* ---- thème, langue, zone ---- */
+const root = document.documentElement;
+const bTheme = document.getElementById('bTheme');
+bTheme.onclick = () => {
+  const sombre = root.getAttribute('data-theme') === 'sombre';
+  sombre ? root.removeAttribute('data-theme') : root.setAttribute('data-theme','sombre');
+  bTheme.textContent = sombre ? 'Sombre' : 'Clair';
+  nuancier();
+};
+let ar = false;
+document.getElementById('bLang').onclick = (e) => {
+  ar = !ar;
+  root.setAttribute('dir', ar ? 'rtl' : 'ltr');
+  root.setAttribute('lang', ar ? 'ar' : 'fr');
+  e.target.textContent = ar ? 'Français' : 'العربية';
+};
+document.getElementById('zone').onchange = (e) => document.body.setAttribute('data-zone', e.target.value);
+
+/* ---- nuancier avec contraste calculé en direct ---- */
+const ROLES = [
+  ['--accent','--fond','Action principale',3],
+  ['--peda-juste-texte','--peda-juste-fond','Réponse juste',4.5],
+  ['--peda-faux-texte','--peda-faux-fond','Réponse fausse',4.5],
+  ['--peda-remede-texte','--peda-remede-fond','Remédiation, échéance',4.5],
+  ['--sys-err-texte','--sys-err-fond','Erreur système',4.5],
+  ['--texte-doux','--fond','Texte secondaire',4.5],
+  ['--texte-tenu','--fond','Placeholder',4.5],
+  ['--bordure-forte','--surface','Contour de champ',3],
+];
+function lu(hex){
+  const v=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255)
+    .map(c=>c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4));
+  return .2126*v[0]+.7152*v[1]+.0722*v[2];
+}
+function hexDe(nom){
+  const v = getComputedStyle(root).getPropertyValue(nom).trim();
+  const d = document.createElement('span'); d.style.color = v; document.body.appendChild(d);
+  const m = getComputedStyle(d).color.match(/\d+/g); d.remove();
+  return '#' + m.slice(0,3).map(x=>(+x).toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function nuancier(){
+  const el = document.getElementById('nuancier'); el.innerHTML = '';
+  for (const [fg,bg,nom,seuil] of ROLES){
+    const a = hexDe(fg), b = hexDe(bg);
+    const l = [lu(a),lu(b)].sort((x,y)=>y-x);
+    const r = (l[0]+.05)/(l[1]+.05);
+    const ok = r >= seuil;
+    el.insertAdjacentHTML('beforeend', `
+      <div class="nuance">
+        <div class="nuance__aplat" style="background:${b};display:grid;place-items:center">
+          <span style="color:${a};font-weight:800;font-size:.9rem">Aa</span></div>
+        <div class="nuance__pied"><div style="font-weight:700">${nom}</div>
+          <div class="tenu">${a} / ${b}</div>
+          <div class="nuance__ratio ${ok?'ok':'ko'}">${r.toFixed(2)}:1 ${ok?'✓':'✗'} <span class="tenu">seuil ${seuil}</span></div>
+        </div></div>`);
+  }
+}
+nuancier();
+
+/* ---- question : élimination puis révélation en deux temps ---- */
+const CLE='B';
+const WHY={
+ A:"Une évaluation sommative dresse un bilan <b>en fin</b> de séquence et débouche généralement sur une note. Ici, ni l'un ni l'autre.",
+ B:"L'évaluation formative intervient <b>pendant</b> l'apprentissage et produit une information destinée à <b>réguler</b> l'enseignement. L'absence de note et la réorganisation des groupes sont les deux marques de cette régulation.",
+ C:"L'évaluation diagnostique se place <b>en amont</b>, pour situer les acquis avant d'enseigner. L'intention est proche, mais le moment la disqualifie.",
+ D:"L'évaluation certificative délivre une reconnaissance officielle — passage, diplôme, attestation. Rien dans la situation ne l'évoque."};
+let choix=null, revele=false;
+const opts=[...document.querySelectorAll('#opts .opt')];
+opts.forEach(o=>{
+  o.querySelector('.rayer').onclick = ev => { ev.stopPropagation(); if(revele) return;
+    o.dataset.raye = o.dataset.raye === 'true' ? 'false' : 'true'; };
+  o.onclick = () => { if(revele || o.dataset.raye==='true') return;
+    opts.forEach(x=>x.setAttribute('aria-checked','false'));
+    o.setAttribute('aria-checked','true'); choix=o.dataset.k; };
+});
+document.getElementById('bVerifier').onclick = function(){
+  if(!choix){ document.getElementById('astuce').textContent='Choisissez d’abord une réponse.'; return; }
+  revele = true; this.hidden = true;
+  document.getElementById('astuce').hidden = true;
+  document.getElementById('bTout').hidden = false;
+  marquer(opts.find(o=>o.dataset.k===choix), choix===CLE);
+  if(choix!==CLE) marquer(opts.find(o=>o.dataset.k===CLE), true);
+};
+function marquer(el, juste){
+  el.setAttribute('aria-checked','false');
+  el.dataset.etat = juste ? 'juste' : 'faux';
+  const v=document.createElement('span'); v.className='opt__verdict';
+  v.innerHTML = (juste?'✓ ':'✕ ') + (juste ? 'Bonne réponse' : 'Votre réponse · faux');
+  el.querySelector('.opt__corps').appendChild(v);
+}
+document.getElementById('bTout').onclick = function(){
+  this.hidden = true;
+  opts.forEach(o=>{
+    o.dataset.raye='false';
+    if(!o.dataset.etat){ o.dataset.etat='autre';
+      const v=document.createElement('span'); v.className='opt__verdict'; v.textContent='✕ Incorrect';
+      o.querySelector('.opt__corps').appendChild(v); }
+    const d=document.createElement('div'); d.className='why'; d.innerHTML=WHY[o.dataset.k];
+    o.querySelector('.opt__corps').appendChild(d);
+  });
+  document.getElementById('apres').hidden = false;
+};
+
+/* ---- certitude ---- */
+document.querySelectorAll('#cert .cert-opt').forEach(b=>{
+  b.onclick=()=>{ document.querySelectorAll('#cert .cert-opt').forEach(x=>x.setAttribute('aria-checked','false'));
+    b.setAttribute('aria-checked','true'); };
+});
+</script>
+</body>
+</html>

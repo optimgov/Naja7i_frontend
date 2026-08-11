@@ -1,0 +1,434 @@
+/* =====================================================================
+   naja7i.ma — Composants v3
+   Identifiant : NAJA7I-UI-V3 · 8 août 2026
+   Dépend de tokens-v3.css.
+
+   Couvre les composants C01 à C12 de `NAJAH-INV-001` dans leurs huit
+   états — normal, sélectionné, correct, incorrect, verrouillé, vide,
+   chargement, indisponible — et les SEPT COMPOSANTS SIGNATURE qui
+   n'existaient jusqu'ici ni dans le code ni dans aucune maquette :
+   Certitude+ (F02), Autopsie (F03), « Pourquoi pas B ? » (F04),
+   Question miroir (F05), Ordonnance (F06), Rendez-vous Mémoire (F07),
+   Mission du jour (F09).
+
+   TROIS RÈGLES STRUCTURELLES, appliquées partout :
+   1. Aucune information portée par la seule couleur : icône + libellé.
+   2. Aucun score sans son volume de preuve (C12).
+   3. Propriétés logiques uniquement : le RTL est natif, pas une surcouche.
+   ===================================================================== */
+
+/* ===================== Primitives ==================================== */
+
+.pile   { display: flex; flex-direction: column; gap: var(--e-3); }
+.rangee { display: flex; align-items: center; gap: var(--e-2); flex-wrap: wrap; }
+.pousse { margin-inline-start: auto; }
+.petit  { font-size: var(--t-s); color: var(--texte-doux); }
+.tenu   { font-size: var(--t-xs); color: var(--texte-tenu); }
+.sr {
+  position: absolute; inline-size: 1px; block-size: 1px;
+  padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+
+/* --- Boutons --------------------------------------------------------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2);
+  min-block-size: var(--cible); padding: 0 var(--e-5);
+  font: inherit; font-size: var(--t-s); font-weight: 700; line-height: 1;
+  color: var(--texte-inverse); background: var(--accent);
+  border: 1px solid transparent; border-radius: var(--r-pilule);
+  cursor: pointer; text-decoration: none;
+  transition: background var(--transition), border-color var(--transition);
+}
+.btn:hover:not(:disabled) { background: var(--accent-fort); }
+.btn:disabled, .btn[aria-disabled='true'] { opacity: .5; cursor: not-allowed; }
+.btn--fantome { color: var(--texte); background: transparent; border-color: var(--bordure-forte); }
+.btn--fantome:hover:not(:disabled) { background: var(--surface-douce); border-color: var(--accent); }
+.btn--discret { min-block-size: 34px; padding: 0 var(--e-3); font-size: var(--t-xs); font-weight: 600;
+  color: var(--texte-doux); background: transparent; border-color: var(--bordure); }
+.btn--discret:hover:not(:disabled) { color: var(--texte); background: var(--surface-douce); }
+.btn--bloc { inline-size: 100%; }
+.btn--grand { min-block-size: 52px; font-size: var(--t-l); padding: 0 var(--e-6); }
+
+/* --- Champs ---------------------------------------------------------- */
+.champ { display: block; margin-block-end: var(--e-4); }
+.champ__label { display: block; margin-block-end: var(--e-1); font-size: var(--t-s); font-weight: 600; }
+.champ__saisie {
+  inline-size: 100%; min-block-size: var(--cible); padding: 0 var(--e-4);
+  font: inherit; font-size: var(--t-m); color: var(--texte);
+  background: var(--surface);
+  border: 1px solid var(--bordure-forte);      /* 3:1 — exigence 1.4.11 */
+  border-radius: var(--r-s);
+  transition: border-color var(--transition);
+}
+.champ__saisie::placeholder { color: var(--texte-tenu); }   /* 4,85:1 */
+.champ__saisie:focus { border-color: var(--accent); }
+/* L'erreur de SAISIE est une erreur système : rouge, jamais terre cuite. */
+.champ__saisie[aria-invalid='true'] { border-color: var(--sys-err); }
+.champ__aide { display: block; margin-block-start: var(--e-1); font-size: var(--t-xs); color: var(--texte-doux); }
+.champ__erreur {
+  display: flex; gap: var(--e-1); align-items: baseline;
+  margin-block-start: var(--e-1); font-size: var(--t-xs); font-weight: 700; color: var(--sys-err-texte);
+}
+.champ__erreur::before { content: '⚠'; }   /* jamais la couleur seule */
+
+/* --- Puces ----------------------------------------------------------- */
+.puce {
+  display: inline-flex; align-items: center; gap: var(--e-1);
+  padding: 3px var(--e-2); font-size: var(--t-2xs); font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid transparent; border-radius: var(--r-pilule);
+  background: var(--neutre-fond); color: var(--texte-doux);
+}
+.puce--juste  { color: var(--peda-juste-texte);  background: var(--peda-juste-fond);  border-color: var(--peda-juste-bordure); }
+.puce--faux   { color: var(--peda-faux-texte);   background: var(--peda-faux-fond);   border-color: var(--peda-faux-bordure); }
+.puce--remede { color: var(--peda-remede-texte); background: var(--peda-remede-fond); border-color: var(--peda-remede-bordure); }
+.puce--sys-err{ color: var(--sys-err-texte);     background: var(--sys-err-fond);     border-color: var(--sys-err-bordure); }
+.puce--sys-ok { color: var(--sys-ok-texte);      background: var(--sys-ok-fond);      border-color: var(--sys-ok-bordure); }
+
+/* --- Cartes ---------------------------------------------------------- */
+.carte {
+  background: var(--surface); border: 1px solid var(--bordure);
+  border-radius: var(--rayon-zone, var(--r-m)); padding: var(--e-5);
+}
+.carte--douce { background: var(--surface-douce); border-color: transparent; }
+.carte__titre { font-size: var(--t-2xs); font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--texte-doux); margin-block-end: var(--e-3); }
+
+/* --- Alertes (état système) ------------------------------------------ */
+.alerte {
+  display: flex; gap: var(--e-2); padding: var(--e-3) var(--e-4);
+  font-size: var(--t-s); border: 1px solid var(--sys-err-bordure);
+  border-inline-start-width: 3px; border-radius: var(--r-s);
+  background: var(--sys-err-fond); color: var(--sys-err-texte);
+}
+.alerte--ok  { border-color: var(--sys-ok-bordure);  background: var(--sys-ok-fond);  color: var(--sys-ok-texte); }
+.alerte--att { border-color: var(--sys-att-bordure); background: var(--sys-att-fond); color: var(--sys-att-texte); }
+
+/* ===================== C01 · questionBlock ============================ *
+ * Les états ne sont JAMAIS portés par la seule couleur : chaque option
+ * révélée reçoit un jeton (icône) et un libellé écrit.
+ * ===================================================================== */
+
+.q { display: block; }
+.q__meta { display: flex; flex-wrap: wrap; gap: var(--e-2); margin-block-end: var(--e-3); }
+.q__enonce { font-size: var(--t-l); font-weight: 700; line-height: 1.45; margin-block-end: var(--e-4); }
+.q__options { display: flex; flex-direction: column; gap: var(--e-2); }
+
+.opt {
+  --opt-bordure: var(--bordure);
+  --opt-fond: var(--surface);
+  display: flex; gap: var(--e-3); align-items: flex-start; inline-size: 100%;
+  padding: var(--e-3) var(--e-4); font: inherit; color: inherit; text-align: start;
+  background: var(--opt-fond); border: 1.5px solid var(--opt-bordure);
+  border-radius: var(--r-s); cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+.opt:hover:not([disabled]) { --opt-bordure: var(--bordure-forte); }
+.opt__cle {
+  flex: 0 0 28px; block-size: 28px; display: grid; place-items: center;
+  font-size: var(--t-xs); font-weight: 800; border-radius: var(--r-xs);
+  background: var(--neutre-fond); color: var(--texte-doux);
+}
+.opt__corps { flex: 1; min-inline-size: 0; }
+.opt__texte { display: block; font-size: var(--t-m); line-height: 1.45; }
+.opt__verdict {
+  display: flex; inline-size: fit-content; align-items: center; gap: var(--e-1);
+  margin-block-start: var(--e-2); font-size: var(--t-2xs); font-weight: 800;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+
+/* — état : sélectionné (avant validation) */
+.opt[aria-checked='true'] { --opt-bordure: var(--accent); --opt-fond: var(--accent-doux); }
+.opt[aria-checked='true'] .opt__cle { background: var(--accent); color: var(--texte-inverse); }
+
+/* — état : rayé (élimination active — porte d'entrée de F04) */
+.opt[data-raye='true'] { opacity: .5; }
+.opt[data-raye='true'] .opt__texte { text-decoration: line-through; }
+
+/* — état : correct */
+.opt[data-etat='juste'] { --opt-bordure: var(--peda-juste); --opt-fond: var(--peda-juste-fond); }
+.opt[data-etat='juste'] .opt__cle { background: var(--peda-juste); color: #fff; }
+.opt[data-etat='juste'] .opt__verdict { color: var(--peda-juste-texte); }
+
+/* — état : incorrect (choisi par le candidat) */
+.opt[data-etat='faux'] { --opt-bordure: var(--peda-faux); --opt-fond: var(--peda-faux-fond); }
+.opt[data-etat='faux'] .opt__cle { background: var(--peda-faux); color: #fff; }
+.opt[data-etat='faux'] .opt__verdict { color: var(--peda-faux-texte); }
+
+/* — état : incorrect non choisi (neutre, mais justifié quand même) */
+.opt[data-etat='autre'] .opt__verdict { color: var(--texte-tenu); }
+
+/* — état : verrouillé (premium) */
+.opt[data-etat='verrouille'] { --opt-fond: var(--surface-douce); cursor: not-allowed; }
+.opt[data-etat='verrouille'] .opt__texte { filter: blur(3px); user-select: none; }
+
+/* — état : chargement */
+.opt[data-etat='chargement'] { pointer-events: none; }
+.opt[data-etat='chargement'] .opt__texte {
+  color: transparent; border-radius: var(--r-xs);
+  background: linear-gradient(90deg, var(--surface-douce) 25%, var(--neutre-fond) 37%, var(--surface-douce) 63%);
+  background-size: 400% 100%; animation: glisse 1.2s infinite linear;
+}
+@keyframes glisse { from { background-position: 100% 0 } to { background-position: 0 0 } }
+
+.rayer {
+  flex: 0 0 auto; min-inline-size: 30px; min-block-size: 30px;
+  border: 0; background: transparent; color: var(--texte-tenu);
+  border-radius: var(--r-xs); cursor: pointer; font-size: var(--t-s);
+}
+.rayer:hover { background: var(--neutre-fond); color: var(--peda-faux); }
+
+/* ===================== C02 · rationale ================================ */
+.why {
+  margin-block-start: var(--e-2); padding-inline-start: var(--e-3);
+  border-inline-start: 2px solid var(--bordure);
+  font-size: var(--t-s); color: var(--texte-doux); line-height: 1.55;
+}
+.piege {
+  margin-block-start: var(--e-4); padding: var(--e-3) var(--e-4);
+  background: var(--peda-piege-fond);
+  border: 1px solid var(--peda-faux-bordure); border-radius: var(--r-s);
+}
+.piege__titre { display: flex; align-items: center; gap: var(--e-2);
+  font-size: var(--t-2xs); font-weight: 800; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--peda-faux-texte); }
+.source {
+  display: flex; gap: var(--e-2); margin-block-start: var(--e-4);
+  padding-block-start: var(--e-3); border-block-start: 1px dashed var(--bordure-forte);
+  font-size: var(--t-xs); color: var(--texte-doux); line-height: 1.5;
+}
+
+/* ===================== C03 · masteryRow + C12 · evidence ============== */
+.maitrise { display: block; margin-block-end: var(--e-4); }
+.maitrise__ligne { display: flex; align-items: baseline; gap: var(--e-2); margin-block-end: var(--e-2); }
+.maitrise__nom { font-weight: 700; font-size: var(--t-s); }
+.maitrise__etat {
+  font-size: var(--t-2xs); font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  padding: 2px var(--e-2); border-radius: var(--r-pilule);
+  background: var(--neutre-fond); color: var(--texte-doux);
+}
+/* Quatre états NOMMÉS, réversibles — un chiffre seul n'appelle pas l'action. */
+.maitrise[data-etat='acquis']      .maitrise__etat { background: var(--peda-juste-fond); color: var(--peda-juste-texte); }
+.maitrise[data-etat='fragile']     .maitrise__etat { background: var(--peda-remede-fond); color: var(--peda-remede-texte); }
+.maitrise[data-etat='ancien']      .maitrise__etat { background: var(--peda-faux-fond); color: var(--peda-faux-texte); }
+.maitrise[data-etat='non-couvert'] .maitrise__etat { background: var(--neutre-fond); color: var(--texte-doux); }
+
+.jauge { block-size: 8px; border-radius: var(--r-pilule); background: var(--seq-0); overflow: hidden; }
+.jauge__remplissage {
+  block-size: 100%; border-radius: inherit; background: var(--seq-4);
+  transition: inline-size var(--d-maitrise) var(--courbe);
+}
+.maitrise[data-etat='fragile'] .jauge__remplissage { background: var(--seq-2); }
+.maitrise[data-etat='ancien']  .jauge__remplissage { background: var(--seq-1); }
+
+/* C12 — le volume de preuve n'est JAMAIS dissocié du score. */
+.preuve { display: flex; align-items: center; gap: var(--e-2); margin-block-start: var(--e-2);
+  font-size: var(--t-xs); color: var(--texte-doux); }
+.preuve__points { display: inline-flex; gap: 3px; }
+.preuve__point { inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--bordure-forte); }
+.preuve__point[data-plein='true'] { background: var(--texte-doux); }
+
+/* ===================== C04 · reco ===================================== */
+.reco { display: flex; gap: var(--e-3); padding: var(--e-4); background: var(--surface);
+  border: 1px solid var(--bordure); border-radius: var(--r-m); }
+.reco__pourquoi { margin-block-start: var(--e-2); font-size: var(--t-xs); color: var(--texte-doux); }
+.reco__pourquoi::before { content: 'Pourquoi · '; font-weight: 700; color: var(--texte); }
+html[dir='rtl'] .reco__pourquoi::before { content: 'لماذا · '; }
+
+/* ===================== C05 · paywall ================================== *
+ * Un contenu premium n'est pas « introuvable ». Le mur doit dire ce qui
+ * existe, pourquoi c'est fermé, et ce qu'on obtient — sinon la règle
+ * serveur « 404 jamais 403 » supprime le moment de conversion.
+ * ===================================================================== */
+.mur {
+  position: relative; padding: var(--e-5); border-radius: var(--r-m);
+  background: var(--surface-douce); border: 1px dashed var(--bordure-forte); text-align: center;
+}
+.mur__cadenas { font-size: var(--t-2xl); }
+.mur__raison { font-size: var(--t-s); color: var(--texte-doux); margin-block: var(--e-2) var(--e-4); }
+
+/* ===================== C06 · exambar + qnav =========================== */
+.exambar {
+  display: flex; align-items: center; gap: var(--e-4);
+  padding: var(--e-3) var(--e-4); background: var(--surface);
+  border-block-end: 1px solid var(--bordure);
+}
+.chrono { font-family: var(--f-mono); font-size: var(--t-xl); font-weight: 700; font-variant-numeric: tabular-nums; }
+.chrono[data-urgent='true'] { color: var(--sys-err-texte); }
+.qnav { display: flex; flex-wrap: wrap; gap: 6px; }
+.qnav__case {
+  inline-size: 32px; block-size: 32px; display: grid; place-items: center;
+  font-size: var(--t-2xs); font-weight: 700; border-radius: var(--r-xs);
+  border: 1px solid var(--bordure-forte); background: var(--surface); cursor: pointer;
+}
+.qnav__case[data-etat='repondu'] { background: var(--accent); color: var(--texte-inverse); border-color: transparent; }
+.qnav__case[data-etat='marque']  { border-color: var(--peda-remede); border-width: 2px; }
+.qnav__case[data-etat='courant'] { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ===================== C07 · rubric =================================== */
+.critere { display: block; padding-block: var(--e-3); border-block-end: 1px solid var(--bordure); }
+.critere__note { font-variant-numeric: tabular-nums; font-weight: 700; }
+.machine {
+  display: flex; gap: var(--e-2); padding: var(--e-3);
+  background: var(--sys-att-fond); border: 1px solid var(--sys-att-bordure);
+  border-radius: var(--r-s); font-size: var(--t-xs); color: var(--sys-att-texte);
+}
+
+/* ===================== C09 · graphiques =============================== */
+.graphe { inline-size: 100%; block-size: auto; }
+.graphe .axe { stroke: var(--serie-grille); stroke-width: 1; }
+.graphe .s1 { stroke: var(--serie-1); fill: var(--serie-1); }
+.graphe .s2 { stroke: var(--serie-2); fill: var(--serie-2); }
+.graphe .s3 { stroke: var(--serie-3); fill: var(--serie-3); }
+/* La légende porte la forme ET le libellé : la couleur ne suffit jamais. */
+.legende { display: flex; flex-wrap: wrap; gap: var(--e-4); font-size: var(--t-xs); color: var(--texte-doux); }
+.legende__item { display: inline-flex; align-items: center; gap: var(--e-2); }
+.legende__marque { inline-size: 12px; block-size: 12px; }
+
+/* ===================== C11 · door ===================================== */
+.porte { display: block; padding: var(--e-5); background: var(--surface);
+  border: 1px solid var(--bordure); border-radius: var(--r-m); text-decoration: none; color: inherit; }
+.porte:hover { border-color: var(--accent); }
+
+/* ===================== États transverses ============================== */
+.vide {
+  padding: var(--e-6) var(--e-4); text-align: center; color: var(--texte-doux);
+  border: 1px dashed var(--bordure-forte); border-radius: var(--r-m);
+}
+.indispo {
+  padding: var(--e-4); border-radius: var(--r-m);
+  background: var(--sys-att-fond); border: 1px solid var(--sys-att-bordure); color: var(--sys-att-texte);
+  font-size: var(--t-s);
+}
+.squelette {
+  border-radius: var(--r-xs); color: transparent !important;
+  background: linear-gradient(90deg, var(--surface-douce) 25%, var(--neutre-fond) 37%, var(--surface-douce) 63%);
+  background-size: 400% 100%; animation: glisse 1.2s infinite linear;
+}
+
+/* ##################################################################### *
+ *                     LES SEPT COMPOSANTS SIGNATURE                     *
+ * ##################################################################### */
+
+/* ---- F02 · Certitude+ ------------------------------------------------ *
+ * Achromatique à dessein : déclarer sa certitude n'est ni juste ni faux.
+ * Le niveau se lit à la graisse du trait et au libellé, pas à la teinte.
+ * ---------------------------------------------------------------------- */
+.certitude { display: flex; flex-direction: column; gap: var(--e-2); }
+.certitude__question { font-size: var(--t-s); font-weight: 600; }
+.certitude__choix { display: flex; gap: var(--e-2); flex-wrap: wrap; }
+.cert-opt {
+  display: inline-flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  min-block-size: var(--cible); padding: var(--e-2) var(--e-4);
+  font: inherit; font-size: var(--t-s); font-weight: 600; color: var(--texte-doux);
+  background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r-s); cursor: pointer;
+}
+.cert-opt__trait { inline-size: 40px; block-size: 3px; border-radius: 2px; background: var(--certitude-hasard); }
+.cert-opt[data-niveau='2'] .cert-opt__trait { block-size: 5px; background: var(--certitude-hesitant); }
+.cert-opt[data-niveau='3'] .cert-opt__trait { block-size: 7px; background: var(--certitude-sur); }
+.cert-opt[aria-checked='true'] { color: var(--texte); border-color: var(--texte); border-width: 2px; }
+
+/* ---- F03 · Autopsie de l'erreur -------------------------------------- *
+ * Présentée comme HYPOTHÈSE, jamais comme verdict. Le composant impose
+ * typographiquement le doute : le mot « probablement » n'est pas un choix
+ * rédactionnel, c'est une classe.
+ * ---------------------------------------------------------------------- */
+.autopsie { padding: var(--e-4); border-radius: var(--r-m);
+  background: var(--peda-faux-fond); border: 1px solid var(--peda-faux-bordure); }
+.autopsie__hypothese {
+  display: inline-flex; align-items: center; gap: var(--e-1);
+  font-size: var(--t-2xs); font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--peda-faux-texte);
+}
+.autopsie__hypothese::after { content: '· hypothèse'; font-weight: 600; opacity: .8; }
+html[dir='rtl'] .autopsie__hypothese::after { content: '· فرضية'; }
+.autopsie__cause { font-size: var(--t-l); font-weight: 700; margin-block: var(--e-2); }
+.autopsie__accord { display: flex; gap: var(--e-2); margin-block-start: var(--e-3); }
+
+/* ---- F04 · « Pourquoi pas B ? » — correction progressive ------------- */
+.progressive { display: flex; flex-direction: column; gap: var(--e-2); }
+.palier {
+  display: flex; gap: var(--e-3); padding: var(--e-3) var(--e-4);
+  border: 1px solid var(--bordure); border-radius: var(--r-s); background: var(--surface);
+}
+.palier[data-ouvert='false'] { border-style: dashed; color: var(--texte-tenu); }
+.palier__rang {
+  flex: 0 0 22px; block-size: 22px; display: grid; place-items: center;
+  font-size: var(--t-2xs); font-weight: 800; border-radius: 50%;
+  background: var(--neutre-fond); color: var(--texte-doux);
+}
+.palier[data-ouvert='true'] .palier__rang { background: var(--accent); color: var(--texte-inverse); }
+
+/* ---- F05 · Question miroir ------------------------------------------- */
+.miroir { padding: var(--e-4); border-radius: var(--r-m);
+  background: var(--accent-doux); border: 1px solid var(--peda-juste-bordure); }
+.miroir__bandeau { display: flex; align-items: center; gap: var(--e-2);
+  font-size: var(--t-2xs); font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--peda-juste-texte); margin-block-end: var(--e-2); }
+.miroir__note { font-size: var(--t-xs); color: var(--texte-doux); margin-block-start: var(--e-2); }
+
+/* ---- F06 · Ordonnance Najah ------------------------------------------ */
+.ordonnance { padding: var(--e-4); border-radius: var(--r-m);
+  background: var(--peda-remede-fond); border: 1px solid var(--peda-remede-bordure); }
+.ordonnance__entete { display: flex; align-items: baseline; gap: var(--e-2); margin-block-end: var(--e-3); }
+.ordonnance__duree {
+  font-family: var(--f-mono); font-size: var(--t-2xs); font-weight: 700;
+  padding: 2px var(--e-2); border-radius: var(--r-pilule);
+  background: var(--peda-remede); color: #1b1403;
+}
+.ordonnance__acte { display: flex; gap: var(--e-3); align-items: flex-start; padding-block: var(--e-2);
+  border-block-start: 1px solid var(--peda-remede-bordure); }
+.ordonnance__acte:first-of-type { border-block-start: 0; }
+.ordonnance__etat { font-size: var(--t-2xs); font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--peda-remede-texte); }
+
+/* ---- F07 · Rendez-vous Mémoire --------------------------------------- */
+.memoire { display: flex; flex-direction: column; gap: var(--e-3); }
+.memoire__frise { display: flex; align-items: center; gap: 0; }
+.memoire__jalon {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--e-1);
+  font-size: var(--t-2xs); color: var(--texte-tenu); position: relative;
+}
+.memoire__pastille {
+  inline-size: 18px; block-size: 18px; border-radius: 50%;
+  border: 2px solid var(--bordure-forte); background: var(--surface);
+  display: grid; place-items: center; font-size: 10px; line-height: 1;
+}
+.memoire__jalon[data-etat='fait'] .memoire__pastille { background: var(--peda-juste); border-color: var(--peda-juste); color: #fff; }
+.memoire__jalon[data-etat='du'] .memoire__pastille { border-color: var(--peda-remede); border-width: 3px; }
+.memoire__jalon[data-etat='du'] { color: var(--peda-remede-texte); font-weight: 700; }
+.memoire__jalon::before {
+  content: ''; position: absolute; inset-block-start: 8px; inset-inline-start: -50%;
+  inline-size: 100%; block-size: 2px; background: var(--bordure); z-index: -1;
+}
+.memoire__jalon:first-child::before { content: none; }
+
+/* ---- F09 · Mission du jour ------------------------------------------- *
+ * Trois actions au maximum, chacune avec sa raison. Le composant refuse
+ * structurellement d'en afficher davantage — voir `.mission__liste`.
+ * ---------------------------------------------------------------------- */
+.mission { display: flex; flex-direction: column; gap: var(--e-3); }
+.mission__liste { display: flex; flex-direction: column; gap: var(--e-2); }
+.mission__liste > :nth-child(n + 4) { display: none; }   /* garde-fou F09 */
+.mission__acte {
+  display: flex; gap: var(--e-3); align-items: flex-start; padding: var(--e-4);
+  background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r-m);
+}
+.mission__rang {
+  flex: 0 0 26px; block-size: 26px; display: grid; place-items: center;
+  font-size: var(--t-xs); font-weight: 800; border-radius: var(--r-xs);
+  background: var(--accent-doux); color: var(--accent-fort);
+}
+.mission__raison { margin-block-start: var(--e-1); font-size: var(--t-xs); color: var(--texte-doux); }
+.mission__pret {
+  display: inline-flex; align-items: center; gap: var(--e-1); margin-block-start: var(--e-2);
+  font-size: var(--t-2xs); font-weight: 700; color: var(--peda-juste-texte);
+}
+
+/* ===================== Zones ========================================== */
+[data-zone='examen'] .carte,
+[data-zone='examen'] .opt { box-shadow: none; }
+[data-zone='examen'] .why,
+[data-zone='examen'] .piege,
+[data-zone='examen'] .autopsie,
+[data-zone='examen'] .ordonnance { display: none !important; }  /* R06 */

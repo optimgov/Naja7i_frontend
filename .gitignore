@@ -4,3 +4,6 @@ node_modules
 .env
 dist
 .DS_Store
+
+# Archives et livrables compressés : ils vivent hors du dépôt (~/Coding/_archives).
+*.zip
