@@ -249,3 +249,112 @@ chantiers 2 et 3 en entier. Tout le reste du chantier 1 est livré.
 **Ce qu'il faut pour débloquer.** Soit le contrat des endpoints (chemins, formes
 de réponse), soit un backend qui les serve — les deux hypothèses tenables étant
 un cache de routes à vider ou une branche backend non fusionnée.
+
+## FRONT-3 — chantier 1 (b) et chantier 2
+
+## D-F11 — L'empêchement du D-F10 était faux : je n'étais pas allé à la source
+
+**Ce que j'avais écrit.** « Les routes ne sont pas déclarées », d'après quinze
+sondages HTTP.
+
+**Ce qui était vrai.** Les routes existent, sous le préfixe `me/` :
+`me/attempts`, `me/mastery`, `me/plan`, `me/diagnostics/{examCode}`. Je n'avais
+pas ouvert `routes/api.php`, un fichier lisible dans un dépôt monté à côté.
+
+**La règle qui en sort, et qui vaut pour la suite.** Une inférence n'est pas un
+empêchement. Un empêchement est un fait vérifié à sa source. Quand la source
+est hors d'atteinte, on écrit « je n'ai pas pu vérifier X » et on continue sur
+ce qui n'en dépend pas — on n'arrête pas tout sur une déduction.
+
+Appliqué immédiatement après : la banque de questions vide a été constatée par
+`Question::count() = 0` en base, pas déduite d'un code d'erreur ; les deux
+migrations en attente ont été lues avant d'en exécuter une.
+
+## D-F12 — Banque de questions semée localement, hors dépôt
+
+**Contexte.** `questions: 0` en base : aucun diagnostic ne pouvait s'ouvrir,
+donc aucune recette de bout en bout.
+
+**Décision.** 20 questions semées par un script de scratchpad exécuté via
+`php artisan tinker`. Rien n'est écrit dans le dépôt backend.
+
+**Justification.** Le script passe par `QuestionTransitionService`, donc par
+`QuestionIntegrityChecker` : chaîne éditoriale complète (brouillon → à vérifier
+→ relu → validé → publié), valideur distinct de l'auteur, quatre options,
+distracteurs tous étiquetés d'une cause — sans quoi la publication pour
+diagnostic est refusée, conformément à la fiche F03 v1.1. Une insertion directe
+en base aurait contourné ces invariants et produit des données que le produit
+n'accepte pas.
+
+## D-F13 — Migration `000380` exécutée
+
+**Constat.** `POST me/attempts/{uuid}/submit` répondait 500 :
+`column "skipped_count" of relation "mastery_scores" does not exist`. Deux
+migrations en attente, dont `000380_compter_les_questions_sautees` qui ajoute
+cette colonne.
+
+**Décision.** Exécutée, seule, par `--path`. `000390_ouvrir_la_session_de_revision`
+est laissée en attente : elle relève de F07, chantier d'une autre session.
+
+**Justification.** Additive, avec un `down()`, et sans elle la soumission d'un
+diagnostic est impossible — donc l'arrêt B aussi. Lue avant exécution.
+
+## D-F14 — Cookies relayés au rendu serveur
+
+**Constat.** `useApi` posait `credentials: 'include'`, qui ne veut rien dire
+côté serveur : aucune requête émise pendant le rendu ne portait la session.
+`fetchMe` échouait, la garde de route concluait à l'absence de session, et toute
+entrée directe sur une URL protégée rebondissait vers `/connexion`, qui
+renvoyait le candidat authentifié vers `/app`.
+
+**Ce que ça cassait.** Ouvrir une tentative par son adresse. Recharger la page
+pendant une passation. C'est-à-dire exactement ce que « reprise sur un second
+appareil » demande de faire.
+
+**Décision.** `useRequestHeaders(['cookie'])` relayé dans les en-têtes, résolu
+au moment de l'appel de `useApi()` — après le premier `await`, le contexte Nuxt
+n'est plus actif et le composable lèverait.
+
+## D-F15 — L'épreuve suivie vient d'une trace locale, faute de profil
+
+**Contexte.** E1 doit afficher l'épreuve suivie et le dernier diagnostic. Le
+contrat n'expose ni profil (PAS-5, à venir) ni index des tentatives — seulement
+`GET me/attempts/{uuid}`, qui suppose de connaître l'identifiant.
+
+**Décision.** `useSuivi` retient en local ce que le navigateur a fait, et
+l'écran RECHARGE ensuite tout depuis l'API. La trace ne sert qu'à savoir quoi
+demander ; aucun chiffre n'en sort. Sans trace, l'écran ne suppose rien : il
+propose de choisir une épreuve.
+
+**À remplacer** par le profil dès que PAS-5 l'expose.
+
+## D-F16 — Deux serrures sur « la passation ne connaît jamais la correction »
+
+**Décision.** La règle est tenue deux fois plutôt qu'une : les types de
+`useTentative.ts` reproduisent la liste blanche d'`AttemptQuestionResource` (ni
+`is_correct`, ni `rationale`, ni `cause`), et `data-zone="examen"` masque
+justifications et autopsies au niveau du CSS, `!important` compris.
+
+**Justification.** La première serrure tombe si un jour un composant reçoit une
+justification par un autre chemin ; la seconde ne dépend d'aucun contrat. Une
+règle qui ne doit pas céder mérite d'être tenue par deux mécanismes
+indépendants.
+
+**Vérifié sur le fil, pas dans le code** : `scripts/recette-passation.mjs`
+enregistre les corps de toutes les réponses d'API. 30 appels pendant la
+passation, 0 occurrence de `is_correct`, `rationale`, `cause` ni `explanation`.
+
+## D-F17 — Trois rampes brutes de plus, révélées par la banque semée
+
+**Constat.** Le bloc de démonstration ne s'était jamais affiché avec du contenu
+réel : la banque était vide, l'API répondait `DEMO_NOT_AVAILABLE`. Dès qu'elle a
+eu des questions, l'audit a relevé `p.preuve__contenu` à 1,07:1 en thème sombre
+— `--texte` clair sur `--vert-50`, un fond invariant.
+
+**Décision.** `--vert-50` → `--peda-juste-fond`, `--vert-700` → `--peda-juste`,
+`--terre-700` → `--peda-faux-texte`, `--safran-50/800` → `--peda-remede-fond`
+et `-texte`.
+
+**Ce que ça confirme.** Un écran jamais rendu avec ses vraies données n'est pas
+un écran vérifié. Trois défauts de contraste ont attendu que la banque existe
+pour devenir visibles.

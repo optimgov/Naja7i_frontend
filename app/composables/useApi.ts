@@ -93,6 +93,25 @@ export function useApi() {
    */
   const { $i18n } = useNuxtApp()
 
+  /*
+   * COOKIES AU RENDU SERVEUR
+   *
+   * `credentials: 'include'` ne veut rien dire côté serveur : il n'y a pas de
+   * navigateur pour joindre les cookies. Sans ce relais, toute requête émise
+   * pendant le rendu part ANONYME — `fetchMe` échoue, la garde de route conclut
+   * que personne n'est connecté, et l'entrée directe sur une URL protégée
+   * rebondit vers la connexion, qui renvoie aussitôt un candidat authentifié
+   * vers son tableau de bord.
+   *
+   * Symptôme observé : impossible d'ouvrir une tentative par son adresse, ni de
+   * recharger la page pendant une passation. C'est-à-dire précisément ce que la
+   * reprise sur un second appareil demande de faire.
+   *
+   * Résolu ici, avec `$i18n`, et pas dans `call()` : après le premier `await`,
+   * le contexte Nuxt n'est plus actif et `useRequestHeaders` lèverait.
+   */
+  const enteteCookie = import.meta.server ? useRequestHeaders(['cookie']) : {}
+
   async function call<T>(
     path: string,
     options: {
@@ -113,7 +132,7 @@ export function useApi() {
      * compte : dans l'autre sens, un appelant écraserait `X-XSRF-TOKEN` par
      * mégarde et provoquerait un 419 dont la cause serait introuvable.
      */
-    const headers: Record<string, string> = { ...(options.headers ?? {}) }
+    const headers: Record<string, string> = { ...enteteCookie, ...(options.headers ?? {}) }
 
     headers.Accept = 'application/json'
 

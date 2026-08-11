@@ -403,6 +403,31 @@
   opacity: 0.75;
 }
 
+/* --- Zone d'examen — REPRIS de composants-v3.css --------------------- *
+ *
+ * Seconde serrure sur la règle 1 du FRONT-3 : la passation ne connaît jamais
+ * la correction.
+ *
+ * La première serrure est le contrat — `AttemptQuestionResource` est une liste
+ * blanche stricte, et les types de `useTentative.ts` la reproduisent, donc rien
+ * ne peut être affiché qui n'ait été servi. Celle-ci est indépendante : même si
+ * un composant recevait un jour une justification par un autre chemin, elle ne
+ * s'afficherait pas sur un écran portant `data-zone="examen"`.
+ *
+ * Deux serrures pour une règle qui ne doit pas céder : `!important` est ici
+ * délibéré, il n'y a aucun cas où l'on veut y déroger.
+ *
+ * `--d-correction` est déjà mis à 0 par `tokens.css` sur ce même sélecteur.
+ * ---------------------------------------------------------------------- */
+
+[data-zone='examen'] .why,
+[data-zone='examen'] .piege,
+[data-zone='examen'] .autopsie,
+[data-zone='examen'] .justification,
+[data-zone='examen'] .ordonnance {
+  display: none !important;
+}
+
 /* --- Accessibilité ---------------------------------------------------- */
 
 /* Lien d'évitement : premier élément focusable de la page, invisible tant
