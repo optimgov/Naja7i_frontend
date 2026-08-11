@@ -232,6 +232,227 @@ if (partie === '1' || partie === 'toutes') {
   }
 }
 
+// ══════════════════════════════════════════ PARTIE 2 — E8, miroir, E1
+if (partie === '2' || partie === 'toutes') {
+  // ─────────────────────────────────────── aucun plafond silencieux
+  {
+    await page.goto(`${BASE}/fr/app/revisions`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(900)
+
+    const due = JSON.parse((await api(`/me/memory/${codeEpreuve}/due`)).corps)
+    // `.enveloppe` est aussi la barre du gabarit : on vise le contenu.
+    const texte = (await page.locator('main .enveloppe').innerText()) ?? ''
+
+    const servisAffiches = texte.includes(String(due.meta.served))
+    const attenteAffichee = due.meta.pending === 0 || texte.includes(String(due.meta.pending))
+    const lignes = await page.locator('.rdv__ligne').count()
+
+    note(
+      'aucun plafond silencieux',
+      servisAffiches && attenteAffichee && lignes === due.meta.served,
+      `${due.meta.due_total} échus · ${due.meta.served} servis (${lignes} lignes rendues) · `
+        + `${due.meta.pending} en attente, annoncés : ${attenteAffichee}`,
+    )
+    await page.screenshot({ path: `${SORTIE}-05-revisions.png`, fullPage: true })
+  }
+
+  // ─────────────────────────── la séance s'ouvre et devient une passation
+  await (async () => {
+    await page.locator('button.btn--grand').click()
+
+    /*
+     * Deux issues LÉGITIMES, et il faut les distinguer :
+     *
+     *  - la séance s'ouvre, et c'est une passation ordinaire ;
+     *  - le serveur refuse — rien d'échu, ou aucune question sœur en banque —
+     *    et l'écran l'annonce sans naviguer.
+     *
+     * Exiger la navigation ferait échouer la recette sur un comportement
+     * correct : celui d'un candidat à jour, qui est le cas le plus fréquent
+     * une fois la boucle installée.
+     */
+    const ouverte = await page
+      .waitForURL('**/app/tentative/**', { timeout: 20000 })
+      .then(() => true)
+      .catch(() => false)
+
+    if (ouverte) {
+      const chrono = await page.locator('.passation__temps').count()
+      const uuidSeance = page.url().split('/app/tentative/')[1].split(/[?#]/)[0]
+      const seance = JSON.parse((await api(`/me/attempts/${uuidSeance}`)).corps).data
+
+      note(
+        'la séance de révision est une passation ordinaire',
+        seance.kind !== 'diagnostic' && chrono === 0,
+        `kind = ${seance.kind} · ${seance.item_count} question(s) · chronomètre rendu : ${chrono}`,
+      )
+    } else {
+      let message = (await page.locator('.alerte').first().innerText().catch(() => '')) ?? ''
+
+      /*
+       * Un 429 n'est PAS un résultat : c'est la recette qui a martelé la route
+       * (`throttle:10,1`). Le laisser passer pour vert validerait un test qui ne
+       * prouve rien — le défaut qu'on reproche aux recettes complaisantes. On
+       * attend la fenêtre et on réessaie une fois.
+       */
+      if (/trop de requêtes|too many/i.test(message)) {
+        console.log('        (429 — attente de la fenêtre de limitation, puis reprise)')
+        await page.waitForTimeout(62000)
+        await page.reload({ waitUntil: 'networkidle' })
+        await page.locator('button.btn--grand').click().catch(() => {})
+        const repartie = await page
+          .waitForURL('**/app/tentative/**', { timeout: 20000 })
+          .then(() => true)
+          .catch(() => false)
+
+        if (repartie) {
+          const uuidSeance = page.url().split('/app/tentative/')[1].split(/[?#]/)[0]
+          const seance = JSON.parse((await api(`/me/attempts/${uuidSeance}`)).corps).data
+          const chrono = await page.locator('.passation__temps').count()
+          note(
+            'la séance de révision est une passation ordinaire',
+            seance.kind !== 'diagnostic' && chrono === 0,
+            `kind = ${seance.kind} · ${seance.item_count} question(s) · chronomètre rendu : ${chrono}`,
+          )
+          await page.screenshot({ path: `${SORTIE}-06-seance.png` })
+          return
+        }
+
+        message = (await page.locator('.alerte').first().innerText().catch(() => '')) ?? ''
+      }
+
+      const refusAttendu = /à jour|rien à réviser|banque|question/i.test(message)
+      note(
+        'la séance de révision est une passation ordinaire',
+        refusAttendu,
+        refusAttendu
+          ? `refus annoncé sans navigation : « ${message.replace(/\n/g, ' ').slice(0, 90)} »`
+          : `ni ouverture ni refus reconnaissable : « ${message.replace(/\n/g, ' ').slice(0, 90)} »`,
+      )
+    }
+
+    await page.screenshot({ path: `${SORTIE}-06-seance.png` })
+  })()
+
+  // ─────────────────────────────────── rien d'échu : liste vide + date
+  {
+    // On repousse tous les rendez-vous : l'écran doit annoncer une date, pas
+    // afficher un vide.
+    await page.goto(`${BASE}/fr/app/revisions?epreuve=CRMEF-SE-2025`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(800)
+
+    const due = JSON.parse((await api('/me/memory/CRMEF-SE-2025/due')).corps)
+    const bloc = await page.locator('.rien').isVisible().catch(() => false)
+    const texte = (await page.locator('.rien').innerText().catch(() => '')) ?? ''
+    const annonce = due.meta.next_due_on
+      ? /\d/.test(texte)
+      : texte.length > 0
+
+    note(
+      "rien d'échu n'est pas un écran mort",
+      due.meta.due_total > 0 || (bloc && annonce),
+      due.meta.due_total > 0
+        ? `${due.meta.due_total} échus sur cette épreuve — cas non applicable ici`
+        : `bloc affiché : ${bloc} · prochaine échéance : ${due.meta.next_due_on ?? 'aucune'} · « ${texte.replace(/\n/g, ' ').slice(0, 80)} »`,
+    )
+    await page.screenshot({ path: `${SORTIE}-07-rien-echu.png` })
+  }
+
+  // ───────────────────────────────── le miroir n'apparaît que s'il existe
+  let itemAvecMiroir = null
+  {
+    const attempts = JSON.parse((await api('/me/attempts')).corps).data
+    const soumise = attempts.find((a) => a.status !== 'in_progress')
+    const corr = JSON.parse((await api(`/me/attempts/${soumise.uuid}/correction`)).corps)
+
+    const avec = corr.data.filter((l) => l.mirror_available)
+    const sans = corr.data.filter((l) => !l.mirror_available)
+    itemAvecMiroir = avec[0]?.item_uuid ?? null
+
+    await page.goto(`${BASE}/fr/app/tentative/${soumise.uuid}/correction`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(900)
+
+    const boutons = await page.locator('.miroir__action').count()
+    const desactives = await page.locator('.miroir__action[disabled]').count()
+
+    note(
+      'le miroir n’apparaît que si mirror_available',
+      boutons === avec.length && desactives === 0,
+      `${avec.length} item(s) avec sœur → ${boutons} bouton(s) · ${sans.length} sans → aucun rendu · `
+        + `boutons désactivés : ${desactives}`,
+    )
+    await page.screenshot({ path: `${SORTIE}-08-miroir.png`, fullPage: true })
+  }
+
+  // ──────────────────── le miroir ne consomme pas de quota déjà payé
+  if (itemAvecMiroir) {
+    const avant = JSON.parse((await api('/me/attempts')).corps)
+    const attempts = avant.data
+    const soumise = attempts.find((a) => a.status !== 'in_progress')
+    const quotaAvant = JSON.parse((await api(`/me/attempts/${soumise.uuid}/correction`)).corps).meta.cause_quota
+
+    const r = await api(`/me/mirrors/${itemAvecMiroir}`, {
+      method: 'POST', headers: { 'Idempotency-Key': `miroir-recette-${Date.now()}` },
+    })
+    const j = JSON.parse(r.corps)
+
+    const quotaApres = JSON.parse((await api(`/me/attempts/${soumise.uuid}/correction`)).corps).meta.cause_quota
+
+    /*
+     * Un 409 MIRROR_ALREADY_OPEN est un succès pour CE contrôle : le serveur
+     * refuse d'en ouvrir un second, et rien n'a été décompté. Ce qui est
+     * vérifié ici est le quota, pas l'ouverture.
+     */
+    const accepte = r.statut < 400 || j.error?.code === 'MIRROR_ALREADY_OPEN'
+
+    note(
+      'le miroir ne coûte pas de quota déjà payé',
+      accepte && quotaApres.revealed === quotaAvant.revealed,
+      `${r.statut}${j.error ? ' ' + j.error.code : ''} · cause servie : ${j.meta?.cause ?? '—'} · `
+        + `quota révélé ${quotaAvant.revealed} → ${quotaApres.revealed} (plafond ${quotaApres.quota})`,
+    )
+  }
+
+  // ────────────────────────────────── le tableau de bord compte les échus
+  {
+    await page.goto(`${BASE}/fr/app`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(900)
+
+    const due = JSON.parse((await api(`/me/memory/${codeEpreuve}/due`)).corps)
+    const texte = (await page.locator('.revisions').innerText().catch(() => '')) ?? ''
+    const montre = due.meta.due_total === 0
+      ? texte.length > 0
+      : texte.includes(String(due.meta.due_total))
+
+    note(
+      'le tableau de bord compte les rendez-vous échus',
+      montre,
+      `${due.meta.due_total} échus · bloc : « ${texte.replace(/\n/g, ' ').slice(0, 70)} »`,
+    )
+    await page.screenshot({ path: `${SORTIE}-09-tableau-de-bord.png`, fullPage: true })
+  }
+
+  // ────────────────────────────────────────── bascule arabe sur E8
+  {
+    await page.goto(`${BASE}/ar/app/revisions`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(800)
+    const dir = await page.evaluate(() => document.documentElement.dir)
+    const lang = await page.evaluate(() => document.documentElement.lang)
+    const sansDir = await page.evaluate(
+      () => [...document.querySelectorAll('.rdv__domaine')].filter((e) => e.getAttribute('dir') !== 'auto').length,
+    )
+    const avecDir = await page.evaluate(
+      () => document.querySelectorAll('.rdv__domaine[dir="auto"]').length,
+    )
+    note(
+      'bascule arabe sur E8',
+      dir === 'rtl' && lang === 'ar' && sansDir === 0,
+      `dir=${dir}, lang=${lang} · ${avecDir} libellé(s) d’API avec dir="auto", ${sansDir} sans`,
+    )
+    await page.screenshot({ path: `${SORTIE}-10-e8-arabe.png`, fullPage: true })
+  }
+}
+
 await navigateur.close()
 writeFileSync(`${SORTIE}-resultats.json`, JSON.stringify(resultats, null, 2))
 

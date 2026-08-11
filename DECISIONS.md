@@ -519,3 +519,78 @@ collé son aide « 5 – 40 » contre la saisie. `.champ__aide` est un `<span>` 
 la ligne de lui-même et l'omission ne se voyait pas.
 
 **Décision.** `display: block` dans `commun.css`. Vu sur capture, pas déduit.
+
+## FRONT-4 — E8, miroir, tableau de bord
+
+## D-F29 — `/app/revisions` résout l'épreuve, elle ne la porte pas
+
+**Contexte.** Les routes mémoire sont par épreuve (`me/memory/{examCode}/due`),
+mais la révision est une porte QUOTIDIENNE : le candidat y va le matin, il ne
+choisit pas une épreuve avant de savoir s'il a quelque chose à faire.
+
+**Décision.** `/app/revisions` sans paramètre. L'épreuve est résolue par l'index
+des tentatives — la même source que le tableau de bord — et `?epreuve=CODE`
+reste accepté pour qui en suit plusieurs.
+
+**Justification.** Mettre l'épreuve dans le chemin aurait obligé à la choisir
+avant de savoir s'il y a lieu. La réponse « rien aujourd'hui » ne vaut pas un
+détour par un sélecteur.
+
+## D-F30 — La clé d'idempotence de la séance est datée, pas aléatoire
+
+**Décision.** `revision.{épreuve}.{AAAA-MM-JJ}`.
+
+**Justification.** Le rendez-vous mémoire est quotidien : deux clics à dix
+minutes d'écart visent la MÊME séance. Une clé aléatoire par visite en ouvrirait
+deux, et la seconde viderait le calendrier de la première. La date est celle du
+poste — le serveur reste seul juge de ce qui est échu, la clé ne sert qu'à ne
+pas redemander deux fois la même chose.
+
+## D-F31 — `MIRROR_ALREADY_OPEN` mène au miroir, il ne l'annonce pas indisponible
+
+**Constat, à l'exécution.** Un quatrième code de refus existe, que je ne
+traitais pas : `MIRROR_ALREADY_OPEN`. Mon premier filet attrapait tout
+`MIRROR_*` et affichait « aucune autre question ne tend ce piège » — ce qui est
+FAUX dans ce cas, et laisse le candidat sans moyen de retrouver la série ouverte
+à son nom.
+
+**Décision.** Le refus porte `details.attempt_uuid` : on y navigue. Les deux
+autres (`MIRROR_NOT_AVAILABLE`, `MIRROR_NOT_APPLICABLE`) gardent le message
+d'indisponibilité.
+
+**La leçon.** Un filet qui attrape une famille entière de codes traite le cas
+qu'on n'a pas lu comme celui qu'on a lu. Ici, trois refus se ressemblent et
+n'appellent pas la même conduite — le backend le dit d'ailleurs en toutes
+lettres dans ses propres commentaires.
+
+## D-F32 — Un 429 n'est pas un résultat de recette
+
+**Constat.** Le contrôle « la séance s'ouvre » est passé au vert sur un
+**429 de limitation de débit** provoqué par la recette elle-même
+(`throttle:10,1`). Le test cherchait « un message est affiché » : il en a trouvé
+un, et n'a rien prouvé.
+
+**Décision.** Un 429 déclenche une attente de la fenêtre puis une reprise ; s'il
+persiste, seul un refus RECONNAISSABLE (« à jour », « banque ») vaut succès.
+
+**Pourquoi c'est consigné.** C'est le défaut symétrique de D-F21 : là une
+recette accusait du code juste, ici elle absolvait du code non vérifié. Les deux
+viennent de tests qui mesurent la présence d'un signe plutôt que sa nature.
+
+## D-F33 — Deux issues légitimes pour l'ouverture d'une séance
+
+**Décision.** La recette accepte l'ouverture ET le refus annoncé sans
+navigation.
+
+**Justification.** « Rien d'échu » est le cas le plus fréquent une fois la
+boucle installée : un candidat à jour est un candidat qui va bien. Exiger la
+navigation ferait échouer la recette sur le comportement nominal du produit.
+
+## D-F34 — Les rendez-vous de recette sont antidatés localement
+
+**Décision.** `review_schedules.due_on` reculé d'un jour, et neuf lignes ajoutées
+pour dépasser le plafond de vingt. Hors dépôt, par `tinker`.
+
+**Justification.** Le plafond ne se vérifie qu'au-delà de vingt échus, et le
+calendrier réel met des semaines à en produire autant. Mesuré :
+26 échus → 20 servis, 6 annoncés en attente.

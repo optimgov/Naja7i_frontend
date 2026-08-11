@@ -179,7 +179,12 @@
     "voir_maitrise": "Voir la maîtrise",
     "voir_ordonnance": "Voir l'ordonnance",
     "reprendre": "Reprendre la série en cours",
-    "coefficient": "Coefficient"
+    "coefficient": "Coefficient",
+    "revisions_titre": "Révisions du jour",
+    "revisions_echues": "À réviser : {n}",
+    "revisions_rien": "Rien à réviser aujourd’hui.",
+    "voir_revisions": "Voir les révisions",
+    "entrainement": "S’entraîner sur un point faible"
   },
   "diagnostic": {
     "oeil": "Diagnostic",
@@ -297,5 +302,35 @@
     "court_texte": "{served} questions servies sur {requested} demandées — c’est tout ce que le périmètre contient. La série n’est jamais complétée hors du domaine visé.",
     "resservies": "Dont {n} déjà réussies, resservies faute de questions neuves.",
     "pas_une_note": "Série d’entraînement : le résultat n’est pas représentatif du concours."
+  },
+  "revisions": {
+    "oeil": "Mémoire",
+    "titre": "Vos révisions du jour",
+    "intro": "Les pièges sur lesquels vous vous êtes déjà trompé reviennent à intervalles croissants, tant qu’ils ne sont pas acquis.",
+    "rien_titre": "Rien à réviser aujourd’hui",
+    "rien_texte": "Vous êtes à jour.",
+    "prochain": "Prochain rendez-vous : {date}",
+    "plus_de_rendez_vous": "Aucun rendez-vous programmé pour l’instant.",
+    "servis": "Aujourd’hui : {n}",
+    "en_attente": "En attente : {n}",
+    "plafond": "Le serveur en sert au plus {n} par jour.",
+    "sans_soeur": "Sans question disponible : {n}",
+    "sans_soeur_aide": "La banque ne tend pas encore ces pièges. Rien à faire de votre côté.",
+    "palier": "Palier {n}",
+    "erreur_certitude": "Erreur commise avec certitude",
+    "cause_fermee": "Cause réservée aux abonnés",
+    "lancer": "Commencer la séance",
+    "lancement": "Ouverture…",
+    "aucune_epreuve": "Passez d’abord un diagnostic : les rendez-vous naissent de vos erreurs.",
+    "resservies_identiques": "Dont {n} servies avec l’énoncé déjà vu, faute de question sœur.",
+    "couvertes": "Causes couvertes : {n}"
+  },
+  "miroir": {
+    "action": "Vérifier sur une autre question",
+    "aide": "Le même piège, un autre énoncé.",
+    "ouverture": "Ouverture…",
+    "indisponible": "Aucune autre question ne tend ce piège pour l’instant.",
+    "titre": "Question miroir",
+    "contexte": "Ce piège vous a coûté une réponse. On le retend, autrement."
   }
 }
