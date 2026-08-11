@@ -7,12 +7,9 @@ const nomAutre = computed(
   () => locales.value.find((l: any) => l.code === autre.value)?.name ?? '',
 )
 
-useHead({
-  htmlAttrs: computed(() => ({
-    lang: locale.value,
-    dir: locale.value === 'ar' ? 'rtl' : 'ltr',
-  })),
-})
+// REVUE FRONT-1 : `htmlAttrs` attend un objet aux valeurs réactives, pas un
+// ComputedRef enveloppant l'objet entier. Le composable porte la forme juste.
+useLangueEtDirection()
 </script>
 
 <template>

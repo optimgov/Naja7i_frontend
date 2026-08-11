@@ -36,6 +36,29 @@ const { data: epreuves } = await useAsyncData(
   { default: () => [] },
 )
 
+/**
+ * Domaines de premier niveau d'une matrice d'épreuve.
+ *
+ * Le gabarit portait ce filtre en ligne, annotations de type comprises — que le
+ * compilateur de gabarits Vue n'accepte pas : `npm run typecheck` échouait sur
+ * quatre erreurs de syntaxe. Le typage descend donc ici, où il est légitime, et
+ * le gabarit ne fait plus qu'appeler.
+ */
+interface NoeudMatrice {
+  code: string
+  name: string
+  depth: number
+  weight_percent: number | null
+}
+
+function domainesRacines(noeuds: unknown): NoeudMatrice[] {
+  if (!Array.isArray(noeuds)) {
+    return []
+  }
+
+  return (noeuds as NoeudMatrice[]).filter((n) => n.depth === 0)
+}
+
 useSeoCatalogue({
   title: concours.value.name,
   description: concours.value.description ?? t('catalogue.description_index'),
@@ -106,7 +129,7 @@ useSeoCatalogue({
           :coefficient="Number(epreuve.meta?.coefficient) || null"
           :duree="Number(epreuve.meta?.duration_minutes) || null"
           :langues="(epreuve.meta?.languages_allowed as string[]) ?? null"
-          :domaines="(epreuve.data as never[]).filter((n: never) => (n as { depth: number }).depth === 0)"
+          :domaines="domainesRacines(epreuve.data)"
         />
       </div>
       <p class="note">{{ t('catalogue.note_sources') }}</p>

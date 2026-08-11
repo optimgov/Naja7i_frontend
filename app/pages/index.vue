@@ -20,7 +20,10 @@ useSeoCatalogue({
       <div class="enveloppe heros__grille">
         <div>
           <p class="oeil">{{ t('accueil.oeil') }}</p>
-          <h1 class="heros__titre" v-html="t('accueil.titre')" />
+          <!-- Texte simple, pas de v-html : le compilateur i18n refuse le HTML dans
+               les messages, et il a raison — une traduction n'est pas un gabarit.
+               La coupure de ligne revient à la typographie, pas au contenu. -->
+          <h1 class="heros__titre">{{ t('accueil.titre') }}</h1>
           <p class="heros__chapeau">{{ t('accueil.chapeau') }}</p>
 
           <div class="heros__actes">
@@ -86,7 +89,8 @@ useSeoCatalogue({
 .heros { padding-block: var(--e-6) var(--e-5); background: var(--sable-50); border-block-end: 1px solid var(--sable-200); }
 .heros__grille { display: grid; gap: var(--e-5); align-items: start; }
 @media (min-width: 56rem) { .heros__grille { grid-template-columns: 1fr 1fr; gap: var(--e-6); } }
-.heros__titre { font-size: var(--t-4xl); max-inline-size: 16ch; }
+.heros__titre {
+  text-wrap: balance; font-size: var(--t-4xl); max-inline-size: 16ch; }
 .heros__titre :deep(em) { font-style: normal; color: var(--terre-700); }
 .heros__chapeau { margin-block: var(--e-3) var(--e-4); font-size: var(--t-lg); color: var(--encre-700); max-inline-size: 44ch; }
 .heros__actes { display: flex; align-items: center; gap: var(--e-4); flex-wrap: wrap; }

@@ -1,3 +1,7 @@
+// `process` vient de Node, pas du navigateur : l'importer explicitement le
+// type sans élargir la configuration TypeScript.
+import process from 'node:process'
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-08-01',
   devtools: { enabled: true },
