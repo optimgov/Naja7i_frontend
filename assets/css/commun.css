@@ -1,0 +1,207 @@
+/* =====================================================================
+   Classes partagées de la zone publique — FRONT-2
+
+   POURQUOI CE FICHIER EXISTE, ET PAS UN AJOUT À tokens.css
+
+   `assets/css/tokens.css` est une COPIE CONFORME de
+   `docs/design/ui-v3/tokens-v3.css`. Elle doit le rester : le validateur de
+   jetons la lit en intégration continue, et la reprise d'une révision du socle
+   se fait par un simple `cp`. Y mêler des règles de composants condamnerait
+   les deux.
+
+   PROVENANCE DES RÈGLES
+
+   `.btn` et ses variantes sont REPRISES de `composants-v3.css`, à l'identique.
+   Les huit autres classes — `.enveloppe`, `.section`, `.grille`, `.oeil`,
+   `.fil`, `.titre-page`, `.chapeau`, `.lien-second` — n'existent NULLE PART
+   dans le livrable v3 : elles ont été écrites ici, à partir des seuls jetons
+   v3, sans valeur littérale hors de celles qu'aucun jeton ne couvre (nombres
+   de colonnes, épaisseurs de trait). Signalé au rapport.
+
+   PROPRIÉTÉS LOGIQUES UNIQUEMENT
+
+   Aucune `margin-left`, `padding-right`, `text-align: left` : le catalogue est
+   servi en arabe autant qu'en français, et une seule propriété physique casse
+   la mise en page inversée sans que personne ne le voie avant un lecteur
+   arabophone.
+   ===================================================================== */
+
+/* --- Mise en page ---------------------------------------------------- */
+
+/* Largeur de lecture confortable, marges intérieures qui tiennent à 320 px. */
+.enveloppe {
+  inline-size: 100%;
+  max-inline-size: 72rem;
+  margin-inline: auto;
+  padding-inline: var(--e-4);
+}
+
+.section {
+  padding-block: var(--e-6);
+}
+
+.section--douce {
+  background: var(--surface-douce);
+}
+
+.grille {
+  display: grid;
+  gap: var(--e-4);
+  grid-template-columns: 1fr;
+}
+
+/* Trois colonnes dès que la place existe, une seule en dessous : les cartes
+   de concours restent lisibles sans défilement horizontal. */
+@media (min-width: 48rem) {
+  .grille--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- Texte ------------------------------------------------------------ */
+
+/* Surtitre : annonce la nature de la page avant son titre. */
+.oeil {
+  display: block;
+  margin-block-end: var(--e-2);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+}
+
+.titre-page {
+  margin-block: 0 var(--e-3);
+  font-size: var(--t-2xl);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--texte);
+}
+
+/* Chapeau : la phrase qui suit le titre, moins appuyée que le corps. */
+.chapeau {
+  margin-block: 0 var(--e-5);
+  max-inline-size: 60ch;
+  font-size: var(--t-lg);
+  line-height: 1.6;
+  color: var(--texte-doux);
+}
+
+/* --- Navigation ------------------------------------------------------- */
+
+/* Fil d'Ariane. `flex-wrap` plutôt qu'un débordement : à 320 px il se replie. */
+.fil {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-2);
+  margin-block-end: var(--e-4);
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-sm);
+  color: var(--texte-doux);
+}
+
+.fil a {
+  color: var(--texte-doux);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.fil a:hover {
+  color: var(--texte);
+}
+
+/* Lien d'action secondaire, à côté d'un `.btn` sans lui faire concurrence. */
+.lien-second {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.lien-second:hover {
+  color: var(--accent-fort);
+}
+
+/* --- Boutons — REPRIS de docs/design/ui-v3/composants-v3.css ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e-2);
+  min-block-size: var(--cible);
+  padding: 0 var(--e-5);
+  font: inherit;
+  font-size: var(--t-s);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--texte-inverse);
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--accent-fort);
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--fantome {
+  color: var(--texte);
+  background: transparent;
+  border-color: var(--bordure-forte);
+}
+
+.btn--fantome:hover:not(:disabled) {
+  background: var(--surface-douce);
+  border-color: var(--accent);
+}
+
+.btn--discret {
+  min-block-size: 34px;
+  padding: 0 var(--e-3);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--texte-doux);
+  background: transparent;
+  border-color: var(--bordure);
+}
+
+.btn--discret:hover:not(:disabled) {
+  color: var(--texte);
+  background: var(--surface-douce);
+}
+
+.btn--bloc {
+  inline-size: 100%;
+}
+
+.btn--grand {
+  min-block-size: 52px;
+  padding: 0 var(--e-6);
+  font-size: var(--t-l);
+}
+
+/* --- Accessibilité ---------------------------------------------------- */
+
+/* Repère de focus visible partout : exigé par la ligne 15 de la recette. */
+.enveloppe :is(a, button, [tabindex]):focus-visible,
+.btn:focus-visible,
+.lien-second:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

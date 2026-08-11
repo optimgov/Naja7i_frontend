@@ -13,7 +13,7 @@ export default defineNuxtConfig({
 
   // `~` désigne `app/` sous cette arborescence, or la feuille de style est à la
   // racine comme le documente le README : `~~` (racine du projet) est requis.
-  css: ['~~/assets/css/tokens.css'],
+  css: ['~~/assets/css/tokens.css', '~~/assets/css/commun.css'],
 
   runtimeConfig: {
     // Jamais exposé au navigateur : le client ne doit pas connaître l'API.
