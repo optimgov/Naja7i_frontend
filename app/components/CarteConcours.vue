@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   to: string
   titre: string
   texte?: string | null
@@ -8,12 +8,23 @@ defineProps<{
 }>()
 
 const { t } = useI18n()
+
+const libelleEtat = computed(() =>
+  props.disponibilite === 'open' ? t('catalogue.ouvert') : t('catalogue.en_preparation'),
+)
 </script>
 
 <template>
   <NuxtLink :to="to" class="carte" :data-etat="disponibilite">
-    <span class="carte__puce">
-      {{ disponibilite === 'open' ? t('catalogue.ouvert') : t('catalogue.en_preparation') }}
+    <!--
+      `aria-label` plutôt que le seul texte visible : hors contexte, « Ouvert »
+      ne dit pas de quoi il est l'état. Annoncé « Statut : Ouvert », le badge se
+      comprend seul — ce qui est exactement la situation d'un lecteur d'écran
+      qui parcourt les cartes une à une. Le mot visible reste contenu dans le
+      libellé, comme l'exige WCAG 2.5.3.
+    -->
+    <span class="carte__puce" :aria-label="t('catalogue.statut', { etat: libelleEtat })">
+      {{ libelleEtat }}
     </span>
     <h3 class="carte__titre" dir="auto">{{ titre }}</h3>
     <p v-if="meta" class="carte__meta" dir="auto">{{ meta }}</p>
@@ -26,15 +37,15 @@ const { t } = useI18n()
   display: block;
   padding: var(--e-4);
   text-decoration: none;
-  background: var(--sable-0);
-  border: 1px solid var(--sable-200);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
   border-radius: var(--r);
   border-block-start: 3px solid var(--vert-700);
   transition: border-color .15s ease;
 }
 .carte[data-etat="waitlist"],
-.carte[data-etat="closed"] { border-block-start-color: var(--sable-300); }
-.carte:hover { border-color: var(--bordure-forte, var(--sable-300)); }
+.carte[data-etat="closed"] { border-block-start-color: var(--bordure-forte); }
+.carte:hover { border-color: var(--bordure-forte); }
 
 .carte__puce {
   display: inline-block;
@@ -47,7 +58,7 @@ const { t } = useI18n()
   color: var(--vert-800);
 }
 .carte[data-etat="waitlist"] .carte__puce,
-.carte[data-etat="closed"] .carte__puce { background: var(--sable-100); color: var(--encre-700); }
+.carte[data-etat="closed"] .carte__puce { background: var(--surface-douce); color: var(--texte-doux); }
 
 .carte__titre { font-size: var(--t-lg); margin-block-end: 6px; }
 .carte__meta { font-size: var(--t-xs); color: var(--texte-doux); margin-block-end: 6px; }

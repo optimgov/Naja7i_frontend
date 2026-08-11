@@ -6,7 +6,12 @@
     "dev": "nuxt dev",
     "build": "nuxt build",
     "preview": "nuxt preview",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "jetons": "node docs/design/ui-v3/valider-jetons.mjs && node docs/design/ui-v3/valider-jetons.mjs jetons.commun.config.json",
+    "icones": "node scripts/generer-icones.mjs",
+    "locales": "node scripts/verifier-locales.mjs",
+    "audit": "node scripts/auditer-ecrans.mjs --sombre \"[data-bascule-theme]\"",
+    "audit:ci": "node scripts/auditer-ecrans.mjs --ci --sombre \"[data-bascule-theme]\""
   },
   "dependencies": {
     "nuxt": "^3.14.0",
@@ -16,6 +21,7 @@
   "devDependencies": {
     "@nuxtjs/i18n": "^9.0.0",
     "@types/node": "^26.2.0",
+    "playwright": "^1.62.1",
     "typescript": "^5.6.0",
     "vue-tsc": "^2.1.0"
   }

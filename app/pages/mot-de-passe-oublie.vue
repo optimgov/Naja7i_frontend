@@ -29,7 +29,7 @@ useHead({ title: t('oubli.titre') })
 
 <template>
   <div>
-    <h1>{{ t('oubli.titre') }}</h1>
+    <h1 class="titre-page">{{ t('oubli.titre') }}</h1>
 
     <template v-if="envoye">
       <div class="alerte alerte--succes" role="status">{{ t('oubli.confirme') }}</div>
@@ -44,7 +44,7 @@ useHead({ title: t('oubli.titre') })
           <span class="champ__label">{{ t('champs.email') }}</span>
           <input v-model="email" type="email" autocomplete="email" required class="champ__saisie">
         </label>
-        <button type="submit" class="bouton" :disabled="envoi">
+        <button type="submit" class="btn btn--bloc" :disabled="envoi">
           {{ envoi ? t('oubli.envoi') : t('oubli.action') }}
         </button>
       </form>
@@ -56,6 +56,6 @@ useHead({ title: t('oubli.titre') })
 </template>
 
 <style scoped>
-.sous-titre { margin-block-end: var(--espace-4); color: var(--texte-doux); font-size: var(--taille-s); }
-.liens { margin-block-start: var(--espace-3); font-size: var(--taille-s); text-align: center; }
+.sous-titre { margin-block-end: var(--e-5); color: var(--texte-doux); font-size: var(--t-s); }
+.liens { margin-block-start: var(--e-3); font-size: var(--t-s); text-align: center; }
 </style>

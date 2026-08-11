@@ -30,8 +30,8 @@ const annee = new Date().getFullYear()
 
     <header class="publique__entete">
       <div class="enveloppe publique__barre">
-        <NuxtLink :to="localePath('/')" class="marque">
-          naja<span class="marque__sept">7</span>i<em>.ma</em>
+        <NuxtLink :to="localePath('/')" class="publique__logo">
+          <LogoNaja7i />
         </NuxtLink>
 
         <nav class="publique__nav" :aria-label="t('navigation.principale')">
@@ -41,7 +41,14 @@ const annee = new Date().getFullYear()
         </nav>
 
         <div class="publique__actions">
-          <NuxtLink :to="switchLocalePath(autre)" class="bascule" :lang="autre">
+          <BasculeTheme />
+
+          <NuxtLink
+            :to="switchLocalePath(autre)"
+            class="bascule"
+            data-bascule-langue
+            :lang="autre"
+          >
             {{ nomAutre }}
           </NuxtLink>
 
@@ -78,21 +85,10 @@ const annee = new Date().getFullYear()
   background: var(--fond);
 }
 
-/* Visible seulement au clavier : il devient le premier arrêt du focus. */
-.evitement {
-  position: absolute;
-  inset-block-start: -100%;
-  inset-inline-start: var(--e-3);
-  z-index: 10;
-  padding: var(--e-2) var(--e-3);
-  color: var(--texte-inverse);
-  background: var(--accent);
-  border-radius: var(--r);
-}
-
-.evitement:focus {
-  inset-block-start: var(--e-2);
-}
+/* `.evitement` était défini ici ET dans commun.css — deux règles pour une même
+   classe, celle-ci l'emportant par la spécificité du scope. Elle posait
+   `--texte-inverse` sur `--accent`, la composition qui tombe à 2,11:1 en thème
+   sombre. La règle partagée de commun.css est la seule qui subsiste. */
 
 .publique__entete {
   border-block-end: 1px solid var(--bordure);
@@ -107,23 +103,19 @@ const annee = new Date().getFullYear()
   padding-block: var(--e-3);
 }
 
-.marque {
-  font-size: var(--t-lg);
-  font-weight: 800;
-  color: var(--texte);
+/* Le mot-symbole et son 7 en arabizi vivent maintenant dans `LogoNaja7i.vue`,
+   avec la tuile. Ils étaient écrits deux fois — ici et dans le gabarit
+   d'authentification — avec deux safrans différents (--safran-800 d'un côté,
+   --safran de l'autre) : la marque n'avait pas la même couleur selon qu'on
+   était connecté ou non. */
+.publique__logo {
+  display: inline-flex;
   text-decoration: none;
-  letter-spacing: -0.03em;
 }
 
-/* Le 7 est la lettre ح en arabizi : « naja7i » = نجاحي, « ma réussite ». */
-.marque__sept {
-  color: var(--safran-800);
-}
-
-.marque em {
-  font-style: normal;
-  font-weight: 600;
-  opacity: 0.55;
+.publique__logo:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .publique__nav {

@@ -129,6 +129,43 @@
   color: var(--accent-fort);
 }
 
+/* --- Le rôle manquant : texte posé SUR l'accent — FRONT-3 ------------- *
+ *
+ * Le socle v3 définit `--accent`, `--accent-fort`, `--accent-doux`, mais aucun
+ * rôle pour le texte qui se pose DESSUS. `.btn` emploie donc `--texte-inverse`.
+ *
+ * En clair, l'accent est le vert profond et `--texte-inverse` est sable : le
+ * compte est bon. En sombre, l'accent devient `--vert-400` (#45b89d, un menthe
+ * clair) tandis que `--texte-inverse` reste clair — et TOUS les boutons
+ * principaux de l'application tombent à 2,11:1. Illisibles.
+ *
+ * Aucune relecture ne pouvait le voir : les deux jetons sont corrects
+ * séparément, c'est leur composition dans un thème qui ne l'est pas. Il a fallu
+ * `auditer.mjs` en thème sombre, sur les six écrans, pour que ça sorte.
+ *
+ * Le rôle est défini ICI et non dans `tokens.css`, qui est une copie conforme
+ * du socle et ne doit pas en diverger. À remonter à la conception pour reprise
+ * dans `tokens-v3.css`.
+ *
+ * Mesures : #14150f sur #45b89d → 7,51:1. #faf8f3 sur #0b6b57 → 9,64:1.
+ * ---------------------------------------------------------------------- */
+
+:root {
+  --texte-sur-accent: var(--texte-inverse);
+
+  /* Même piège, symétrique : le 7 de la marque. Le safran qui se lit sur une
+     surface claire (--safran-800, 6,78:1) est illisible sur la surface sombre
+     (2,55:1), et réciproquement (--safran-500 : 8,95:1 en sombre, 2,4:1 en
+     clair). Une seule valeur ne peut pas tenir les deux thèmes — c'est un rôle,
+     pas une couleur. */
+  --marque-accent: var(--safran-800);
+}
+
+:root[data-theme='sombre'] {
+  --texte-sur-accent: var(--encre-900);
+  --marque-accent: var(--safran-500);
+}
+
 /* --- Boutons — REPRIS de docs/design/ui-v3/composants-v3.css ---------- */
 
 .btn {
@@ -142,7 +179,7 @@
   font-size: var(--t-s);
   font-weight: 700;
   line-height: 1;
-  color: var(--texte-inverse);
+  color: var(--texte-sur-accent);
   background: var(--accent);
   border: 1px solid transparent;
   border-radius: var(--r);
@@ -196,7 +233,289 @@
   font-size: var(--t-l);
 }
 
+/* --- Formulaires — FRONT-3 -------------------------------------------- *
+ *
+ * Ces classes étaient EMPLOYÉES par les six écrans d'authentification de
+ * FRONT-1 (`.champ`, `.champ__saisie`, `.bouton`, `.case`, `.alerte`) et
+ * DÉFINIES nulle part : ni ici, ni dans un bloc scopé, ni dans le livrable v3.
+ * Les formulaires étaient donc rendus par la feuille de style par défaut du
+ * navigateur — libellés et champs sur une même ligne, bouton système. Ni le
+ * typage, ni le validateur de jetons, ni une relecture de code ne peuvent voir
+ * cela : il fallait le mesurer dans un navigateur. C'est ce qu'a fait la
+ * ligne de base du chantier 0.
+ *
+ * `.bouton` n'est pas repris : le socle v3 livre `.btn`. Les écrans sont
+ * réécrits sur `.btn` plutôt que de dupliquer un second vocabulaire de bouton.
+ * ---------------------------------------------------------------------- */
+
+.champ {
+  display: block;
+  margin-block-end: var(--e-4);
+}
+
+.champ__label {
+  display: block;
+  margin-block-end: var(--e-2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--texte);
+}
+
+.champ__saisie {
+  inline-size: 100%;
+  min-block-size: var(--cible);
+  padding: 0 var(--e-3);
+  font: inherit;
+  font-size: var(--t-m);
+  color: var(--texte);
+  background: var(--surface);
+  border: 1px solid var(--bordure-forte);
+  border-radius: var(--r);
+}
+
+.champ__saisie::placeholder {
+  color: var(--texte-tenu);
+}
+
+.champ__saisie:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.champ__aide {
+  margin-block: var(--e-2) 0;
+  font-size: var(--t-xs);
+  color: var(--texte-doux);
+}
+
+/* Champ en faute : la bordure NE PORTE PAS l'information à elle seule — elle
+   la double. Le message ci-dessous la porte, avec son signe et ses mots. */
+.champ--faute .champ__saisie {
+  border-color: var(--sys-err);
+}
+
+.champ__erreur {
+  display: flex;
+  gap: var(--e-2);
+  margin-block-start: var(--e-2);
+  font-size: var(--t-sm);
+  /* --sys-err rend 4,38:1 sur --surface : sous le seuil de texte. Le jeton
+     `-texte` existe pour ça (CTR-05). */
+  color: var(--sys-err-texte);
+}
+
+/* Le signe fait partie du message, pas de la décoration : c'est l'un des trois
+   canaux qui séparent l'erreur système de l'erreur pédagogique, la couleur ne
+   pouvant pas le faire (ΔE 4,7 en deutéranopie, 1,7 en thème sombre). */
+.champ__erreur::before {
+  content: '⚠';
+  flex: none;
+}
+
+/* Case à cocher. 24 px : c'est le minimum de cible tactile de WCAG 2.2 AA, et
+   la valeur par défaut du navigateur (13 px) était relevée par l'audit sur les
+   cinq écrans qui en portent une. */
+.case {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e-3);
+  margin-block-end: var(--e-4);
+  font-size: var(--t-sm);
+  color: var(--texte-doux);
+}
+
+.case__coche {
+  flex: none;
+  inline-size: 24px;
+  block-size: 24px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.case__coche:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- Alertes — FRONT-3 ------------------------------------------------ *
+ *
+ * L'erreur SYSTÈME se reconnaît à sa PLACE (un bandeau au-dessus du
+ * formulaire, ou une ligne sous le champ fautif), à son SIGNE et à ses MOTS.
+ * Jamais à sa couleur : mesurée contre l'erreur pédagogique, elle est à
+ * ΔE 4,7 en deutéranopie sur le thème clair et ΔE 1,7 sur le sombre, pour un
+ * plancher de 6. Aucune autre teinte n'y changerait rien — c'est la raison
+ * pour laquelle SEP-01 a été retirée de jetons.config.json plutôt que
+ * rehaussée.
+ * ---------------------------------------------------------------------- */
+
+.alerte {
+  display: flex;
+  gap: var(--e-3);
+  margin-block-end: var(--e-4);
+  padding: var(--e-3) var(--e-4);
+  font-size: var(--t-sm);
+  border: 1px solid;
+  border-radius: var(--r);
+}
+
+.alerte::before {
+  flex: none;
+  font-weight: 700;
+}
+
+.alerte--systeme {
+  color: var(--sys-err-texte);
+  background: var(--sys-err-fond);
+  border-color: var(--sys-err-bordure);
+}
+
+.alerte--systeme::before {
+  content: '⚠';
+}
+
+.alerte--succes {
+  color: var(--sys-ok-texte);
+  background: var(--sys-ok-fond);
+  border-color: var(--sys-ok-bordure);
+}
+
+.alerte--succes::before {
+  content: '✓';
+}
+
+.alerte--info {
+  color: var(--texte);
+  background: var(--surface-douce);
+  border-color: var(--bordure);
+}
+
+.alerte--info::before {
+  content: 'i';
+}
+
+/* Identifiant de requête : utile au support, inutile au candidat. Il est là,
+   en retrait, jamais mis en avant. */
+.alerte__reference {
+  margin-block: var(--e-2) 0;
+  font-family: var(--mono);
+  font-size: var(--t-2xs);
+  opacity: 0.75;
+}
+
+/* --- Justification et autopsie — FRONT-3 ------------------------------ *
+ *
+ * Deux choses différentes, qui ne doivent jamais se lire pareil :
+ *
+ *   .justification — POURQUOI une option est fausse. Fait éditorial, toujours
+ *                    servi, jamais conditionné par le quota.
+ *   .autopsie      — pourquoi le candidat a PROBABLEMENT choisi celle-là.
+ *                    Hypothèse, soumise au quota (fiches F03 et F04).
+ *
+ * LA MENTION « HYPOTHÈSE » VIENT D'ICI, PAS DE LA RÉDACTION
+ *
+ * `::after` l'ajoute au niveau du CSS. Aucun contenu futur — traduction,
+ * reformulation, texte servi par l'API — ne peut donc présenter une cause comme
+ * un verdict : la mention ne dépend d'aucune chaîne. C'est la règle 6 du lot,
+ * et c'est aussi ce que la fiche F03 exige au titre de « elle n'affirme pas ».
+ *
+ * Le mot est traduit par la direction du document plutôt que par i18n —
+ * précisément parce qu'il ne doit PAS passer par les fichiers de traduction,
+ * où quelqu'un pourrait un jour le vider.
+ * ---------------------------------------------------------------------- */
+
+.justification {
+  margin-block: var(--e-2) 0;
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  color: var(--texte-doux);
+}
+
+.justification--globale {
+  padding: var(--e-3);
+  background: var(--surface-douce);
+  border-radius: var(--r);
+}
+
+.autopsie {
+  margin-block: var(--e-2) 0;
+  font-size: var(--t-sm);
+}
+
+.autopsie__hypothese {
+  color: var(--peda-faux-texte);
+  font-weight: 600;
+}
+
+.autopsie__hypothese::after {
+  content: ' · hypothèse';
+  font-weight: 400;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+[dir='rtl'] .autopsie__hypothese::after {
+  content: ' · فرضية';
+}
+
+/* --- Zone d'examen — REPRIS de composants-v3.css --------------------- *
+ *
+ * Seconde serrure sur la règle 1 du FRONT-3 : la passation ne connaît jamais
+ * la correction.
+ *
+ * La première serrure est le contrat — `AttemptQuestionResource` est une liste
+ * blanche stricte, et les types de `useTentative.ts` la reproduisent, donc rien
+ * ne peut être affiché qui n'ait été servi. Celle-ci est indépendante : même si
+ * un composant recevait un jour une justification par un autre chemin, elle ne
+ * s'afficherait pas sur un écran portant `data-zone="examen"`.
+ *
+ * Deux serrures pour une règle qui ne doit pas céder : `!important` est ici
+ * délibéré, il n'y a aucun cas où l'on veut y déroger.
+ *
+ * `--d-correction` est déjà mis à 0 par `tokens.css` sur ce même sélecteur.
+ * ---------------------------------------------------------------------- */
+
+[data-zone='examen'] .why,
+[data-zone='examen'] .piege,
+[data-zone='examen'] .autopsie,
+[data-zone='examen'] .justification,
+[data-zone='examen'] .ordonnance {
+  display: none !important;
+}
+
 /* --- Accessibilité ---------------------------------------------------- */
+
+/* Lien d'évitement : premier élément focusable de la page, invisible tant
+   qu'il n'a pas le focus. */
+.evitement {
+  position: absolute;
+  inset-block-start: var(--e-2);
+  inset-inline-start: var(--e-2);
+  z-index: 10;
+  padding: var(--e-2) var(--e-3);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--texte);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--r);
+  transform: translateY(-200%);
+}
+
+.evitement:focus-visible {
+  transform: none;
+}
+
+/* Texte réservé aux technologies d'assistance. */
+.lecture-seule {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 
 /* Repère de focus visible partout : exigé par la ligne 15 de la recette. */
 .enveloppe :is(a, button, [tabindex]):focus-visible,

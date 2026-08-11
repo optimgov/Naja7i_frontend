@@ -93,16 +93,75 @@ export function useApi() {
    */
   const { $i18n } = useNuxtApp()
 
+  /*
+   * COOKIES AU RENDU SERVEUR
+   *
+   * `credentials: 'include'` ne veut rien dire côté serveur : il n'y a pas de
+   * navigateur pour joindre les cookies. Sans ce relais, toute requête émise
+   * pendant le rendu part ANONYME — `fetchMe` échoue, la garde de route conclut
+   * que personne n'est connecté, et l'entrée directe sur une URL protégée
+   * rebondit vers la connexion, qui renvoie aussitôt un candidat authentifié
+   * vers son tableau de bord.
+   *
+   * Symptôme observé : impossible d'ouvrir une tentative par son adresse, ni de
+   * recharger la page pendant une passation. C'est-à-dire précisément ce que la
+   * reprise sur un second appareil demande de faire.
+   *
+   * Résolu ici, avec `$i18n`, et pas dans `call()` : après le premier `await`,
+   * le contexte Nuxt n'est plus actif et `useRequestHeaders` lèverait.
+   */
+  const enteteCookie = import.meta.server ? useRequestHeaders(['cookie']) : {}
+
   async function call<T>(
     path: string,
-    options: { method?: string; body?: unknown; query?: Record<string, unknown> } = {},
+    options: {
+      method?: string
+      body?: unknown
+      query?: Record<string, unknown>
+      headers?: Record<string, string>
+    } = {},
   ): Promise<T> {
     const method = (options.method ?? 'GET').toUpperCase()
     const writes = method !== 'GET' && method !== 'HEAD'
 
-    if (writes) await ensureCsrf()
+    /*
+     * L'amorçage CSRF est DANS la gestion d'erreur, pas avant.
+     *
+     * Il était placé au-dessus du `try`, et sa panne remontait donc telle
+     * quelle — une `FetchError` brute, pas une `ApiRequestError`. Conséquence
+     * mesurée par la recette : hors connexion, une réponse de passation
+     * n'atteignait jamais la file d'envoi. L'appelant ne reconnaissait pas
+     * l'erreur, la relançait, et le travail du candidat était perdu — très
+     * exactement ce que la file existe pour empêcher.
+     *
+     * Le cas est fréquent : `csrfReady` est un drapeau de module, remis à zéro
+     * à chaque rechargement de page. Il suffit de recharger puis de perdre le
+     * réseau pour tomber dedans.
+     *
+     * Ne pas joindre le cookie CSRF veut dire qu'on n'a pas pu atteindre le
+     * serveur : c'est une panne de réseau, et elle se déclare comme telle.
+     */
+    if (writes) {
+      try {
+        await ensureCsrf()
+      } catch {
+        throw new ApiRequestError(0, {
+          code: 'NETWORK_ERROR',
+          message: $i18n.t('errors.network'),
+          request_id: '',
+        })
+      }
+    }
 
-    const headers: Record<string, string> = { Accept: 'application/json' }
+    /*
+     * Les en-têtes de l'appelant sont posés EN PREMIER, puis recouverts par les
+     * en-têtes calculés. C'est par là que passe `Idempotency-Key`. L'ordre
+     * compte : dans l'autre sens, un appelant écraserait `X-XSRF-TOKEN` par
+     * mégarde et provoquerait un 419 dont la cause serait introuvable.
+     */
+    const headers: Record<string, string> = { ...enteteCookie, ...(options.headers ?? {}) }
+
+    headers.Accept = 'application/json'
 
     if (writes) {
       const token = readXsrfToken()
@@ -137,7 +196,16 @@ export function useApi() {
 
   return {
     get: <T>(path: string, query?: Record<string, unknown>) => call<T>(path, { query }),
-    post: <T>(path: string, body?: unknown) => call<T>(path, { method: 'POST', body }),
-    patch: <T>(path: string, body?: unknown) => call<T>(path, { method: 'PATCH', body }),
+    post: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+      call<T>(path, { method: 'POST', body, headers }),
+    patch: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+      call<T>(path, { method: 'PATCH', body, headers }),
+    /*
+     * L'enregistrement d'une réponse est un PUT — `PUT …/items/{uuid}`, rejouable
+     * sans effet de bord. Son absence ici rendait la passation impossible à
+     * écrire : c'est la première dette de FRONT-1 levée par ce lot.
+     */
+    put: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+      call<T>(path, { method: 'PUT', body, headers }),
   }
 }

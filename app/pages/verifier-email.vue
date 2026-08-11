@@ -56,21 +56,21 @@ useHead({ title: t('verification.titre') })
 
 <template>
   <div>
-    <h1>{{ t('verification.titre') }}</h1>
+    <h1 class="titre-page">{{ t('verification.titre') }}</h1>
 
     <p v-if="etat === 'verification'" class="sous-titre">{{ t('verification.en_cours') }}</p>
 
     <template v-else-if="etat === 'reussi'">
       <div class="alerte alerte--succes" role="status">{{ t('verification.reussi') }}</div>
-      <NuxtLink :to="localePath('/app')" class="bouton bouton--lien">
+      <NuxtLink :to="localePath('/app')" class="btn">
         {{ t('verification.continuer') }}
       </NuxtLink>
     </template>
 
     <template v-else-if="etat === 'echec'">
-      <div class="alerte" role="alert">{{ message }}</div>
+      <div class="alerte alerte--systeme" role="alert">{{ message }}</div>
       <p class="sous-titre">{{ t('verification.echec_aide') }}</p>
-      <button class="bouton" :disabled="renvoiEnCours || renvoiFait" @click="renvoyer">
+      <button class="btn btn--bloc" :disabled="renvoiEnCours || renvoiFait" @click="renvoyer">
         {{ renvoiFait ? t('verification.renvoye') : t('verification.renvoyer') }}
       </button>
     </template>
@@ -82,7 +82,7 @@ useHead({ title: t('verification.titre') })
       <div v-if="renvoiFait" class="alerte alerte--succes" role="status">
         {{ t('verification.renvoye_detail') }}
       </div>
-      <button class="bouton" :disabled="renvoiEnCours || renvoiFait" @click="renvoyer">
+      <button class="btn btn--bloc" :disabled="renvoiEnCours || renvoiFait" @click="renvoyer">
         {{ renvoiFait ? t('verification.renvoye') : t('verification.renvoyer') }}
       </button>
     </template>
@@ -90,6 +90,6 @@ useHead({ title: t('verification.titre') })
 </template>
 
 <style scoped>
-.sous-titre { margin-block-end: var(--espace-4); color: var(--texte-doux); font-size: var(--taille-s); }
+.sous-titre { margin-block-end: var(--e-5); color: var(--texte-doux); font-size: var(--t-s); }
 .bouton--lien { display: block; text-align: center; text-decoration: none; }
 </style>

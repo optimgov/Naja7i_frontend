@@ -32,14 +32,19 @@ useHead({ title: t('connexion.titre') })
 
 <template>
   <div>
-    <h1>{{ t('connexion.titre') }}</h1>
+    <h1 class="titre-page">{{ t('connexion.titre') }}</h1>
     <p class="sous-titre">{{ t('connexion.sous_titre') }}</p>
 
-    <div v-if="erreur" class="alerte" role="alert">
-      {{ erreur.message }}
-      <span v-if="erreur.requestId" class="alerte__reference">
-        {{ t('errors.reference') }} {{ erreur.requestId }}
-      </span>
+    <!-- `alerte--systeme` et non `alerte` seule : la variante porte le signe ⚠
+         et les jetons `--sys-err-*`. Sans elle, le bandeau n'avait ni bordure,
+         ni fond, ni signe — la classe `.alerte` n'existait nulle part. -->
+    <div v-if="erreur" class="alerte alerte--systeme" role="alert">
+      <div>
+        <span dir="auto">{{ erreur.message }}</span>
+        <span v-if="erreur.requestId" class="alerte__reference">
+          {{ t('errors.reference') }} {{ erreur.requestId }}
+        </span>
+      </div>
     </div>
 
     <form novalidate @submit.prevent="soumettre">
@@ -54,11 +59,11 @@ useHead({ title: t('connexion.titre') })
       </label>
 
       <label class="case">
-        <input v-model="form.remember" type="checkbox">
+        <input v-model="form.remember" type="checkbox" class="case__coche">
         <span>{{ t('connexion.rester_connecte') }}</span>
       </label>
 
-      <button type="submit" class="bouton" :disabled="envoi">
+      <button type="submit" class="btn btn--bloc" :disabled="envoi">
         {{ envoi ? t('connexion.envoi') : t('connexion.action') }}
       </button>
     </form>
@@ -74,7 +79,11 @@ useHead({ title: t('connexion.titre') })
 </template>
 
 <style scoped>
-.sous-titre { margin-block-end: var(--espace-4); color: var(--texte-doux); font-size: var(--taille-s); }
-.liens { margin-block-start: var(--espace-3); font-size: var(--taille-s); text-align: center; }
-.bascule-compte { margin-block-start: var(--espace-2); font-size: var(--taille-s); text-align: center; color: var(--texte-doux); }
+/* Jetons v3 directement, plus les alias de compatibilité v1 : ces derniers
+   fonctionnent — `--espace-4` pointe sur `--e-5` — mais la correspondance n'est
+   pas de un à un, et lire `--espace-4` en croyant obtenir `--e-4` est une
+   erreur qui ne se voit pas. */
+.sous-titre { margin-block-end: var(--e-5); color: var(--texte-doux); font-size: var(--t-sm); }
+.liens { margin-block-start: var(--e-3); font-size: var(--t-sm); text-align: center; }
+.bascule-compte { margin-block-start: var(--e-2); font-size: var(--t-sm); text-align: center; color: var(--texte-doux); }
 </style>

@@ -58,17 +58,59 @@
       "bg": "--fond",
       "type": "nonTexte",
       "note": "aplat du bouton principal"
+    },
+    {
+      "id": "CTR-05",
+      "fg": "--sys-err-texte",
+      "bg": "--surface",
+      "type": "texte",
+      "note": "erreur SYSTÈME — le jeton qui a le droit de porter du texte"
+    },
+    {
+      "id": "CTR-06",
+      "fg": "--peda-faux-texte",
+      "bg": "--surface",
+      "type": "texte",
+      "note": "erreur PÉDAGOGIQUE — le jeton qui a le droit de porter du texte"
+    },
+    {
+      "id": "CTR-07",
+      "fg": "--peda-juste-texte",
+      "bg": "--surface",
+      "type": "texte",
+      "note": "bonne réponse — le jeton qui a le droit de porter du texte"
+    },
+    {
+      "id": "CTR-08",
+      "fg": "--peda-remede-texte",
+      "bg": "--surface",
+      "type": "texte",
+      "note": "remédiation — le jeton qui a le droit de porter du texte"
+    },
+    {
+      "id": "NTX-04",
+      "fg": "--peda-faux",
+      "bg": "--surface",
+      "type": "nonTexte",
+      "note": "APLAT ET BORDURE SEULEMENT — 4,13:1 sur le fond clair, sous le seuil de texte. Le texte prend --peda-faux-texte (CTR-06)."
+    },
+    {
+      "id": "NTX-05",
+      "fg": "--peda-juste",
+      "bg": "--surface",
+      "type": "nonTexte",
+      "note": "aplat et bordure de la bonne réponse"
+    },
+    {
+      "id": "NTX-06",
+      "fg": "--sys-err",
+      "bg": "--surface",
+      "type": "nonTexte",
+      "note": "aplat et bordure de l'erreur système"
     }
   ],
   "series": [],
-  "separations": [
-    {
-      "id": "SEP-01",
-      "a": "--sys-err",
-      "b": "--peda-faux",
-      "note": "l'erreur pédagogique ne se confond pas avec l'erreur système"
-    }
-  ],
+  "separations": [],
   "achromatiques": [],
   "parite": {
     "prefixes": [
@@ -243,5 +285,5 @@
       "message": "prise en charge de prefers-reduced-motion"
     }
   ],
-  "_note": "SEP-02 (aplats --sys-err-fond / --peda-faux-fond) a été RETIRÉE, non satisfaite : distance 3 pour un seuil de 30. La séparation de l'erreur système et de l'erreur pédagogique tient sur les couleurs d'avant-plan (SEP-01) mais pas sur leurs aplats. Baisser le seuil aurait fait valider le défaut par la CI. Question de conception, remontée au rapport FRONT-2."
+  "_note": "SEP-01 et SEP-02 ont été RETIRÉES au FRONT-3, et la section « separations » est vide à dessein. SEP-02 avait déjà été retirée au FRONT-2 (aplats à distance 3 pour un seuil de 30). SEP-01 passait — distance 56 — mais mesurait la mauvaise chose : la règle « separations » du validateur calcule une distance euclidienne en sRGB brut, EN VISION NORMALE, sans jamais appliquer ses matrices de dichromatie (elles ne servent qu'aux « series »). Mesuré avec docs/design/ui-v3/scripts/valider-palette.mjs, qui simule Viénot-Brettel-Mollon et compare en OKLab : --sys-err #b3261e vs --peda-faux #c25a2e donne ΔE 4,7 en deutéranopie — et 10,1 en vision normale, sous le plancher dur de 15. Les aplats #fdf0ef vs #fdf3ee donnent ΔE 0,1. La séparation ne tient donc NI sur les aplats NI sur les avant-plans : SEP-01 délivrait un certificat de conformité à un défaut. Aucune autre teinte n'y changerait rien — deux lavis quasi blancs ne se sépareront jamais. L'opposition est donc portée par des canaux redondants (place, icône, mots), contrôlés par jetons.commun.config.json sur assets/css/commun.css. Ce que les règles de couleur contrôlent désormais est ce qui est vrai : quel jeton a le droit de porter du texte (CTR-05 à CTR-08) et lequel est réservé aux aplats et bordures (NTX-04 à NTX-06)."
 }

@@ -99,3 +99,358 @@ de `ci.yml`. Aucune modification n'a été faite.
 **Justification.** `auditer.mjs` exige Playwright et un serveur en cours
 d'exécution : le brancher maintenant rendrait la CI rouge pour une raison
 étrangère au code livré. C'est le premier chantier du lot suivant.
+
+## FRONT-3 — chantiers 0 et 1
+
+## D-F04 — Une enveloppe d'audit, plutôt qu'une modification d'`auditer.mjs`
+
+**Contexte.** `auditer.mjs` prend UNE cible et décline ses variantes par
+fragment d'URL (`--hash`). L'application a de vraies routes. Son binaire par
+défaut, `/opt/pw-browsers/chromium`, est un chemin d'image de conteneur absent
+de tout poste.
+
+**Décision.** `scripts/auditer-ecrans.mjs` : tient la liste des écrans, résout
+le Chromium réellement installé par Playwright, appelle le script du socle sans
+le modifier. `npm run audit`.
+
+**Justification.** Les scripts de `docs/design/ui-v3/scripts/` sont livrés par
+la conception. Les patcher ferait diverger le dépôt de sa référence et rendrait
+la prochaine reprise conflictuelle. L'enveloppe est du code applicatif, elle
+vit avec l'application.
+
+**Corollaire.** Le RTL ne se déclenche pas par un bouton mais par le préfixe de
+langue : une URL arabe EST la variante RTL. `--rtl` reste inutilisé.
+
+## D-F05 — SEP-01 retirée : elle mesurait la mauvaise chose
+
+**Contexte.** Le point (h) demandait de réconcilier `jetons.config.json` avec la
+mesure sous dichromatie.
+
+**Mesure.** Avec `valider-palette.mjs` (Viénot-Brettel-Mollon puis OKLab) :
+
+| Paire | clair | sombre |
+|---|---|---|
+| `--sys-err` ↔ `--peda-faux` | ΔE 4,7 deutan · 10,1 normal | **ΔE 1,7** deutan · 4,6 normal |
+| aplats | ΔE 0,1 | ΔE 0,4 |
+
+Le plancher est à 6 en dichromatie, et à 15 en vision normale. Aucune des quatre
+mesures ne le tient.
+
+**Pourquoi SEP-01 passait quand même.** La règle `separations` du validateur
+calcule une distance euclidienne en sRGB brut, **en vision normale**, sans
+jamais appliquer ses matrices de dichromatie — elles ne servent qu'aux `series`.
+D'où le « 56 » rassurant du document v3. La règle délivrait un certificat de
+conformité à un défaut.
+
+**Décision.** `separations` vidée. À la place, quatorze règles de contraste qui
+contrôlent ce qui est vrai : quels jetons ont le droit de porter du texte
+(CTR-05 à 08) et lesquels sont réservés aux aplats (NTX-04 à 06), dans les deux
+thèmes. Et un second passage du validateur,
+`jetons.commun.config.json`, sur `assets/css/commun.css` : RED-01 à 03 exigent
+que l'erreur système, l'erreur de saisie et le succès portent un signe ;
+SEP-03 et SEP-04 interdisent d'employer un jeton d'aplat comme couleur de texte.
+
+**Vérifié par sonde.** SEP-04 a d'abord signalé `border-color: var(--sys-err)` —
+un faux positif : le motif attrapait toute propriété finissant par `color`.
+Corrigé par une amorce `(?:^|[\s;{])`, puis reconfirmé mordant en injectant une
+vraie violation dans une copie du fichier. Une règle qu'on désactive au premier
+faux positif ne protège plus rien (cf. DET-18 côté backend).
+
+## D-F06 — Le thème par cookie, lu au rendu serveur
+
+**Décision.** `useTheme` sur `useCookie`, `data-theme` posé par `app.vue` seul.
+Pas de `prefers-color-scheme`.
+
+**Justification.** `localStorage` n'existe pas au rendu serveur : la page
+partirait en clair puis basculerait, à chaque entrée. Le cookie est lu par le
+serveur, l'attribut part dans le HTML. **Vérifié** : `curl -H 'Cookie:
+naja7i_theme=sombre'` rend `<html lang="fr" data-theme="sombre" dir="ltr">`.
+Le non-clignotement n'est pas une intention, c'est une propriété du rendu.
+
+Pas de suivi automatique de la préférence système : le socle v3 l'écrit
+au-dessus de son bloc sombre — « choisi pas à pas, jamais une inversion
+automatique ».
+
+## D-F07 — Rampes brutes remplacées par les rôles
+
+**Constat.** La zone publique de FRONT-2 employait `--sable-0/50/100/200/300` et
+`--encre-700` pour ses surfaces, bordures et textes secondaires. Le thème sombre
+ne redéfinit que les **rôles** ; la rampe est invariante par construction. Au
+premier essai du sombre, les fonds restaient clairs pendant que les textes
+passaient au clair : titres illisibles sur toute la page d'accueil.
+
+**Décision.** Substitution par les rôles. Cinq des six correspondances sont
+l'identité en thème clair — `--surface` EST `--sable-0` — donc l'apparence
+claire ne bouge pas. La sixième, `--sable-300` → `--bordure-forte`, fonce d'un
+cran : c'est le rôle qui porte l'intention, et il est mesuré en sombre.
+
+`LogoNaja7i.vue` est exclu : sa tuile est un dessin de marque, pas une surface.
+
+## D-F08 — Deux rôles manquants au socle, définis dans `commun.css`
+
+**`--texte-sur-accent`.** Le socle définit `--accent`, `--accent-fort`,
+`--accent-doux`, mais aucun rôle pour le texte posé DESSUS. `.btn` emploie donc
+`--texte-inverse` : correct en clair (sable sur vert profond), faux en sombre,
+où l'accent devient un menthe clair. **Tous** les boutons principaux rendaient
+2,11:1. Mesuré par `auditer.mjs` sur les six écrans, en thème sombre.
+
+**`--marque-accent`.** Même piège, symétrique, sur le 7 de la marque :
+`--safran-800` rend 6,78:1 en clair et 2,55:1 en sombre ; `--safran-500`
+l'inverse. Une valeur ne peut pas tenir les deux thèmes.
+
+**Décision.** Les deux rôles sont définis dans `commun.css`, jamais dans
+`tokens.css` — copie conforme du socle, qui ne doit pas diverger. **À remonter à
+la conception** pour reprise dans `tokens-v3.css`.
+
+**Ce que ça dit de la méthode.** Aucune de ces deux fautes n'est visible en
+relecture : chaque jeton est correct isolément, c'est leur composition dans un
+thème qui ne l'est pas. Elles ne sortent qu'en mesurant un rendu réel.
+
+## D-F09 — L'audit en CI ne couvre que les écrans indépendants de l'API
+
+**Décision.** `npm run audit:ci` — six écrans (les cinq d'authentification et la
+page d'erreur), en FR et AR, clair et sombre. Les cinq écrans de catalogue en
+sont exclus.
+
+**Justification.** Ils affichent des données servies par Laravel. La CI du
+frontend n'a pas de backend : les y auditer mesurerait leur état vide, pas leur
+rendu. Le script **écrit lui-même la liste de ce qu'il n'a pas couvert** dans
+son rapport — une couverture réduite qu'on tait se lit comme une couverture
+complète.
+
+## D-F10 — BLOQUANT : les composables du point (b) ne sont pas écrits
+
+**Ce qui est demandé.** `useTentative`, `useMaitrise`, `useOrdonnance`, contre un
+backend qui « sert déjà diagnostic, passation, soumission, correction, maîtrise
+et ordonnance ».
+
+**Ce qui est mesuré.** L'API qui tourne — `php -S 127.0.0.1:8000` sur
+`Naja7i_backend_front`, démarrée ce matin — ne sert aucune de ces routes.
+Sondées sous une quinzaine de formes (`/attempts`, `/diagnostics`,
+`/diagnostic`, `/tentatives`, `/mastery`, `/maitrise`, `/ordonnance`,
+`/remediation/plan`, en GET et en POST) : toutes répondent le MÊME corps qu'un
+chemin inventé —
+
+    {"error":{"code":"RESOURCE_NOT_FOUND", …}}
+
+identique à la réponse de `/api/v1/inexistant-xyz`. Ce n'est donc pas un 405 ni
+un 401 : les routes ne sont pas déclarées. Répondent : `/api/v1/me` (401),
+`/api/v1/catalogue` (200), `/api/v1/demonstration/correction` (404 applicatif
+`DEMO_NOT_AVAILABLE`, documenté), `/api/v1/auth/*`.
+
+**Décision.** Ne rien écrire. Deviner des chemins d'API reviendrait à écrire
+contre des données inventées — ce que la consigne interdit explicitement pour
+F05 et F07, et pour la même raison ici : le code compilerait, les écrans se
+peindraient, et rien ne fonctionnerait.
+
+**Ce que ça bloque.** Le point (b) du chantier 1, et par conséquent les
+chantiers 2 et 3 en entier. Tout le reste du chantier 1 est livré.
+
+**Ce qu'il faut pour débloquer.** Soit le contrat des endpoints (chemins, formes
+de réponse), soit un backend qui les serve — les deux hypothèses tenables étant
+un cache de routes à vider ou une branche backend non fusionnée.
+
+## FRONT-3 — chantier 1 (b) et chantier 2
+
+## D-F11 — L'empêchement du D-F10 était faux : je n'étais pas allé à la source
+
+**Ce que j'avais écrit.** « Les routes ne sont pas déclarées », d'après quinze
+sondages HTTP.
+
+**Ce qui était vrai.** Les routes existent, sous le préfixe `me/` :
+`me/attempts`, `me/mastery`, `me/plan`, `me/diagnostics/{examCode}`. Je n'avais
+pas ouvert `routes/api.php`, un fichier lisible dans un dépôt monté à côté.
+
+**La règle qui en sort, et qui vaut pour la suite.** Une inférence n'est pas un
+empêchement. Un empêchement est un fait vérifié à sa source. Quand la source
+est hors d'atteinte, on écrit « je n'ai pas pu vérifier X » et on continue sur
+ce qui n'en dépend pas — on n'arrête pas tout sur une déduction.
+
+Appliqué immédiatement après : la banque de questions vide a été constatée par
+`Question::count() = 0` en base, pas déduite d'un code d'erreur ; les deux
+migrations en attente ont été lues avant d'en exécuter une.
+
+## D-F12 — Banque de questions semée localement, hors dépôt
+
+**Contexte.** `questions: 0` en base : aucun diagnostic ne pouvait s'ouvrir,
+donc aucune recette de bout en bout.
+
+**Décision.** 20 questions semées par un script de scratchpad exécuté via
+`php artisan tinker`. Rien n'est écrit dans le dépôt backend.
+
+**Justification.** Le script passe par `QuestionTransitionService`, donc par
+`QuestionIntegrityChecker` : chaîne éditoriale complète (brouillon → à vérifier
+→ relu → validé → publié), valideur distinct de l'auteur, quatre options,
+distracteurs tous étiquetés d'une cause — sans quoi la publication pour
+diagnostic est refusée, conformément à la fiche F03 v1.1. Une insertion directe
+en base aurait contourné ces invariants et produit des données que le produit
+n'accepte pas.
+
+## D-F13 — Migration `000380` exécutée
+
+**Constat.** `POST me/attempts/{uuid}/submit` répondait 500 :
+`column "skipped_count" of relation "mastery_scores" does not exist`. Deux
+migrations en attente, dont `000380_compter_les_questions_sautees` qui ajoute
+cette colonne.
+
+**Décision.** Exécutée, seule, par `--path`. `000390_ouvrir_la_session_de_revision`
+est laissée en attente : elle relève de F07, chantier d'une autre session.
+
+**Justification.** Additive, avec un `down()`, et sans elle la soumission d'un
+diagnostic est impossible — donc l'arrêt B aussi. Lue avant exécution.
+
+## D-F14 — Cookies relayés au rendu serveur
+
+**Constat.** `useApi` posait `credentials: 'include'`, qui ne veut rien dire
+côté serveur : aucune requête émise pendant le rendu ne portait la session.
+`fetchMe` échouait, la garde de route concluait à l'absence de session, et toute
+entrée directe sur une URL protégée rebondissait vers `/connexion`, qui
+renvoyait le candidat authentifié vers `/app`.
+
+**Ce que ça cassait.** Ouvrir une tentative par son adresse. Recharger la page
+pendant une passation. C'est-à-dire exactement ce que « reprise sur un second
+appareil » demande de faire.
+
+**Décision.** `useRequestHeaders(['cookie'])` relayé dans les en-têtes, résolu
+au moment de l'appel de `useApi()` — après le premier `await`, le contexte Nuxt
+n'est plus actif et le composable lèverait.
+
+## D-F15 — L'épreuve suivie vient d'une trace locale, faute de profil
+
+**Contexte.** E1 doit afficher l'épreuve suivie et le dernier diagnostic. Le
+contrat n'expose ni profil (PAS-5, à venir) ni index des tentatives — seulement
+`GET me/attempts/{uuid}`, qui suppose de connaître l'identifiant.
+
+**Décision.** `useSuivi` retient en local ce que le navigateur a fait, et
+l'écran RECHARGE ensuite tout depuis l'API. La trace ne sert qu'à savoir quoi
+demander ; aucun chiffre n'en sort. Sans trace, l'écran ne suppose rien : il
+propose de choisir une épreuve.
+
+**À remplacer** par le profil dès que PAS-5 l'expose.
+
+## D-F16 — Deux serrures sur « la passation ne connaît jamais la correction »
+
+**Décision.** La règle est tenue deux fois plutôt qu'une : les types de
+`useTentative.ts` reproduisent la liste blanche d'`AttemptQuestionResource` (ni
+`is_correct`, ni `rationale`, ni `cause`), et `data-zone="examen"` masque
+justifications et autopsies au niveau du CSS, `!important` compris.
+
+**Justification.** La première serrure tombe si un jour un composant reçoit une
+justification par un autre chemin ; la seconde ne dépend d'aucun contrat. Une
+règle qui ne doit pas céder mérite d'être tenue par deux mécanismes
+indépendants.
+
+**Vérifié sur le fil, pas dans le code** : `scripts/recette-passation.mjs`
+enregistre les corps de toutes les réponses d'API. 30 appels pendant la
+passation, 0 occurrence de `is_correct`, `rationale`, `cause` ni `explanation`.
+
+## D-F17 — Trois rampes brutes de plus, révélées par la banque semée
+
+**Constat.** Le bloc de démonstration ne s'était jamais affiché avec du contenu
+réel : la banque était vide, l'API répondait `DEMO_NOT_AVAILABLE`. Dès qu'elle a
+eu des questions, l'audit a relevé `p.preuve__contenu` à 1,07:1 en thème sombre
+— `--texte` clair sur `--vert-50`, un fond invariant.
+
+**Décision.** `--vert-50` → `--peda-juste-fond`, `--vert-700` → `--peda-juste`,
+`--terre-700` → `--peda-faux-texte`, `--safran-50/800` → `--peda-remede-fond`
+et `-texte`.
+
+**Ce que ça confirme.** Un écran jamais rendu avec ses vraies données n'est pas
+un écran vérifié. Trois défauts de contraste ont attendu que la banque existe
+pour devenir visibles.
+
+## FRONT-3 — chantier 3
+
+## D-F18 — `--cookies` ajouté à `auditer.mjs` : D-F04 renversée, et pourquoi
+
+**Ce que disait D-F04.** Ne pas modifier les scripts de
+`docs/design/ui-v3/scripts/`, livrés par la conception : les patcher ferait
+diverger le dépôt de sa référence.
+
+**Ce qui a changé.** L'arrêt C exige l'audit des six écrans de la boucle. Ils
+sont derrière une session ; `auditer.mjs` ne pose aucun cookie et les mesurerait
+redirigés vers la connexion — six fois le même formulaire.
+
+**Les deux options, et leur coût.** Réécrire la sonde dans la recette :
+deux cents lignes de mesure dupliquées, qui divergeront au premier correctif
+appliqué d'un seul côté. Ou ajouter une option de douze lignes au script.
+
+**Décision.** `--cookies <fichier.json>`, plus `newContext` à la place de
+`newPage` pour pouvoir les poser. Aucune règle de mesure n'est touchée.
+**À remonter à la conception** pour reprise amont.
+
+**Ce que ça dit de D-F04.** Elle n'était pas fausse — elle était juste pour son
+périmètre. Une décision se réexamine quand ce qu'elle protégeait coûte plus que
+ce qu'elle évite.
+
+## D-F19 — La béquille de D-F15 retirée : l'index des tentatives existe
+
+**Constat.** Pendant le chantier, la session backend a livré
+`GET me/attempts` (commit « Index des tentatives : la reprise multi-appareil
+cesse d'être une béquille »). Deux migrations manquaient encore —
+`empreinte_d_idempotence` et `derniere_activite_de_la_tentative` — lues puis
+exécutées, l'endpoint répond.
+
+**Décision.** `useSuivi` supprimé, remplacé par `useParcours`. Le tableau de
+bord demande au serveur ce que le candidat a fait.
+
+**Pourquoi ça compte.** Une trace de navigateur ne suit pas le candidat d'un
+appareil à l'autre : ouvrir le tableau de bord sur un téléphone après un
+diagnostic passé sur un poste affichait un espace vide. Le nom du commit backend
+dit la même chose que D-F15 : c'était une béquille.
+
+## D-F20 — L'amorçage CSRF était hors de la gestion d'erreur
+
+**Constat, par la recette.** Hors connexion, une réponse de passation
+n'atteignait jamais la file d'envoi. `ensureCsrf()` était appelé AVANT le `try`
+de `call()` : sa panne remontait en `FetchError` brute, pas en
+`ApiRequestError`. L'appelant ne la reconnaissait pas et la relançait — le
+travail du candidat était perdu, très exactement ce que la file existe pour
+empêcher.
+
+Le cas n'est pas rare : `csrfReady` est un drapeau de module, remis à zéro à
+chaque rechargement. Recharger puis perdre le réseau suffit.
+
+**Décision.** L'amorçage entre dans le `try` et sa panne se déclare
+`NETWORK_ERROR` — ne pas pouvoir joindre le cookie CSRF, c'est ne pas pouvoir
+joindre le serveur.
+
+## D-F21 — Deux tests de recette étaient faux, et accusaient du code juste
+
+**404 d'une tentative étrangère.** Le test refusait tout message contenant
+« exist » — donc « Cette ressource n'existe pas », qui est la formulation
+juste. Ce qu'il faut chercher est un AVEU D'EXISTENCE (« vous n'y avez pas
+droit », « appartient à un autre compte ») qui reconstituerait un 403 en
+français.
+
+**Score nul.** Le test refusait « 0 % » n'importe où dans la page. Or un domaine
+mesuré sur six réponses et raté six fois vaut bien 0 %, et le taire serait un
+autre mensonge. La règle interdit de rendre un score ABSENT comme un zéro. Le
+test compare désormais l'écran à la source : autant de pourcentages que de
+scores non nuls, autant de phrases que de scores nuls, et aucun domaine ne
+porte les deux.
+
+**La leçon, symétrique de celle du D-F11.** Une recette qui échoue n'a pas
+toujours raison. Elle est un artefact comme un autre, et son verdict se vérifie
+à la source avant de corriger le code qu'elle accuse.
+
+## D-F22 — Compteurs formulés sans accord de nombre
+
+**Constat.** « 1 erreurs avec certitude », « Fondé sur 1 réponses » : faute de
+français visible à l'écran.
+
+**Décision.** Tournure « Libellé : {n} » — « Erreurs avec certitude : 3 ».
+
+**Justification.** L'arabe compte six formes plurielles et vue-i18n ne les
+tranche pas seul : une règle approximative produit une faute à chaque affichage.
+La tournure neutre n'en produit aucune, dans les deux langues. Même choix qu'au
+chantier 1 pour la file d'envoi.
+
+## D-F23 — Règle 9bis tenue à deux endroits
+
+**Décision.** `attempt.kind` est lu avant tout score, sur E1 (tableau de bord)
+comme sur E4 (correction). Un résultat d'entraînement porte sa mention AVANT le
+nombre, pas après.
+
+**Justification.** Un avertissement placé sous le résultat arrive trop tard : le
+nombre a déjà été lu comme une note. L'ordre est la moitié du message.

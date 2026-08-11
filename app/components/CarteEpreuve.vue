@@ -45,13 +45,13 @@ const { t } = useI18n()
 
 <style scoped>
 .epreuve {
-  background: var(--sable-0);
-  border: 1px solid var(--sable-200);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
   border-radius: var(--r);
   padding: var(--e-4);
 }
 .epreuve__coef { display: flex; align-items: baseline; gap: 6px; margin-block-end: var(--e-2); }
-.epreuve__coef b { font-size: var(--t-2xl); font-weight: 800; color: var(--vert-700); letter-spacing: -.04em; }
+.epreuve__coef b { font-size: var(--t-2xl); font-weight: 800; color: var(--accent); letter-spacing: -.04em; }
 .epreuve__coef span { font-size: var(--t-xs); font-weight: 700; color: var(--texte-doux); text-transform: uppercase; letter-spacing: .07em; }
 .epreuve__titre { font-size: var(--t-md); margin-block-end: var(--e-2); }
 .epreuve__meta { display: flex; gap: 6px; font-size: var(--t-xs); color: var(--texte-doux); margin-block-end: var(--e-3); }
@@ -63,6 +63,6 @@ const { t } = useI18n()
 /* Contraste mesuré : vert-700 sur sable-200 = 6,45:1.
    La v2 employait vert-500 sur sable-100, à 2,84:1 — sous le seuil WCAG de
    3:1 applicable aux objets graphiques porteurs d'information. */
-.jauge { block-size: 6px; background: var(--sable-200); border-radius: 99px; overflow: hidden; }
+.jauge { block-size: 6px; background: var(--bordure); border-radius: 99px; overflow: hidden; }
 .jauge span { display: block; block-size: 100%; background: var(--vert-700); border-radius: 99px; }
 </style>

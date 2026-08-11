@@ -112,8 +112,11 @@ const indisponible = computed(() => Boolean(error.value) || demo.value === null)
   padding: var(--e-2) var(--e-3);
   font-size: var(--t-xs);
   font-weight: 700;
-  color: var(--safran-800);
-  background: var(--safran-50);
+  /* Rôles, pas rampes : --safran-50 ne bascule pas avec le thème, et un fond
+     clair invariant sous un texte qui, lui, passe au clair rend la mention
+     illisible en sombre. Même faute que celle relevée au chantier 1. */
+  color: var(--peda-remede-texte);
+  background: var(--peda-remede-fond);
   border-radius: var(--r);
 }
 
@@ -144,15 +147,15 @@ const indisponible = computed(() => Boolean(error.value) || demo.value === null)
 
 .preuve__option {
   padding: var(--e-3);
-  background: var(--sable-50);
+  background: var(--fond);
   border: 1px solid var(--bordure);
   border-radius: var(--r);
 }
 
 /* Bordure de début de ligne : à droite en arabe, à gauche en français. */
 .preuve__option--juste {
-  background: var(--vert-50);
-  border-inline-start: 3px solid var(--vert-700);
+  background: var(--peda-juste-fond);
+  border-inline-start: 3px solid var(--peda-juste);
 }
 
 .preuve__contenu {
@@ -176,6 +179,6 @@ const indisponible = computed(() => Boolean(error.value) || demo.value === null)
   margin: var(--e-2) 0 0;
   font-size: var(--t-xs);
   font-weight: 600;
-  color: var(--terre-700);
+  color: var(--peda-faux-texte);
 }
 </style>

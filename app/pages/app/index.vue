@@ -1,121 +1,182 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
+/**
+ * E1 — tableau de bord : épreuve suivie, dernier diagnostic, Mission du jour.
+ *
+ * L'épreuve suivie vient de `GET me/attempts`, pas d'une trace de navigateur :
+ * le serveur sait ce que le candidat a fait, et il répond la même chose sur
+ * tous ses appareils. La version précédente s'appuyait sur `localStorage`
+ * faute d'index — un tableau de bord ouvert sur un téléphone après un
+ * diagnostic passé sur un poste s'affichait vide.
+ */
+definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t } = useI18n()
-const { user, logout } = useAuth()
+const localePath = useLocalePath()
+const { parcours, enCours, dernierePassee, estEntrainement } = useParcours()
+const { ordonnance } = useOrdonnance()
 
-// REVUE FRONT-1 : `htmlAttrs` attend un objet aux valeurs réactives, pas un
-// ComputedRef enveloppant l'objet entier. Le composable porte la forme juste.
-useLangueEtDirection()
+const { data: liste } = await parcours()
 
-useHead({ title: t('espace.titre') })
+const tentatives = computed(() => liste.value?.data ?? [])
+const ouverte = computed(() => enCours(tentatives.value))
+const derniere = computed(() => dernierePassee(tentatives.value))
+
+/** L'épreuve suivie est celle de la série en cours, sinon de la dernière passée. */
+const epreuve = computed(() => ouverte.value?.exam ?? derniere.value?.exam ?? null)
+const code = computed(() => epreuve.value?.code ?? '')
+
+/**
+ * Mission du jour : les trois premières lignes de l'ordonnance. On demande 3,
+ * on n'en affiche jamais plus de 3, et le CSS le garantit une seconde fois.
+ */
+const { data: plan } = await useAsyncData(
+  () => `mission-${code.value || 'aucune'}`,
+  async () => {
+    if (!code.value) return null
+    const { data } = await ordonnance(code, 3)
+    return data.value
+  },
+  { watch: [code] },
+)
+
+const mission = computed(() => plan.value?.data?.slice(0, 3) ?? [])
+
+useHead({ title: t('app.titre') })
 </script>
 
 <template>
-  <!--
-    Écran de contrôle, pas un tableau de bord. Sa seule fonction est de prouver
-    que la session traverse le BFF : si cette page affiche l'adresse du candidat
-    et son état de vérification, toute la chaîne de cookies fonctionne.
-    Il sera remplacé par le vrai espace candidat au lot suivant.
-  -->
-  <main class="espace">
-    <header class="espace__entete">
-      <span class="marque">naja<span class="marque__sept">7</span>i<em>.ma</em></span>
-      <button class="lien-deconnexion" @click="logout">{{ t('espace.deconnexion') }}</button>
-    </header>
+  <div class="enveloppe">
+    <h1 class="titre-page">{{ t('app.titre') }}</h1>
 
-    <h1>{{ t('espace.titre') }}</h1>
-    <p class="espace__intro">{{ t('espace.intro') }}</p>
+    <div v-if="!epreuve" class="alerte alerte--info" role="status">
+      <span>{{ t('app.aucun_diagnostic') }}</span>
+    </div>
 
-    <dl class="etat">
-      <div class="etat__ligne">
-        <dt>{{ t('champs.email') }}</dt>
-        <dd>{{ user?.email }}</dd>
-      </div>
-      <div class="etat__ligne">
-        <dt>{{ t('espace.verification') }}</dt>
-        <dd>
-          <span :class="['pastille', user?.email_verified ? 'pastille--ok' : 'pastille--attente']">
-            {{ user?.email_verified ? t('espace.verifie') : t('espace.non_verifie') }}
+    <template v-else>
+      <section class="carte-epreuve">
+        <p class="oeil">{{ t('app.epreuve_suivie') }}</p>
+        <h2 class="carte-epreuve__nom" dir="auto">{{ epreuve.name }}</h2>
+        <p v-if="epreuve.coefficient !== null" class="carte-epreuve__coef">
+          {{ t('app.coefficient') }} {{ epreuve.coefficient }}
+        </p>
+
+        <!-- Règle 9bis : le genre de la série est lu AVANT d'annoncer un score.
+             Un résultat d'entraînement est annoncé comme tel, pas comme une
+             note d'épreuve. -->
+        <p v-if="derniere" class="dernier">
+          <span class="dernier__libelle">{{ t('app.dernier_diagnostic') }}</span>
+          <span v-if="estEntrainement(derniere)" class="dernier__genre">
+            {{ t('correction.entrainement_avertissement') }}
           </span>
-        </dd>
-      </div>
-      <div class="etat__ligne">
-        <dt>{{ t('espace.roles') }}</dt>
-        <dd>{{ user?.roles?.join(', ') || '—' }}</dd>
-      </div>
-      <div class="etat__ligne">
-        <dt>{{ t('espace.identifiant') }}</dt>
-        <dd class="etat__uuid">{{ user?.uuid }}</dd>
-      </div>
-    </dl>
-  </main>
+          <NuxtLink
+            class="lien-second"
+            :to="localePath(`/app/tentative/${derniere.uuid}/correction`)"
+          >
+            {{ t('correction.titre') }}
+          </NuxtLink>
+        </p>
+
+        <div class="carte-epreuve__actes">
+          <NuxtLink
+            v-if="ouverte"
+            class="btn"
+            :to="localePath(`/app/tentative/${ouverte.uuid}`)"
+          >
+            {{ t('app.reprendre') }}
+          </NuxtLink>
+
+          <NuxtLink
+            v-else
+            class="btn"
+            :to="localePath(`/app/diagnostic/${epreuve.code}`)"
+          >
+            {{ t('diagnostic.lancer') }}
+          </NuxtLink>
+
+          <NuxtLink class="lien-second" :to="localePath(`/app/maitrise/${epreuve.code}`)">
+            {{ t('app.voir_maitrise') }}
+          </NuxtLink>
+
+          <NuxtLink class="lien-second" :to="localePath(`/app/ordonnance/${epreuve.code}`)">
+            {{ t('app.voir_ordonnance') }}
+          </NuxtLink>
+        </div>
+      </section>
+
+      <section class="mission">
+        <h2 class="mission__titre">{{ t('app.mission_titre') }}</h2>
+
+        <p v-if="!mission.length" class="mission__vide">{{ t('app.mission_vide') }}</p>
+
+        <!-- Trois actions, jamais quatre. La borne est posée deux fois : le
+             `slice(0, 3)` au-dessus, et la règle CSS ci-dessous. La seconde
+             tient même si un jour la première est perdue dans un refactor. -->
+        <ol v-else class="mission__liste">
+          <li v-for="ligne in mission" :key="ligne.node_uuid" class="mission__ligne">
+            <span class="mission__domaine" dir="auto">{{ ligne.node_name }}</span>
+            <span class="mission__motif">{{ t(`ordonnance.motif_${ligne.reason}`) }}</span>
+            <span v-if="ligne.remediation" class="mission__remede" dir="auto">
+              {{ ligne.remediation.title }}
+            </span>
+          </li>
+        </ol>
+      </section>
+    </template>
+  </div>
 </template>
 
 <style scoped>
-.espace {
-  max-inline-size: 42rem;
-  padding: var(--espace-4) var(--espace-3);
-  margin-inline: auto;
-}
-
-.espace__entete {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-block-end: var(--espace-5);
-}
-
-.marque { font-weight: 800; letter-spacing: -0.03em; }
-.marque__sept { color: var(--terre-cuite); }
-.marque em { font-style: normal; opacity: 0.5; font-weight: 600; }
-
-.lien-deconnexion {
-  padding: 0;
-  font: inherit;
-  font-size: var(--taille-s);
-  color: var(--texte-doux);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  background: none;
-  border: none;
-}
-
-.espace__intro { color: var(--texte-doux); font-size: var(--taille-s); margin-block-end: var(--espace-4); }
-
-.etat {
-  margin: 0;
+.carte-epreuve {
+  margin-block-end: var(--e-6);
+  padding: var(--e-5);
+  background: var(--surface);
   border: 1px solid var(--bordure);
-  border-radius: var(--rayon);
-  background: var(--fond-eleve);
+  border-radius: var(--r);
 }
 
-.etat__ligne {
+.carte-epreuve__nom { margin-block: 0 var(--e-1); font-size: var(--t-xl); font-weight: 800; }
+.carte-epreuve__coef { margin-block: 0 var(--e-4); font-size: var(--t-xs); color: var(--texte-doux); }
+
+.dernier {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-3);
+  align-items: baseline;
+  margin-block: 0 var(--e-4);
+  font-size: var(--t-sm);
+}
+
+.dernier__libelle { font-weight: 700; }
+.dernier__genre { color: var(--peda-remede-texte); }
+
+.carte-epreuve__actes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-4);
+  align-items: center;
+}
+
+.mission__titre { margin-block: 0 var(--e-3); font-size: var(--t-lg); font-weight: 800; }
+
+.mission__vide { max-inline-size: 60ch; font-size: var(--t-sm); color: var(--texte-doux); }
+
+.mission__liste { display: grid; gap: var(--e-3); margin: 0; padding: 0; list-style: none; }
+
+/* Trois actions, jamais quatre — propriété du composant, pas de l'appelant.
+   Une mission qui en afficherait cinq cesserait d'être une mission. */
+.mission__liste > :nth-child(n + 4) { display: none; }
+
+.mission__ligne {
   display: grid;
-  gap: var(--espace-2);
-  padding: var(--espace-3);
-  border-block-end: 1px solid var(--bordure);
+  gap: 2px;
+  padding: var(--e-4);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-inline-start: 3px solid var(--accent);
+  border-radius: var(--r);
 }
 
-@media (min-width: 40rem) {
-  .etat__ligne { grid-template-columns: 12rem 1fr; }
-}
-
-.etat__ligne:last-child { border-block-end: none; }
-
-.etat dt { font-size: var(--taille-s); font-weight: 600; color: var(--texte-doux); }
-.etat dd { margin: 0; }
-.etat__uuid { font-family: ui-monospace, monospace; font-size: var(--taille-xs); word-break: break-all; }
-
-.pastille {
-  display: inline-block;
-  padding: 0.15rem 0.6rem;
-  font-size: var(--taille-xs);
-  font-weight: 700;
-  border-radius: 999px;
-}
-
-.pastille--ok { color: var(--vert-fonce); background: #eef8f4; }
-.pastille--attente { color: var(--terre-cuite); background: #fdf1eb; }
+.mission__domaine { font-weight: 700; }
+.mission__motif { font-size: var(--t-sm); color: var(--texte-doux); }
+.mission__remede { font-size: var(--t-xs); color: var(--peda-remede-texte); }
 </style>

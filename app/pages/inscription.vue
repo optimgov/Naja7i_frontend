@@ -45,10 +45,10 @@ useHead({ title: t('inscription.titre') })
 
 <template>
   <div>
-    <h1>{{ t('inscription.titre') }}</h1>
+    <h1 class="titre-page">{{ t('inscription.titre') }}</h1>
     <p class="sous-titre">{{ t('inscription.sous_titre') }}</p>
 
-    <div v-if="erreurGenerale" class="alerte" role="alert">
+    <div v-if="erreurGenerale" class="alerte alerte--systeme" role="alert">
       {{ erreurGenerale.message }}
       <span v-if="erreurGenerale.requestId" class="alerte__reference">
         {{ t('errors.reference') }} {{ erreurGenerale.requestId }}
@@ -104,7 +104,7 @@ useHead({ title: t('inscription.titre') })
         <legend class="champ__label">{{ t('inscription.actes_legende') }}</legend>
 
         <label class="case">
-          <input v-model="form.terms_accepted" type="checkbox">
+          <input v-model="form.terms_accepted" type="checkbox" class="case__coche">
           <span>
             {{ t('inscription.cgu') }}
             <a :href="`/${locale}/conditions`" target="_blank">{{ t('inscription.cgu_lien') }}</a>
@@ -113,7 +113,7 @@ useHead({ title: t('inscription.titre') })
         <span v-if="erreurs.terms_accepted" class="champ__erreur">{{ erreurs.terms_accepted }}</span>
 
         <label class="case">
-          <input v-model="form.privacy_notice_acknowledged" type="checkbox">
+          <input v-model="form.privacy_notice_acknowledged" type="checkbox" class="case__coche">
           <span>
             {{ t('inscription.confidentialite') }}
             <a :href="`/${locale}/confidentialite`" target="_blank">{{ t('inscription.confidentialite_lien') }}</a>
@@ -124,13 +124,13 @@ useHead({ title: t('inscription.titre') })
         </span>
 
         <label class="case">
-          <input v-model="form.marketing_granted" type="checkbox">
+          <input v-model="form.marketing_granted" type="checkbox" class="case__coche">
           <span>{{ t('inscription.rappels') }}</span>
         </label>
         <span class="champ__aide">{{ t('inscription.rappels_aide') }}</span>
       </fieldset>
 
-      <button type="submit" class="bouton" :disabled="envoi">
+      <button type="submit" class="btn btn--bloc" :disabled="envoi">
         {{ envoi ? t('inscription.envoi') : t('inscription.action') }}
       </button>
     </form>
@@ -144,27 +144,27 @@ useHead({ title: t('inscription.titre') })
 
 <style scoped>
 .sous-titre {
-  margin-block-end: var(--espace-4);
+  margin-block-end: var(--e-5);
   color: var(--texte-doux);
-  font-size: var(--taille-s);
+  font-size: var(--t-s);
 }
 
 .actes {
-  padding: var(--espace-3);
-  margin-block: var(--espace-3);
+  padding: var(--e-3);
+  margin-block: var(--e-3);
   margin-inline: 0;
   border: 1px solid var(--bordure);
-  border-radius: var(--rayon);
+  border-radius: var(--r-s);
 }
 
 .actes legend {
-  padding-inline: var(--espace-1);
-  margin-inline-start: calc(-1 * var(--espace-1));
+  padding-inline: var(--e-1);
+  margin-inline-start: calc(-1 * var(--e-1));
 }
 
 .bascule-compte {
-  margin-block-start: var(--espace-4);
-  font-size: var(--taille-s);
+  margin-block-start: var(--e-5);
+  font-size: var(--t-s);
   text-align: center;
   color: var(--texte-doux);
 }
