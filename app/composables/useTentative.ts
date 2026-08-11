@@ -64,6 +64,23 @@ interface Avancement {
   seconds_remaining?: number | null
 }
 
+/**
+ * Ce que le serveur dit d'une série d'ENTRAÎNEMENT en la servant.
+ *
+ * `short_of_scope` est le champ qui compte. Le serveur sert parfois moins que
+ * demandé quand le périmètre est mince — il ne complète JAMAIS hors périmètre,
+ * la série est simplement plus courte. Taire l'écart ferait croire au candidat
+ * qu'il a reçu une série complète, et fausserait sa lecture du résultat.
+ */
+export interface MetaEntrainement {
+  requested: number
+  served: number
+  short_of_scope: boolean
+  available_in_scope: number
+  /** Questions déjà réussies, resservies faute de vivier neuf. */
+  already_mastered_reused: number
+}
+
 const CLE_IDEMPOTENCE = 'naja7i.idempotence.diagnostic'
 
 export function useTentative() {
@@ -123,8 +140,8 @@ export function useTentative() {
    * tentatives. Elle vit dans `sessionStorage` : deux onglets sont deux
    * intentions distinctes, un rechargement est la même.
    */
-  function cleIdempotence(codeEpreuve: string): string {
-    const cle = `${CLE_IDEMPOTENCE}.${codeEpreuve}`
+  function cleIdempotence(portee: string): string {
+    const cle = `${CLE_IDEMPOTENCE}.${portee}`
     if (import.meta.server) return cle
 
     try {
@@ -161,6 +178,49 @@ export function useTentative() {
       tentative.value = reponse.data
       ancrerTemps(reponse.data.seconds_remaining)
       return reponse.data
+    } catch (e: unknown) {
+      if (e instanceof ApiRequestError) erreur.value = e
+      throw e
+    } finally {
+      chargement.value = false
+    }
+  }
+
+  /**
+   * Ouvre une série d'ENTRAÎNEMENT ciblé.
+   *
+   * Même patron que `ouvrir` — clé d'idempotence, le serveur tranche entre
+   * création et reprise — à deux différences près :
+   *
+   *  - un domaine peut être visé (`node_uuid`), ou laissé au serveur, qui le
+   *    choisit alors d'après l'ordonnance ;
+   *  - la réponse porte un `meta` que l'appelant DOIT montrer quand
+   *    `short_of_scope` est vrai. Il est donc rendu, pas avalé.
+   *
+   * La clé est distincte de celle du diagnostic : rejouer la clé d'un
+   * diagnostic pour ouvrir un entraînement est refusé par le serveur depuis
+   * l'empreinte d'idempotence, et ce serait de toute façon une autre intention.
+   */
+  async function ouvrirEntrainement(
+    codeEpreuve: string,
+    options: { nodeUuid?: string | null; total?: number } = {},
+  ): Promise<{ tentative: Tentative; meta: MetaEntrainement }> {
+    chargement.value = true
+    erreur.value = null
+
+    const corps: Record<string, unknown> = {}
+    if (options.nodeUuid) corps.node_uuid = options.nodeUuid
+    if (options.total !== undefined) corps.total = options.total
+
+    try {
+      const reponse = await api.post<{ data: Tentative; meta: MetaEntrainement }>(
+        `/me/training/${encodeURIComponent(codeEpreuve)}`,
+        corps,
+        { 'Idempotency-Key': cleIdempotence(`entrainement.${codeEpreuve}.${options.nodeUuid ?? 'auto'}`) },
+      )
+      tentative.value = reponse.data
+      ancrerTemps(reponse.data.seconds_remaining)
+      return { tentative: reponse.data, meta: reponse.meta }
     } catch (e: unknown) {
       if (e instanceof ApiRequestError) erreur.value = e
       throw e
@@ -273,6 +333,7 @@ export function useTentative() {
     secondesRestantes,
     tempsEcoule,
     ouvrir,
+    ouvrirEntrainement,
     charger,
     repondre,
     soumettre,

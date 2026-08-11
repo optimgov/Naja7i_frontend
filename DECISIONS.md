@@ -454,3 +454,68 @@ nombre, pas après.
 
 **Justification.** Un avertissement placé sous le résultat arrive trop tard : le
 nombre a déjà été lu comme une note. L'ordre est la moitié du message.
+
+## FRONT-4 — E7, l'entraînement ciblé
+
+## D-F24 — Les domaines proposés SONT les lignes de l'ordonnance
+
+**Décision.** E7 n'appelle pas la maîtrise pour composer sa propre liste de
+domaines : il affiche `GET me/plan`, dans l'ordre servi, avec le motif de chaque
+ligne.
+
+**Justification.** Recomposer une liste créerait un second classement, qui
+finirait par diverger de celui de l'ordonnance — et le candidat verrait deux
+priorités différentes pour la même épreuve. Afficher le motif à côté de chaque
+domaine ferme aussi la boucle que le lot vise : l'ordonnance disait quoi
+réviser, elle devient cliquable sans rien réinterpréter.
+
+## D-F25 — `short_of_scope` transmis par l'URL, pas par un état partagé
+
+**Contexte.** La règle 3 exige de montrer que la série est plus courte que
+demandée. L'information vient du `meta` de l'ouverture (E7), l'écran qui doit
+l'afficher est la passation (E3).
+
+**Décision.** Trois paramètres d'URL — `demandees`, `servies`, `resservies`.
+
+**Justification.** La passation est atteignable par son adresse et doit
+survivre à un rechargement : c'est acquis depuis FRONT-3 et vérifié par la
+reprise multi-appareil. Un état en mémoire disparaîtrait au premier F5, et le
+candidat verrait six questions sans savoir qu'il en avait demandé quinze —
+exactement ce que la règle interdit. L'URL, elle, se recharge et se partage.
+
+**Corollaire.** Le bandeau paraît AVANT la première question. Une série plus
+courte qu'annoncée se lit autrement si on l'apprend à la fin.
+
+## D-F26 — La clé d'idempotence est portée par une PORTÉE, pas par l'épreuve
+
+**Constat.** `cleIdempotence(codeEpreuve)` aurait donné la même clé au
+diagnostic et à l'entraînement de la même épreuve. Le backend refuse désormais
+ce rejeu (empreinte d'idempotence, migration `000400`), mais le refus serait
+survenu à l'usage plutôt qu'à la conception.
+
+**Décision.** La portée devient `entrainement.{épreuve}.{domaine ou 'auto'}` —
+deux domaines visés sont deux intentions distinctes, et méritent deux clés.
+
+## D-F27 — `dir="auto"` marqué par `data-domaine`
+
+**Constat, par la recette.** Le contrôle « toute chaîne d'API porte
+`dir="auto"` » signalait un manquant sur E7. Vérifié : c'était « Laisser Naja7i
+choisir », une chaîne TRADUITE, déjà dans la langue de la page. Les dix noms de
+domaine servis par l'API le portaient tous.
+
+**Décision.** Les choix dont le libellé vient de l'API portent `data-domaine`.
+La recette ne contrôle qu'eux, et vérifie en plus qu'il y en a — un test qui
+passe sur zéro élément ne prouve rien.
+
+**Encore la même leçon.** Troisième fois qu'un test accuse du code juste
+(cf. D-F21). Le réflexe est acquis : vérifier ce que la recette mesure avant de
+corriger ce qu'elle désigne.
+
+## D-F28 — `.champ__aide` était inline
+
+**Constat.** Le premier champ étroit du produit — le nombre de questions — a
+collé son aide « 5 – 40 » contre la saisie. `.champ__aide` est un `<span>` sans
+`display: block` ; tant que les champs occupaient toute la largeur, il passait à
+la ligne de lui-même et l'omission ne se voyait pas.
+
+**Décision.** `display: block` dans `commun.css`. Vu sur capture, pas déduit.

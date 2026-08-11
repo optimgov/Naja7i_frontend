@@ -280,5 +280,22 @@
     "erreurs_certitude": "Erreurs avec certitude : {n}",
     "hasard": "Réussites au hasard : {n}",
     "aucun": "Aucun domaine mesuré pour l’instant."
+  },
+  "entrainement": {
+    "oeil": "Entraînement",
+    "titre": "Entraînement ciblé",
+    "intro": "Une série courte sur un point faible. Elle ne compte pas comme un diagnostic : les questions visent ce qui manque, pas l’ensemble de l’épreuve.",
+    "domaine": "Domaine à travailler",
+    "domaine_auto": "Laisser Naja7i choisir",
+    "domaine_auto_aide": "D’après votre ordonnance.",
+    "nombre": "Nombre de questions",
+    "lancer": "Lancer l’entraînement",
+    "lancement": "Ouverture…",
+    "perimetre_vide": "Aucun domaine à travailler pour l’instant sur cette épreuve.",
+    "perimetre_etroit": "Le périmètre est trop mince pour une série utile : {available} question(s) disponible(s), {minimum} au minimum.",
+    "court_titre": "Série plus courte que demandée",
+    "court_texte": "{served} questions servies sur {requested} demandées — c’est tout ce que le périmètre contient. La série n’est jamais complétée hors du domaine visé.",
+    "resservies": "Dont {n} déjà réussies, resservies faute de questions neuves.",
+    "pas_une_note": "Série d’entraînement : le résultat n’est pas représentatif du concours."
   }
 }
