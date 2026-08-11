@@ -15,9 +15,9 @@ const { t } = useI18n()
     <span class="carte__puce">
       {{ disponibilite === 'open' ? t('catalogue.ouvert') : t('catalogue.en_preparation') }}
     </span>
-    <h3 class="carte__titre">{{ titre }}</h3>
-    <p v-if="meta" class="carte__meta">{{ meta }}</p>
-    <p v-if="texte" class="carte__texte">{{ texte }}</p>
+    <h3 class="carte__titre" dir="auto">{{ titre }}</h3>
+    <p v-if="meta" class="carte__meta" dir="auto">{{ meta }}</p>
+    <p v-if="texte" class="carte__texte" dir="auto">{{ texte }}</p>
   </NuxtLink>
 </template>
 
@@ -50,6 +50,6 @@ const { t } = useI18n()
 .carte[data-etat="closed"] .carte__puce { background: var(--sable-100); color: var(--encre-700); }
 
 .carte__titre { font-size: var(--t-lg); margin-block-end: 6px; }
-.carte__meta { font-size: var(--t-xs); color: var(--texte-doux); font-family: var(--mono); margin-block-end: 6px; }
+.carte__meta { font-size: var(--t-xs); color: var(--texte-doux); margin-block-end: 6px; }
 .carte__texte { font-size: var(--t-sm); color: var(--texte-doux); }
 </style>

@@ -13,7 +13,7 @@ defineProps<{
   coefficient: number | null
   duree: number | null
   langues: string[] | null
-  domaines: Array<{ code: string; name: string; weight_percent: number }>
+  domaines: Array<{ code: string; name: string; weight_percent: number | null }>
 }>()
 
 const { t } = useI18n()
@@ -25,19 +25,19 @@ const { t } = useI18n()
       <b>{{ coefficient ?? '—' }}</b>
       <span>{{ t('catalogue.coefficient') }}</span>
     </p>
-    <h3 class="epreuve__titre">{{ nom }}</h3>
+    <h3 class="epreuve__titre" dir="auto">{{ nom }}</h3>
     <p class="epreuve__meta">
-      <span v-if="duree">{{ duree }} min</span>
+      <span v-if="duree">{{ t('catalogue.duree_minutes', { n: duree }) }}</span>
       <span v-if="langues?.length">· {{ langues.join(' / ') }}</span>
     </p>
 
     <div v-for="domaine in domaines" :key="domaine.code" class="domaine">
       <span class="domaine__ligne">
-        <span>{{ domaine.name }}</span>
-        <b>{{ domaine.weight_percent }} %</b>
+        <span dir="auto">{{ domaine.name }}</span>
+        <b>{{ domaine.weight_percent }} %</b>
       </span>
       <span class="jauge">
-        <span :style="{ inlineSize: `${domaine.weight_percent}%` }" />
+        <span :style="{ inlineSize: `${domaine.weight_percent ?? 0}%` }" />
       </span>
     </div>
   </article>
@@ -54,7 +54,7 @@ const { t } = useI18n()
 .epreuve__coef b { font-size: var(--t-2xl); font-weight: 800; color: var(--vert-700); letter-spacing: -.04em; }
 .epreuve__coef span { font-size: var(--t-xs); font-weight: 700; color: var(--texte-doux); text-transform: uppercase; letter-spacing: .07em; }
 .epreuve__titre { font-size: var(--t-md); margin-block-end: var(--e-2); }
-.epreuve__meta { display: flex; gap: 6px; font-size: var(--t-xs); color: var(--texte-doux); font-family: var(--mono); margin-block-end: var(--e-3); }
+.epreuve__meta { display: flex; gap: 6px; font-size: var(--t-xs); color: var(--texte-doux); margin-block-end: var(--e-3); }
 
 .domaine { display: grid; gap: 3px; margin-block-end: var(--e-2); }
 .domaine__ligne { display: flex; justify-content: space-between; gap: 10px; font-size: var(--t-sm); }
