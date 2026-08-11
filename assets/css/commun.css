@@ -403,6 +403,61 @@
   opacity: 0.75;
 }
 
+/* --- Justification et autopsie — FRONT-3 ------------------------------ *
+ *
+ * Deux choses différentes, qui ne doivent jamais se lire pareil :
+ *
+ *   .justification — POURQUOI une option est fausse. Fait éditorial, toujours
+ *                    servi, jamais conditionné par le quota.
+ *   .autopsie      — pourquoi le candidat a PROBABLEMENT choisi celle-là.
+ *                    Hypothèse, soumise au quota (fiches F03 et F04).
+ *
+ * LA MENTION « HYPOTHÈSE » VIENT D'ICI, PAS DE LA RÉDACTION
+ *
+ * `::after` l'ajoute au niveau du CSS. Aucun contenu futur — traduction,
+ * reformulation, texte servi par l'API — ne peut donc présenter une cause comme
+ * un verdict : la mention ne dépend d'aucune chaîne. C'est la règle 6 du lot,
+ * et c'est aussi ce que la fiche F03 exige au titre de « elle n'affirme pas ».
+ *
+ * Le mot est traduit par la direction du document plutôt que par i18n —
+ * précisément parce qu'il ne doit PAS passer par les fichiers de traduction,
+ * où quelqu'un pourrait un jour le vider.
+ * ---------------------------------------------------------------------- */
+
+.justification {
+  margin-block: var(--e-2) 0;
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  color: var(--texte-doux);
+}
+
+.justification--globale {
+  padding: var(--e-3);
+  background: var(--surface-douce);
+  border-radius: var(--r);
+}
+
+.autopsie {
+  margin-block: var(--e-2) 0;
+  font-size: var(--t-sm);
+}
+
+.autopsie__hypothese {
+  color: var(--peda-faux-texte);
+  font-weight: 600;
+}
+
+.autopsie__hypothese::after {
+  content: ' · hypothèse';
+  font-weight: 400;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+[dir='rtl'] .autopsie__hypothese::after {
+  content: ' · فرضية';
+}
+
 /* --- Zone d'examen — REPRIS de composants-v3.css --------------------- *
  *
  * Seconde serrure sur la règle 1 du FRONT-3 : la passation ne connaît jamais

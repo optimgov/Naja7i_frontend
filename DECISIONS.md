@@ -358,3 +358,99 @@ et `-texte`.
 **Ce que ça confirme.** Un écran jamais rendu avec ses vraies données n'est pas
 un écran vérifié. Trois défauts de contraste ont attendu que la banque existe
 pour devenir visibles.
+
+## FRONT-3 — chantier 3
+
+## D-F18 — `--cookies` ajouté à `auditer.mjs` : D-F04 renversée, et pourquoi
+
+**Ce que disait D-F04.** Ne pas modifier les scripts de
+`docs/design/ui-v3/scripts/`, livrés par la conception : les patcher ferait
+diverger le dépôt de sa référence.
+
+**Ce qui a changé.** L'arrêt C exige l'audit des six écrans de la boucle. Ils
+sont derrière une session ; `auditer.mjs` ne pose aucun cookie et les mesurerait
+redirigés vers la connexion — six fois le même formulaire.
+
+**Les deux options, et leur coût.** Réécrire la sonde dans la recette :
+deux cents lignes de mesure dupliquées, qui divergeront au premier correctif
+appliqué d'un seul côté. Ou ajouter une option de douze lignes au script.
+
+**Décision.** `--cookies <fichier.json>`, plus `newContext` à la place de
+`newPage` pour pouvoir les poser. Aucune règle de mesure n'est touchée.
+**À remonter à la conception** pour reprise amont.
+
+**Ce que ça dit de D-F04.** Elle n'était pas fausse — elle était juste pour son
+périmètre. Une décision se réexamine quand ce qu'elle protégeait coûte plus que
+ce qu'elle évite.
+
+## D-F19 — La béquille de D-F15 retirée : l'index des tentatives existe
+
+**Constat.** Pendant le chantier, la session backend a livré
+`GET me/attempts` (commit « Index des tentatives : la reprise multi-appareil
+cesse d'être une béquille »). Deux migrations manquaient encore —
+`empreinte_d_idempotence` et `derniere_activite_de_la_tentative` — lues puis
+exécutées, l'endpoint répond.
+
+**Décision.** `useSuivi` supprimé, remplacé par `useParcours`. Le tableau de
+bord demande au serveur ce que le candidat a fait.
+
+**Pourquoi ça compte.** Une trace de navigateur ne suit pas le candidat d'un
+appareil à l'autre : ouvrir le tableau de bord sur un téléphone après un
+diagnostic passé sur un poste affichait un espace vide. Le nom du commit backend
+dit la même chose que D-F15 : c'était une béquille.
+
+## D-F20 — L'amorçage CSRF était hors de la gestion d'erreur
+
+**Constat, par la recette.** Hors connexion, une réponse de passation
+n'atteignait jamais la file d'envoi. `ensureCsrf()` était appelé AVANT le `try`
+de `call()` : sa panne remontait en `FetchError` brute, pas en
+`ApiRequestError`. L'appelant ne la reconnaissait pas et la relançait — le
+travail du candidat était perdu, très exactement ce que la file existe pour
+empêcher.
+
+Le cas n'est pas rare : `csrfReady` est un drapeau de module, remis à zéro à
+chaque rechargement. Recharger puis perdre le réseau suffit.
+
+**Décision.** L'amorçage entre dans le `try` et sa panne se déclare
+`NETWORK_ERROR` — ne pas pouvoir joindre le cookie CSRF, c'est ne pas pouvoir
+joindre le serveur.
+
+## D-F21 — Deux tests de recette étaient faux, et accusaient du code juste
+
+**404 d'une tentative étrangère.** Le test refusait tout message contenant
+« exist » — donc « Cette ressource n'existe pas », qui est la formulation
+juste. Ce qu'il faut chercher est un AVEU D'EXISTENCE (« vous n'y avez pas
+droit », « appartient à un autre compte ») qui reconstituerait un 403 en
+français.
+
+**Score nul.** Le test refusait « 0 % » n'importe où dans la page. Or un domaine
+mesuré sur six réponses et raté six fois vaut bien 0 %, et le taire serait un
+autre mensonge. La règle interdit de rendre un score ABSENT comme un zéro. Le
+test compare désormais l'écran à la source : autant de pourcentages que de
+scores non nuls, autant de phrases que de scores nuls, et aucun domaine ne
+porte les deux.
+
+**La leçon, symétrique de celle du D-F11.** Une recette qui échoue n'a pas
+toujours raison. Elle est un artefact comme un autre, et son verdict se vérifie
+à la source avant de corriger le code qu'elle accuse.
+
+## D-F22 — Compteurs formulés sans accord de nombre
+
+**Constat.** « 1 erreurs avec certitude », « Fondé sur 1 réponses » : faute de
+français visible à l'écran.
+
+**Décision.** Tournure « Libellé : {n} » — « Erreurs avec certitude : 3 ».
+
+**Justification.** L'arabe compte six formes plurielles et vue-i18n ne les
+tranche pas seul : une règle approximative produit une faute à chaque affichage.
+La tournure neutre n'en produit aucune, dans les deux langues. Même choix qu'au
+chantier 1 pour la file d'envoi.
+
+## D-F23 — Règle 9bis tenue à deux endroits
+
+**Décision.** `attempt.kind` est lu avant tout score, sur E1 (tableau de bord)
+comme sur E4 (correction). Un résultat d'entraînement porte sa mention AVANT le
+nombre, pas après.
+
+**Justification.** Un avertissement placé sous le résultat arrive trop tard : le
+nombre a déjà été lu comme une note. L'ordre est la moitié du message.

@@ -23,7 +23,6 @@ const {
   tentative, chargement, charger, repondre, soumettre,
   secondesRestantes, demarrerBattement,
 } = useTentative()
-const { noter } = useSuivi()
 
 const uuid = computed(() => String(route.params.uuid ?? ''))
 
@@ -47,11 +46,6 @@ await charger(uuid.value).catch((e: unknown) => {
 })
 
 if (tentative.value) {
-  noter({
-    codeEpreuve: tentative.value.exam.code,
-    nomEpreuve: tentative.value.exam.name,
-    derniereTentative: tentative.value.uuid,
-  })
 }
 
 onMounted(() => demarrerBattement())

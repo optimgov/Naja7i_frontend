@@ -56,8 +56,16 @@ export function useMaitrise() {
     )
   }
 
-  /** Un domaine sur lequel on ne peut rien conclure — pas un domaine à zéro. */
-  function sansConclusion(d: DomaineDeMaitrise): boolean {
+  /**
+   * Un domaine sur lequel on ne peut rien conclure — pas un domaine à zéro.
+   *
+   * La signature ne demande que `score` : l'ordonnance joint le même état de
+   * maîtrise à ses lignes, et la règle « null n'est pas zéro » doit s'y
+   * appliquer à l'identique. Exiger le type complet aurait poussé à recopier le
+   * test dans l'autre écran — et c'est ainsi qu'un `?? 0` finit par apparaître
+   * d'un seul côté.
+   */
+  function sansConclusion(d: { score: number | null }): boolean {
     return d.score === null
   }
 
@@ -66,7 +74,7 @@ export function useMaitrise() {
    * démontrée. Le motif fait autorité côté ordonnance ; ici on le déduit de
    * l'absence totale de réponse, seule information dont la maîtrise dispose.
    */
-  function jamaisEvalue(d: DomaineDeMaitrise): boolean {
+  function jamaisEvalue(d: { answered_count: number }): boolean {
     return d.answered_count === 0
   }
 

@@ -124,7 +124,34 @@ export function useApi() {
     const method = (options.method ?? 'GET').toUpperCase()
     const writes = method !== 'GET' && method !== 'HEAD'
 
-    if (writes) await ensureCsrf()
+    /*
+     * L'amorçage CSRF est DANS la gestion d'erreur, pas avant.
+     *
+     * Il était placé au-dessus du `try`, et sa panne remontait donc telle
+     * quelle — une `FetchError` brute, pas une `ApiRequestError`. Conséquence
+     * mesurée par la recette : hors connexion, une réponse de passation
+     * n'atteignait jamais la file d'envoi. L'appelant ne reconnaissait pas
+     * l'erreur, la relançait, et le travail du candidat était perdu — très
+     * exactement ce que la file existe pour empêcher.
+     *
+     * Le cas est fréquent : `csrfReady` est un drapeau de module, remis à zéro
+     * à chaque rechargement de page. Il suffit de recharger puis de perdre le
+     * réseau pour tomber dedans.
+     *
+     * Ne pas joindre le cookie CSRF veut dire qu'on n'a pas pu atteindre le
+     * serveur : c'est une panne de réseau, et elle se déclare comme telle.
+     */
+    if (writes) {
+      try {
+        await ensureCsrf()
+      } catch {
+        throw new ApiRequestError(0, {
+          code: 'NETWORK_ERROR',
+          message: $i18n.t('errors.network'),
+          request_id: '',
+        })
+      }
+    }
 
     /*
      * Les en-têtes de l'appelant sont posés EN PREMIER, puis recouverts par les

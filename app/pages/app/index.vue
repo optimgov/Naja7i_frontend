@@ -2,26 +2,28 @@
 /**
  * E1 — tableau de bord : épreuve suivie, dernier diagnostic, Mission du jour.
  *
- * D'OÙ VIENT « L'ÉPREUVE SUIVIE »
- *
- * De nulle part côté serveur : le contrat n'expose ni profil du candidat
- * (PAS-5, à venir) ni index des tentatives — seulement
- * `GET me/attempts/{uuid}`, qui suppose de connaître l'identifiant. L'écran
- * s'appuie donc sur la trace locale de `useSuivi`, puis RECHARGE tout depuis
- * l'API. La trace ne sert qu'à savoir quoi demander ; aucun chiffre n'en sort.
- *
- * Sans trace, l'écran ne suppose rien : il propose de choisir une épreuve.
+ * L'épreuve suivie vient de `GET me/attempts`, pas d'une trace de navigateur :
+ * le serveur sait ce que le candidat a fait, et il répond la même chose sur
+ * tous ses appareils. La version précédente s'appuyait sur `localStorage`
+ * faute d'index — un tableau de bord ouvert sur un téléphone après un
+ * diagnostic passé sur un poste s'affichait vide.
  */
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t } = useI18n()
 const localePath = useLocalePath()
-const { relire, suivi } = useSuivi()
+const { parcours, enCours, dernierePassee, estEntrainement } = useParcours()
 const { ordonnance } = useOrdonnance()
 
-onMounted(() => relire())
+const { data: liste } = await parcours()
 
-const code = computed(() => suivi.value?.codeEpreuve ?? '')
+const tentatives = computed(() => liste.value?.data ?? [])
+const ouverte = computed(() => enCours(tentatives.value))
+const derniere = computed(() => dernierePassee(tentatives.value))
+
+/** L'épreuve suivie est celle de la série en cours, sinon de la dernière passée. */
+const epreuve = computed(() => ouverte.value?.exam ?? derniere.value?.exam ?? null)
+const code = computed(() => epreuve.value?.code ?? '')
 
 /**
  * Mission du jour : les trois premières lignes de l'ordonnance. On demande 3,
@@ -46,30 +48,56 @@ useHead({ title: t('app.titre') })
   <div class="enveloppe">
     <h1 class="titre-page">{{ t('app.titre') }}</h1>
 
-    <!-- Aucune épreuve suivie : on ne suppose rien, on ouvre le catalogue. -->
-    <div v-if="!suivi" class="alerte alerte--info" role="status">
+    <div v-if="!epreuve" class="alerte alerte--info" role="status">
       <span>{{ t('app.aucun_diagnostic') }}</span>
     </div>
 
     <template v-else>
       <section class="carte-epreuve">
         <p class="oeil">{{ t('app.epreuve_suivie') }}</p>
-        <h2 class="carte-epreuve__nom" dir="auto">{{ suivi.nomEpreuve }}</h2>
+        <h2 class="carte-epreuve__nom" dir="auto">{{ epreuve.name }}</h2>
+        <p v-if="epreuve.coefficient !== null" class="carte-epreuve__coef">
+          {{ t('app.coefficient') }} {{ epreuve.coefficient }}
+        </p>
+
+        <!-- Règle 9bis : le genre de la série est lu AVANT d'annoncer un score.
+             Un résultat d'entraînement est annoncé comme tel, pas comme une
+             note d'épreuve. -->
+        <p v-if="derniere" class="dernier">
+          <span class="dernier__libelle">{{ t('app.dernier_diagnostic') }}</span>
+          <span v-if="estEntrainement(derniere)" class="dernier__genre">
+            {{ t('correction.entrainement_avertissement') }}
+          </span>
+          <NuxtLink
+            class="lien-second"
+            :to="localePath(`/app/tentative/${derniere.uuid}/correction`)"
+          >
+            {{ t('correction.titre') }}
+          </NuxtLink>
+        </p>
 
         <div class="carte-epreuve__actes">
           <NuxtLink
-            v-if="suivi.derniereTentative"
+            v-if="ouverte"
             class="btn"
-            :to="localePath(`/app/tentative/${suivi.derniereTentative}`)"
+            :to="localePath(`/app/tentative/${ouverte.uuid}`)"
           >
             {{ t('app.reprendre') }}
           </NuxtLink>
 
-          <NuxtLink class="lien-second" :to="localePath(`/app/maitrise/${suivi.codeEpreuve}`)">
+          <NuxtLink
+            v-else
+            class="btn"
+            :to="localePath(`/app/diagnostic/${epreuve.code}`)"
+          >
+            {{ t('diagnostic.lancer') }}
+          </NuxtLink>
+
+          <NuxtLink class="lien-second" :to="localePath(`/app/maitrise/${epreuve.code}`)">
             {{ t('app.voir_maitrise') }}
           </NuxtLink>
 
-          <NuxtLink class="lien-second" :to="localePath(`/app/ordonnance/${suivi.codeEpreuve}`)">
+          <NuxtLink class="lien-second" :to="localePath(`/app/ordonnance/${epreuve.code}`)">
             {{ t('app.voir_ordonnance') }}
           </NuxtLink>
         </div>
@@ -106,11 +134,20 @@ useHead({ title: t('app.titre') })
   border-radius: var(--r);
 }
 
-.carte-epreuve__nom {
+.carte-epreuve__nom { margin-block: 0 var(--e-1); font-size: var(--t-xl); font-weight: 800; }
+.carte-epreuve__coef { margin-block: 0 var(--e-4); font-size: var(--t-xs); color: var(--texte-doux); }
+
+.dernier {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-3);
+  align-items: baseline;
   margin-block: 0 var(--e-4);
-  font-size: var(--t-xl);
-  font-weight: 800;
+  font-size: var(--t-sm);
 }
+
+.dernier__libelle { font-weight: 700; }
+.dernier__genre { color: var(--peda-remede-texte); }
 
 .carte-epreuve__actes {
   display: flex;
@@ -119,31 +156,15 @@ useHead({ title: t('app.titre') })
   align-items: center;
 }
 
-.mission__titre {
-  margin-block: 0 var(--e-3);
-  font-size: var(--t-lg);
-  font-weight: 800;
-}
+.mission__titre { margin-block: 0 var(--e-3); font-size: var(--t-lg); font-weight: 800; }
 
-.mission__vide {
-  max-inline-size: 60ch;
-  font-size: var(--t-sm);
-  color: var(--texte-doux);
-}
+.mission__vide { max-inline-size: 60ch; font-size: var(--t-sm); color: var(--texte-doux); }
 
-.mission__liste {
-  display: grid;
-  gap: var(--e-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
+.mission__liste { display: grid; gap: var(--e-3); margin: 0; padding: 0; list-style: none; }
 
 /* Trois actions, jamais quatre — propriété du composant, pas de l'appelant.
    Une mission qui en afficherait cinq cesserait d'être une mission. */
-.mission__liste > :nth-child(n + 4) {
-  display: none;
-}
+.mission__liste > :nth-child(n + 4) { display: none; }
 
 .mission__ligne {
   display: grid;
@@ -156,14 +177,6 @@ useHead({ title: t('app.titre') })
 }
 
 .mission__domaine { font-weight: 700; }
-
-.mission__motif {
-  font-size: var(--t-sm);
-  color: var(--texte-doux);
-}
-
-.mission__remede {
-  font-size: var(--t-xs);
-  color: var(--peda-remede-texte);
-}
+.mission__motif { font-size: var(--t-sm); color: var(--texte-doux); }
+.mission__remede { font-size: var(--t-xs); color: var(--peda-remede-texte); }
 </style>

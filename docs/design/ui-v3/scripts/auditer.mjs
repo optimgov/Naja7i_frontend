@@ -12,6 +12,7 @@
  *   --rtl "<sélecteur>" sélecteur du bouton de bascule de langue, s'il existe
  *   --sombre "<sél.>"   sélecteur du bouton de bascule de thème, s'il existe
  *   --json <chemin>     écrit le rapport brut en JSON
+ *   --cookies <chemin>  cookies Playwright (JSON) — pour un écran sous session
  *   --chromium <chemin> binaire (défaut : $CHROMIUM ou /opt/pw-browsers/chromium)
  *
  * Sortie : un rapport lisible, trié par gravité. Code de sortie 1 s'il reste
@@ -19,7 +20,7 @@
  */
 
 import { chromium } from 'playwright';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 // ---------------------------------------------------------------- arguments
@@ -38,6 +39,9 @@ const largeurs = opt('largeur', '1440,390').split(',').map(Number);
 const selRtl = opt('rtl', null);
 const selSombre = opt('sombre', null);
 const sortieJson = opt('json', null);
+// Cookies d'une session déjà ouverte. Sans eux, un écran protégé se mesure
+// redirigé vers la connexion — on auditerait six fois le même formulaire.
+const fichierCookies = opt('cookies', null);
 const executablePath = opt('chromium', process.env.CHROMIUM || '/opt/pw-browsers/chromium');
 
 const url = /^https?:/.test(cible) ? cible : 'file://' + resolve(cible);
@@ -213,12 +217,15 @@ function sonde() {
 
 // ------------------------------------------------------------ orchestration
 const navigateur = await chromium.launch({ executablePath });
+const cookies = fichierCookies ? JSON.parse(readFileSync(fichierCookies, 'utf8')) : null;
 const rapport = [];
 
 for (const largeur of largeurs) {
   for (const hash of hashs.length ? hashs : ['']) {
     for (const variante of ['clair-ltr', selSombre && 'sombre-ltr', selRtl && 'clair-rtl'].filter(Boolean)) {
-      const page = await navigateur.newPage({ viewport: { width: largeur, height: 900 } });
+      const contexte = await navigateur.newContext({ viewport: { width: largeur, height: 900 } });
+      if (cookies) await contexte.addCookies(cookies);
+      const page = await contexte.newPage();
       try {
         await page.goto(url + (hash ? '#' + hash : ''), { waitUntil: 'load' });
         await page.waitForTimeout(700);
@@ -231,6 +238,7 @@ for (const largeur of largeurs) {
         rapport.push({ ecran: hash || '(page)', largeur, variante, erreur: String(e.message || e) });
       } finally {
         await page.close();
+        await contexte.close();
       }
     }
   }

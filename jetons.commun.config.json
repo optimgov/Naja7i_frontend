@@ -26,6 +26,16 @@
       "id": "RED-03",
       "regex": "\\.alerte--succes::before\\s*\\{[^}]*content\\s*:",
       "message": "le succès annonce sa nature par un signe — sans quoi succès et erreur ne diffèrent que par la teinte"
+    },
+    {
+      "id": "RED-04",
+      "regex": "\\.autopsie__hypothese::after\\s*\\{[^}]*content\\s*:",
+      "message": "la cause est une hypothèse, et c'est le CSS qui le dit — jamais la rédaction (règle 6 du FRONT-3, fiche F03)"
+    },
+    {
+      "id": "RED-05",
+      "regex": "\\[dir='rtl'\\]\\s*\\.autopsie__hypothese::after\\s*\\{[^}]*content\\s*:",
+      "message": "la mention d'hypothèse existe aussi en arabe — sans quoi elle disparaît pour la moitié des candidats"
     }
   ],
 

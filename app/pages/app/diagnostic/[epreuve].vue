@@ -15,7 +15,6 @@ const route = useRoute()
 const localePath = useLocalePath()
 const { t } = useI18n()
 const { ouvrir } = useTentative()
-const { noter } = useSuivi()
 
 const codeEpreuve = computed(() => String(route.params.epreuve ?? ''))
 
@@ -32,11 +31,6 @@ async function lancer(): Promise<void> {
   try {
     const tentative = await ouvrir(codeEpreuve.value)
 
-    noter({
-      codeEpreuve: tentative.exam.code,
-      nomEpreuve: tentative.exam.name,
-      derniereTentative: tentative.uuid,
-    })
 
     await navigateTo(localePath(`/app/tentative/${tentative.uuid}`))
   } catch (e: unknown) {

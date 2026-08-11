@@ -54,6 +54,18 @@ const ECRANS = [
 ]
 
 /**
+ * Les six écrans de la boucle candidat. Ils exigent une session, donc des
+ * cookies : `auditer.mjs` n'en pose pas, et les visiter sans session mesurerait
+ * l'écran de connexion six fois. Ils sont audités par
+ * `scripts/recette-front3.mjs`, qui se connecte — et leur URL dépend d'une
+ * tentative réelle, qu'aucune liste statique ne peut connaître.
+ */
+const ECRANS_SOUS_SESSION = [
+  'E1 tableau de bord', 'E2 diagnostic', 'E3 passation',
+  'E4 correction', 'E5 maîtrise', 'E6 ordonnance',
+]
+
+/**
  * Sous-ensemble audité en intégration continue : les écrans dont le rendu ne
  * dépend d'AUCUNE donnée d'API.
  *
@@ -106,7 +118,10 @@ if (modeCi) {
 const binaire = chromium.executablePath()
 
 console.log(`# Audit de rendu — ${cibles.length} écran(s) sur ${base}`)
-console.log(`Largeurs : ${largeurs}${selSombre ? ` · bascule sombre : ${selSombre}` : ''}\n`)
+console.log(`Largeurs : ${largeurs}${selSombre ? ` · bascule sombre : ${selSombre}` : ''}`)
+console.log(
+  `Hors de cette passe, audités sous session par scripts/recette-front3.mjs : ${ECRANS_SOUS_SESSION.join(', ')}.\n`,
+)
 
 const echecs = []
 for (const [nom, chemin] of cibles) {
