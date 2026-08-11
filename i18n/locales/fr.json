@@ -78,5 +78,57 @@
   "errors": {
     "network": "La connexion au serveur a échoué. Vérifiez votre réseau et réessayez.",
     "reference": "Référence :"
+  },
+  "navigation": {
+    "aller_au_contenu": "Aller au contenu",
+    "principale": "Navigation principale",
+    "connexion": "Se connecter",
+    "mentions": "© {annee} Naja7i — préparation aux concours de la fonction publique marocaine."
+  },
+  "accueil": {
+    "oeil": "Concours de la fonction publique marocaine",
+    "titre": "Comprendre ses erreurs,<br>pas seulement les compter.",
+    "chapeau": "Chaque correction explique pourquoi la bonne réponse est juste, et pourquoi chaque autre option est fausse. C'est ce qui distingue une révision d'un score.",
+    "action_principale": "Voir une correction expliquée",
+    "action_seconde": "Parcourir les concours",
+    "chiffre_filieres": "Filières",
+    "chiffre_familles": "Familles de concours",
+    "chiffre_ouvertes": "Ouvertes à la préparation",
+    "assise_note": "Ces nombres viennent du catalogue publié, pas d'une promesse commerciale.",
+    "parcours_oeil": "Le parcours",
+    "parcours_titre": "Quatre étapes, dans cet ordre",
+    "etape_1_titre": "Situer son niveau",
+    "etape_1_texte": "Un diagnostic court établit ce qui est acquis et ce qui ne l'est pas, compétence par compétence.",
+    "etape_2_titre": "Comprendre chaque erreur",
+    "etape_2_texte": "Pour chaque question, la justification de la bonne réponse et la raison d'être de chaque option fausse.",
+    "etape_3_titre": "Travailler ce qui manque",
+    "etape_3_texte": "La révision suit le poids officiel des domaines, pas l'ordre du programme.",
+    "etape_4_titre": "Mesurer la progression",
+    "etape_4_texte": "Aucun score n'est affiché tant que les réponses sont trop peu nombreuses pour vouloir dire quelque chose.",
+    "portes_oeil": "Par où commencer",
+    "portes_titre": "Choisissez votre filière",
+    "seo_titre": "Naja7i — préparation aux concours de la fonction publique marocaine",
+    "seo_description": "Diagnostic, corrections expliquées et référentiel officiel des concours marocains. Chaque réponse fausse est justifiée, pas seulement comptée."
+  },
+  "catalogue": {
+    "concours": "Concours",
+    "accueil": "Accueil",
+    "titre_index": "Concours de la fonction publique",
+    "description_index": "Le référentiel officiel des concours, filière par filière. Les informations proviennent des descriptifs publiés par les autorités organisatrices.",
+    "fil_ariane": "Fil d'Ariane",
+    "n_familles": "{n} familles",
+    "specialites": "Spécialités",
+    "epreuves": "Épreuves",
+    "coefficient": "Coefficient",
+    "sessions": "Sessions",
+    "ecrit_le": "Épreuve écrite le",
+    "dates_non_confirmees": "Dates non confirmées",
+    "note_dates": "Les dates annoncées restent indicatives tant que l'autorité organisatrice ne les a pas confirmées.",
+    "note_sources": "Sources : descriptifs officiels des autorités organisatrices.",
+    "ouvert": "Ouvert",
+    "en_preparation": "En préparation",
+    "specialite_en_attente": "La préparation de cette spécialité n'est pas encore ouverte. Aucun diagnostic n'est proposé tant que les questions n'ont pas été validées.",
+    "voir_correction": "Voir une correction expliquée",
+    "introuvable": "Cette page n'existe pas ou n'est pas encore publiée."
   }
 }
