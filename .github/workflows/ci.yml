@@ -31,6 +31,17 @@ jobs:
       - name: Vérifier le typage
         run: npm run typecheck
 
+      # Le socle d'interface est vérifiable, pas seulement déclaratif : contrastes,
+      # présence des jetons dont dépend la zone publique, séparation de l'erreur
+      # système et de l'erreur pédagogique. Sort en code 1 sur échec.
+      - name: Vérifier les jetons de conception
+        run: node docs/design/ui-v3/valider-jetons.mjs
+
+      # Une clé traduite d'un seul côté affiche sa clé brute au lecteur de
+      # l'autre langue, et la compilation ne le voit pas.
+      - name: Vérifier les locales et les propriétés logiques
+        run: node scripts/verifier-locales.mjs
+
       - name: Compiler
         run: npm run build
         env:

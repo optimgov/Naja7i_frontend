@@ -1,0 +1,247 @@
+{
+  "css": "assets/css/tokens.css",
+  "themes": {
+    "clair": ":root",
+    "sombre": ":root[data-theme='sombre']"
+  },
+  "themeReference": "clair",
+  "seuils": {
+    "texte": 4.5,
+    "nonTexte": 3,
+    "dichromatie": 40,
+    "separation": 30,
+    "saturation": 24
+  },
+  "contrastes": [
+    {
+      "id": "CTR-01",
+      "fg": "--texte",
+      "bg": "--fond",
+      "type": "texte"
+    },
+    {
+      "id": "CTR-02",
+      "fg": "--texte-doux",
+      "bg": "--fond",
+      "type": "texte"
+    },
+    {
+      "id": "CTR-03",
+      "fg": "--texte-tenu",
+      "bg": "--fond",
+      "type": "texte",
+      "note": "placeholder et mentions"
+    },
+    {
+      "id": "CTR-04",
+      "fg": "--lien",
+      "bg": "--fond",
+      "type": "texte"
+    },
+    {
+      "id": "NTX-01",
+      "fg": "--bordure-forte",
+      "bg": "--surface",
+      "type": "nonTexte",
+      "note": "contour de champ de saisie (WCAG 1.4.11)"
+    },
+    {
+      "id": "NTX-02",
+      "fg": "--focus",
+      "bg": "--fond",
+      "type": "nonTexte",
+      "note": "anneau de focus"
+    },
+    {
+      "id": "NTX-03",
+      "fg": "--accent",
+      "bg": "--fond",
+      "type": "nonTexte",
+      "note": "aplat du bouton principal"
+    }
+  ],
+  "series": [],
+  "separations": [
+    {
+      "id": "SEP-01",
+      "a": "--sys-err",
+      "b": "--peda-faux",
+      "note": "l'erreur pédagogique ne se confond pas avec l'erreur système"
+    }
+  ],
+  "achromatiques": [],
+  "parite": {
+    "prefixes": [
+      "--fond",
+      "--surface",
+      "--texte",
+      "--bordure",
+      "--accent",
+      "--lien",
+      "--focus"
+    ],
+    "ignorer": []
+  },
+  "presence": [
+    {
+      "id": "PRE-01",
+      "jeton": "--e-2",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-02",
+      "jeton": "--e-3",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-03",
+      "jeton": "--e-4",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-04",
+      "jeton": "--e-5",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-05",
+      "jeton": "--e-6",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-06",
+      "jeton": "--encre-700",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-07",
+      "jeton": "--mono",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-08",
+      "jeton": "--r",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-09",
+      "jeton": "--sable-0",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-10",
+      "jeton": "--sable-100",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-11",
+      "jeton": "--sable-200",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-12",
+      "jeton": "--sable-300",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-13",
+      "jeton": "--sable-50",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-14",
+      "jeton": "--safran-100",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-15",
+      "jeton": "--safran-50",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-16",
+      "jeton": "--safran-800",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-17",
+      "jeton": "--t-2xl",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-18",
+      "jeton": "--t-4xl",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-19",
+      "jeton": "--t-lg",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-20",
+      "jeton": "--t-md",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-21",
+      "jeton": "--t-sm",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-22",
+      "jeton": "--t-xl",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-23",
+      "jeton": "--t-xs",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-24",
+      "jeton": "--terre-700",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-25",
+      "jeton": "--texte-doux",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-26",
+      "jeton": "--vert-50",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-27",
+      "jeton": "--vert-700",
+      "note": "employé par la zone publique (FRONT-2)"
+    },
+    {
+      "id": "PRE-28",
+      "jeton": "--vert-800",
+      "note": "employé par la zone publique (FRONT-2)"
+    }
+  ],
+  "interdits": [
+    {
+      "id": "RTL-01",
+      "regex": "(?:^|[\\s;{])(margin|padding|border)-(left|right)\\s*:",
+      "message": "propriété physique gauche/droite — utiliser les propriétés logiques pour que le RTL soit natif"
+    },
+    {
+      "id": "RTL-02",
+      "regex": "(?:^|[\\s;{])(text-align)\\s*:\\s*(left|right)\\b",
+      "message": "alignement physique — utiliser start/end pour que le RTL soit natif"
+    }
+  ],
+  "exigences": [
+    {
+      "id": "MOV-01",
+      "regex": "prefers-reduced-motion",
+      "message": "prise en charge de prefers-reduced-motion"
+    }
+  ],
+  "_note": "SEP-02 (aplats --sys-err-fond / --peda-faux-fond) a été RETIRÉE, non satisfaite : distance 3 pour un seuil de 30. La séparation de l'erreur système et de l'erreur pédagogique tient sur les couleurs d'avant-plan (SEP-01) mais pas sur leurs aplats. Baisser le seuil aurait fait valider le défaut par la CI. Question de conception, remontée au rapport FRONT-2."
+}
