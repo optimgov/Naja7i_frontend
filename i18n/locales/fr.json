@@ -87,7 +87,7 @@
   },
   "accueil": {
     "oeil": "Concours de la fonction publique marocaine",
-    "titre": "Comprendre ses erreurs,<br>pas seulement les compter.",
+    "titre": "Comprendre ses erreurs, pas seulement les compter.",
     "chapeau": "Chaque correction explique pourquoi la bonne réponse est juste, et pourquoi chaque autre option est fausse. C'est ce qui distingue une révision d'un score.",
     "action_principale": "Voir une correction expliquée",
     "action_seconde": "Parcourir les concours",
@@ -129,6 +129,17 @@
     "en_preparation": "En préparation",
     "specialite_en_attente": "La préparation de cette spécialité n'est pas encore ouverte. Aucun diagnostic n'est proposé tant que les questions n'ont pas été validées.",
     "voir_correction": "Voir une correction expliquée",
-    "introuvable": "Cette page n'existe pas ou n'est pas encore publiée."
+    "introuvable": "Cette page n'existe pas ou n'est pas encore publiée.",
+    "duree_minutes": "{n} min"
+  },
+  "causes": {
+    "confusion_notions": "Confusion entre deux notions voisines",
+    "lecture_enonce": "Lecture incomplète de l'énoncé",
+    "regle_mal_appliquee": "Règle connue mais mal appliquée",
+    "connaissance_absente": "Connaissance non acquise",
+    "source_perimee": "Référence à une source périmée",
+    "calcul": "Erreur de calcul",
+    "piege_formulation": "Piège de formulation",
+    "indetermine": "Cause à préciser"
   }
 }
