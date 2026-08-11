@@ -16,9 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # La version vit dans `.nvmrc`, elle n'est pas recopiée ici : deux
+      # chiffres à maintenir en parallèle finissent toujours par diverger, et
+      # c'est cette divergence qui laisse un lock écrit par un npm être
+      # installé par un autre. `node-version-file` lit le même fichier que le
+      # poste de développement.
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
           cache: npm
 
       - name: Installer les dépendances
