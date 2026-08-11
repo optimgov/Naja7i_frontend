@@ -27,9 +27,18 @@ useSeoCatalogue({
           <p class="heros__chapeau">{{ t('accueil.chapeau') }}</p>
 
           <div class="heros__actes">
-            <NuxtLink class="btn btn--grand" :to="localePath('/methode/correction')">
+            <!--
+              Ancre, pas route : `/methode/correction` n'existe pas et n'a
+              jamais existé — le bouton principal de l'accueil menait à un 404.
+              La correction expliquée qu'il promet est déjà sur la page, juste
+              à côté : c'est le bloc de démonstration. Un lien de fragment vers
+              une cible `tabindex="-1"` y amène le regard ET le focus clavier,
+              sans une ligne de JavaScript, et `scroll-behavior` est déjà neutralisé
+              sous `prefers-reduced-motion`.
+            -->
+            <a class="btn btn--grand" href="#demonstration">
               {{ t('accueil.action_principale') }}
-            </NuxtLink>
+            </a>
             <NuxtLink class="lien-second" :to="localePath('/concours')">
               {{ t('accueil.action_seconde') }}
             </NuxtLink>
@@ -48,7 +57,11 @@ useSeoCatalogue({
           <p v-if="chiffres" class="assise__note">{{ t('accueil.assise_note') }}</p>
         </div>
 
-        <ProofDemonstration />
+        <!-- `tabindex="-1"` rend la cible focusable par le lien de fragment sans
+             l'insérer dans l'ordre de tabulation. -->
+        <div id="demonstration" tabindex="-1" class="ancre-demonstration">
+          <ProofDemonstration />
+        </div>
       </div>
     </section>
 
@@ -86,17 +99,23 @@ useSeoCatalogue({
 </template>
 
 <style scoped>
-.heros { padding-block: var(--e-6) var(--e-5); background: var(--sable-50); border-block-end: 1px solid var(--sable-200); }
+.heros { padding-block: var(--e-6) var(--e-5); background: var(--fond); border-block-end: 1px solid var(--bordure); }
 .heros__grille { display: grid; gap: var(--e-5); align-items: start; }
 @media (min-width: 56rem) { .heros__grille { grid-template-columns: 1fr 1fr; gap: var(--e-6); } }
 .heros__titre {
   text-wrap: balance; font-size: var(--t-4xl); max-inline-size: 16ch; }
 .heros__titre :deep(em) { font-style: normal; color: var(--terre-700); }
-.heros__chapeau { margin-block: var(--e-3) var(--e-4); font-size: var(--t-lg); color: var(--encre-700); max-inline-size: 44ch; }
+.heros__chapeau { margin-block: var(--e-3) var(--e-4); font-size: var(--t-lg); color: var(--texte-doux); max-inline-size: 44ch; }
 .heros__actes { display: flex; align-items: center; gap: var(--e-4); flex-wrap: wrap; }
 
+/* Cible du lien de fragment. `scroll-margin` évite que l'en-tête collant ne
+   recouvre le haut du bloc à l'arrivée ; le contour de focus est celui du
+   socle, pas un contour propre — on ne double pas la règle. */
+.ancre-demonstration { scroll-margin-block-start: var(--e-6); }
+.ancre-demonstration:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
 .assise { display: flex; flex-wrap: wrap; gap: var(--e-4); margin-block-start: var(--e-5);
-  padding-block-start: var(--e-3); border-block-start: 1px solid var(--sable-300); }
+  padding-block-start: var(--e-3); border-block-start: 1px solid var(--bordure-forte); }
 .assise div { display: flex; flex-direction: column-reverse; }
 .assise dt { font-size: var(--t-sm); color: var(--texte-doux); }
 .assise dd { margin: 0; font-size: var(--t-xl); font-weight: 800; letter-spacing: -.03em; }
@@ -104,7 +123,7 @@ useSeoCatalogue({
 
 .etapes { display: grid; gap: var(--e-3); margin-block-start: var(--e-4); padding: 0; list-style: none; }
 @media (min-width: 48rem) { .etapes { grid-template-columns: repeat(4, 1fr); } }
-.etape { background: var(--sable-0); border: 1px solid var(--sable-200); border-radius: var(--r); padding: var(--e-4); }
+.etape { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r); padding: var(--e-4); }
 .etape__n { display: inline-flex; align-items: center; justify-content: center; inline-size: 26px; block-size: 26px;
   border-radius: 999px; background: var(--vert-700); color: #fff; font-size: var(--t-xs); font-weight: 800; margin-block-end: var(--e-2); }
 .etape__titre { font-size: var(--t-md); margin-block-end: 4px; }

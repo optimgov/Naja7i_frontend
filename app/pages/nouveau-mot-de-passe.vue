@@ -46,24 +46,24 @@ useHead({ title: t('nouveau.titre') })
 
 <template>
   <div>
-    <h1>{{ t('nouveau.titre') }}</h1>
+    <h1 class="titre-page">{{ t('nouveau.titre') }}</h1>
 
     <template v-if="reussi">
       <div class="alerte alerte--succes" role="status">{{ t('nouveau.reussi') }}</div>
-      <NuxtLink :to="localePath('/connexion')" class="bouton bouton--lien">
+      <NuxtLink :to="localePath('/connexion')" class="btn">
         {{ t('nouveau.se_connecter') }}
       </NuxtLink>
     </template>
 
     <template v-else-if="!token || !email">
-      <div class="alerte" role="alert">{{ t('nouveau.lien_incomplet') }}</div>
+      <div class="alerte alerte--systeme" role="alert">{{ t('nouveau.lien_incomplet') }}</div>
       <NuxtLink :to="localePath('/mot-de-passe-oublie')">{{ t('nouveau.redemander') }}</NuxtLink>
     </template>
 
     <template v-else>
       <p class="sous-titre">{{ t('nouveau.sous_titre', { email }) }}</p>
 
-      <div v-if="erreurGenerale" class="alerte" role="alert">{{ erreurGenerale }}</div>
+      <div v-if="erreurGenerale" class="alerte alerte--systeme" role="alert">{{ erreurGenerale }}</div>
 
       <form novalidate @submit.prevent="soumettre">
         <label class="champ">
@@ -85,7 +85,7 @@ useHead({ title: t('nouveau.titre') })
           <input v-model="form.password_confirmation" type="password" autocomplete="new-password" required class="champ__saisie">
         </label>
 
-        <button type="submit" class="bouton" :disabled="envoi">
+        <button type="submit" class="btn btn--bloc" :disabled="envoi">
           {{ envoi ? t('nouveau.envoi') : t('nouveau.action') }}
         </button>
       </form>
@@ -94,6 +94,6 @@ useHead({ title: t('nouveau.titre') })
 </template>
 
 <style scoped>
-.sous-titre { margin-block-end: var(--espace-4); color: var(--texte-doux); font-size: var(--taille-s); }
+.sous-titre { margin-block-end: var(--e-5); color: var(--texte-doux); font-size: var(--t-s); }
 .bouton--lien { display: block; text-align: center; text-decoration: none; }
 </style>

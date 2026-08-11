@@ -7,3 +7,6 @@ dist
 
 # Archives et livrables compressés : ils vivent hors du dépôt (~/Coding/_archives).
 *.zip
+
+# Permissions Claude Code, personnelles à la machine
+.claude/settings.local.json

@@ -57,6 +57,6 @@ const ouverte = computed(() => matiere.value?.availability === 'open')
 <style scoped>
 .actes { margin-block-start: var(--e-5); }
 .attente { margin-block-start: var(--e-5); padding: var(--e-4);
-  background: var(--sable-50); border: 1px solid var(--sable-200); border-radius: var(--r);
-  font-size: var(--t-sm); color: var(--encre-700); max-inline-size: 60ch; }
+  background: var(--fond); border: 1px solid var(--bordure); border-radius: var(--r);
+  font-size: var(--t-sm); color: var(--texte-doux); max-inline-size: 60ch; }
 </style>

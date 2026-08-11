@@ -142,7 +142,7 @@ useSeoCatalogue({
 .titre-bloc { font-size: var(--t-xl); margin-block-end: var(--e-3); }
 .sessions { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--e-2); }
 .session { display: flex; justify-content: space-between; gap: var(--e-3); align-items: center; flex-wrap: wrap;
-  background: var(--sable-0); border: 1px solid var(--sable-200); border-radius: var(--r); padding: var(--e-3) var(--e-4); }
+  background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r); padding: var(--e-3) var(--e-4); }
 .session__label { font-weight: 700; }
 .session__date { font-size: var(--t-sm); color: var(--texte-doux); }
 .avis { font-size: var(--t-xs); font-weight: 700; padding: 5px 11px; border-radius: 999px;

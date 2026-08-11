@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Même tracé que public/logo/marque.svg, sans les attributs de rôle : une
+       favicon n'est pas annoncée aux technologies d'assistance. Le trait est
+       épaissi de 3,5 à 4 — à 16 px, la version fine se referme visuellement. -->
+  <rect width="32" height="32" rx="7" fill="#0b6b57"/>
+  <path d="M9.5 10.5H22.5L14.5 23.5" fill="none" stroke="#d99a16" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -47,6 +47,11 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'fr' },
       link: [
+        // Une favicon SVG suit la définition de l'écran sans jeu de tailles à
+        // maintenir. Le PNG reste pour les contextes qui ignorent le SVG —
+        // l'écran d'accueil iOS au premier chef.
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

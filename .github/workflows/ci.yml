@@ -51,3 +51,34 @@ jobs:
         run: npm run build
         env:
           API_BASE_URL: http://localhost:8000
+
+      # FRONT-3 — Sept défauts de rendu ne se voient qu'en mesurant un vrai
+      # navigateur : contraste, débordement, cible tactile, nombre cassé par
+      # l'algorithme bidi. Les écrans d'authentification de FRONT-1 ont été
+      # livrés sans CSS de formulaire, et rien ici ne l'a vu pendant deux lots.
+      #
+      # L'audit ne couvre en CI que les écrans indépendants de l'API : la CI du
+      # frontend n'a pas de backend, et auditer un catalogue vide mesurerait son
+      # état vide. Le script écrit lui-même la liste de ce qu'il n'a pas couvert.
+      - name: Installer Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Attente par `curl` plutôt que par `wait-on` : une dépendance de plus
+      # pour une boucle de six lignes ne se justifie pas, et `npx wait-on` la
+      # téléchargerait à chaque exécution.
+      - name: Servir la compilation
+        run: |
+          node .output/server/index.mjs &
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:3000/fr/connexion; then
+              echo "Serveur prêt après ${i}s"; exit 0
+            fi
+            sleep 1
+          done
+          echo "Le serveur n'a pas répondu en 60 s"; exit 1
+        env:
+          API_BASE_URL: http://localhost:8000
+          NITRO_PORT: 3000
+
+      - name: Revue de rendu (contraste, débordement, cibles, bidi)
+        run: npm run audit:ci

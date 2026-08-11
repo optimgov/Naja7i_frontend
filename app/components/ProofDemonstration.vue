@@ -144,7 +144,7 @@ const indisponible = computed(() => Boolean(error.value) || demo.value === null)
 
 .preuve__option {
   padding: var(--e-3);
-  background: var(--sable-50);
+  background: var(--fond);
   border: 1px solid var(--bordure);
   border-radius: var(--r);
 }

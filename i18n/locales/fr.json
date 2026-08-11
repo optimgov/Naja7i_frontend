@@ -130,7 +130,8 @@
     "specialite_en_attente": "La préparation de cette spécialité n'est pas encore ouverte. Aucun diagnostic n'est proposé tant que les questions n'ont pas été validées.",
     "voir_correction": "Voir une correction expliquée",
     "introuvable": "Cette page n'existe pas ou n'est pas encore publiée.",
-    "duree_minutes": "{n} min"
+    "duree_minutes": "{n} min",
+    "statut": "Statut : {etat}"
   },
   "causes": {
     "confusion_notions": "Confusion entre deux notions voisines",
@@ -141,5 +142,31 @@
     "calcul": "Erreur de calcul",
     "piege_formulation": "Piège de formulation",
     "indetermine": "Cause à préciser"
+  },
+  "theme": {
+    "vers_sombre": "Passer au thème sombre",
+    "vers_clair": "Passer au thème clair"
+  },
+  "erreur": {
+    "introuvable_oeil": "Page introuvable",
+    "introuvable_titre": "Cette page n'existe pas",
+    "introuvable_texte": "L'adresse est peut-être incomplète, ou la page a été retirée. Le catalogue des concours reste accessible.",
+    "panne_oeil": "Incident technique",
+    "panne_titre": "Le service ne répond pas",
+    "panne_texte": "Ce n'est pas de votre fait. Réessayez dans un instant : votre progression est enregistrée.",
+    "retour_accueil": "Retour à l'accueil",
+    "voir_concours": "Parcourir les concours"
+  },
+  "reseau": {
+    "coupe_titre": "Connexion perdue.",
+    "coupe_texte": "Vos réponses sont conservées et repartiront dès le retour du réseau.",
+    "coupe_attente": "Vos réponses sont conservées — en attente d'envoi : {n}."
+  },
+  "session": {
+    "expiree_titre": "Votre session a expiré",
+    "expiree_texte": "Reconnectez-vous pour continuer. Vous reprendrez exactement où vous en étiez.",
+    "expiree_gardees": "Vos réponses sont conservées — en attente d'envoi : {n}. Reconnectez-vous pour les enregistrer.",
+    "reprendre": "Reprendre",
+    "reprise_en_cours": "Reprise…"
   }
 }

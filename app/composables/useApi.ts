@@ -95,14 +95,27 @@ export function useApi() {
 
   async function call<T>(
     path: string,
-    options: { method?: string; body?: unknown; query?: Record<string, unknown> } = {},
+    options: {
+      method?: string
+      body?: unknown
+      query?: Record<string, unknown>
+      headers?: Record<string, string>
+    } = {},
   ): Promise<T> {
     const method = (options.method ?? 'GET').toUpperCase()
     const writes = method !== 'GET' && method !== 'HEAD'
 
     if (writes) await ensureCsrf()
 
-    const headers: Record<string, string> = { Accept: 'application/json' }
+    /*
+     * Les en-têtes de l'appelant sont posés EN PREMIER, puis recouverts par les
+     * en-têtes calculés. C'est par là que passe `Idempotency-Key`. L'ordre
+     * compte : dans l'autre sens, un appelant écraserait `X-XSRF-TOKEN` par
+     * mégarde et provoquerait un 419 dont la cause serait introuvable.
+     */
+    const headers: Record<string, string> = { ...(options.headers ?? {}) }
+
+    headers.Accept = 'application/json'
 
     if (writes) {
       const token = readXsrfToken()
@@ -137,7 +150,16 @@ export function useApi() {
 
   return {
     get: <T>(path: string, query?: Record<string, unknown>) => call<T>(path, { query }),
-    post: <T>(path: string, body?: unknown) => call<T>(path, { method: 'POST', body }),
-    patch: <T>(path: string, body?: unknown) => call<T>(path, { method: 'PATCH', body }),
+    post: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+      call<T>(path, { method: 'POST', body, headers }),
+    patch: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+      call<T>(path, { method: 'PATCH', body, headers }),
+    /*
+     * L'enregistrement d'une réponse est un PUT — `PUT …/items/{uuid}`, rejouable
+     * sans effet de bord. Son absence ici rendait la passation impossible à
+     * écrire : c'est la première dette de FRONT-1 levée par ce lot.
+     */
+    put: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+      call<T>(path, { method: 'PUT', body, headers }),
   }
 }
