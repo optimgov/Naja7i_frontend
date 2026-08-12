@@ -594,3 +594,83 @@ pour dépasser le plafond de vingt. Hors dépôt, par `tinker`.
 **Justification.** Le plafond ne se vérifie qu'au-delà de vingt échus, et le
 calendrier réel met des semaines à en produire autant. Mesuré :
 26 échus → 20 servis, 6 annoncés en attente.
+
+## FRONT-4 — les deux bloquants de l'audit tournée 2
+
+## D-F35 — La conséquence du BLOC-5, mesurée avant correction
+
+**Ce qui était écrit.** Un 422, 409 ou 404 retirait l'entrée de la file, au
+motif que « l'appelant a déjà reçu l'erreur ». C'est faux pour une entrée créée
+HORS CONNEXION : son premier échange avec le serveur a lieu dans `ecouler()`.
+Personne n'avait donc jamais vu cette erreur.
+
+**Mesure, sur une vraie série, avant de toucher au code.** Ouverture d'un
+diagnostic à cinq questions, quatre réponses envoyées, une jetée comme le
+faisait le client, puis soumission :
+
+| | avant | après |
+|---|---|---|
+| `skipped_count` cumulé sur l'épreuve | 0 | **1** |
+
+Le compteur nourrit `RemediationPlanner` (`$partSautee`), qui remonte le domaine
+et bascule son motif vers `questions_sautees` quand la part sautée dépasse la
+part mesurée. Le candidat avait répondu ; le produit lui reproche une esquive.
+
+**Décision.** Trois états — `envoye`, `a_reessayer`, `refuse`. **Seul un 2xx
+retire une entrée.** Un refus reste dans une boîte d'échec explicite, bloque la
+soumission, et se présente avec l'item concerné. La seule suppression d'une
+entrée non envoyée passe par un geste humain (`acquitterRefus`).
+
+## D-F36 — Enveloppe de file : propriétaire, version, entrées
+
+**Décision.** `{ownerUserUuid, version, entries}` à la place du tableau nu.
+`ecouler()` refuse d'émettre quand le propriétaire n'est pas l'utilisateur
+connecté, et l'écran propose de reconnecter le compte propriétaire.
+
+**Justification.** La file ne portait aucune identité. Une reconnexion sous un
+autre compte l'écoulait : les réponses partaient sous la mauvaise identité,
+recevaient 404, et le chemin du BLOC-5 les supprimait. Deux défauts se
+composaient pour effacer le travail d'un candidat au profit d'un autre.
+
+**Migration.** Une file v1 (tableau nu) est relue avec `ownerUserUuid: null` et
+ADOPTÉE par le premier utilisateur identifié, plutôt que jetée : un candidat en
+passation au moment du déploiement ne perd rien.
+
+## D-F37 — Verrou inter-onglets, et relecture DANS le verrou
+
+**Décision.** Toute mutation passe par `avecVerrou` — Web Locks quand il existe,
+sinon un mutex de page — et **relit le stockage à l'intérieur du verrou**.
+
+**Justification.** Le défaut n'était pas l'absence de verrou seule : c'était le
+cycle « lire en mémoire, muter, réécrire tout le tableau ». Un onglet écrasait
+ce qu'un autre venait de poser. Relire dans le verrou fait du stockage la source
+de vérité ; l'identifiant stable par entrée (le chemin de la ressource) rend la
+fusion déterministe quand Web Locks n'est pas disponible.
+
+## D-F38 — Le contrôle de non-fuite passe du typage au HTML servi
+
+**Constat de l'audit.** Le contrôle reposait sur les types, qui ne retirent
+aucun champ à l'exécution. Si le backend régressait, les types deviendraient
+rouges à la compilation SUIVANTE — mais le HTML servi contiendrait déjà la
+correction.
+
+**Décision.** La recette lit la charge utile HYDRATÉE d'une passation, sous
+session, et y cherche `is_correct`, `rationale`, `cause`, `explanation`.
+Mesuré : 15 ko de HTML authentifié, aucune occurrence.
+
+## D-F39 — Trois tests de recette faux, corrigés avant le code
+
+Aucun des trois échecs BLOC-4 du premier passage ne venait du code :
+
+1. Les deux onglets visaient le MÊME item : le dédoublonnage par chemin les
+   fondait, à juste titre. Le test vise maintenant deux items distincts, et
+   vérifie ce qui compte — que l'écriture d'un onglet ne fasse pas disparaître
+   celle de l'autre.
+2. Le réseau était rétabli AVANT le changement de compte : la file partait sous
+   A, correctement. La file est désormais posée une fois la session close.
+3. L'écouteur de requêtes était attaché avant la déconnexion, et comptait au
+   débit de B un PUT émis sous A.
+
+**Quatrième occurrence du même piège** (D-F21, D-F27, D-F32). La règle est
+maintenant systématique : quand une recette échoue, on vérifie ce qu'elle mesure
+avant de corriger ce qu'elle désigne.

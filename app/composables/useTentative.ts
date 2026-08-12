@@ -87,6 +87,9 @@ export function useTentative() {
   const api = useApi()
   const file = useFileEnvoi()
   const reseau = useReseau()
+  // Résolu ici, comme dans `useApi` : après le premier `await`, le contexte
+  // Nuxt n'est plus actif et `useNuxtApp()` lèverait.
+  const { $i18n } = useNuxtApp()
 
   const tentative = useState<Tentative | null>('tentative.courante', () => null)
   const chargement = ref(false)
@@ -296,16 +299,18 @@ export function useTentative() {
       ancrerTemps(donnees.seconds_remaining)
       reseau.signalerSucces()
     } catch (e: unknown) {
+      const repere = { attemptUuid: courante.uuid, itemUuid, position: item?.position }
+
       if (e instanceof ApiRequestError && e.status === 401) {
         // Session expirée : la réponse est mise en file, la reprise se fait
         // sur place et la file repart. Rien n'est perdu.
-        file.poser(chemin, corps)
+        await file.poser(chemin, corps, repere)
         file.reauthRequise.value = true
         return
       }
 
       if (e instanceof ApiRequestError && e.error.code === 'NETWORK_ERROR') {
-        file.poser(chemin, corps)
+        await file.poser(chemin, corps, repere)
         reseau.signalerEchec()
         return
       }
@@ -321,6 +326,23 @@ export function useTentative() {
     // La file d'abord : soumettre en laissant des réponses en attente les
     // perdrait, le serveur figeant la tentative.
     await file.ecouler()
+
+    /*
+     * BLOC-5 — On ne soumet PAS tant qu'un refus n'a pas été vu.
+     *
+     * Soumettre par-dessus une réponse refusée fige la série en comptant la
+     * question comme SAUTÉE : mesuré, `skipped_count` passe de 0 à 1, et ce
+     * compteur remonte le domaine dans l'ordonnance avec le motif
+     * « questions_sautees ». Le candidat avait répondu — on ne lui reproche pas
+     * une esquive qu'il n'a pas commise.
+     */
+    if (file.soumissionBloquee.value) {
+      throw new ApiRequestError(0, {
+        code: 'FILE_ENVOI_REFUS',
+        message: $i18n.t('file.refus_bloque'),
+        request_id: '',
+      })
+    }
 
     await api.post(`/me/attempts/${courante.uuid}/submit`)
     await charger(courante.uuid)
