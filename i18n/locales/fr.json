@@ -179,7 +179,12 @@
     "voir_maitrise": "Voir la maîtrise",
     "voir_ordonnance": "Voir l'ordonnance",
     "reprendre": "Reprendre la série en cours",
-    "coefficient": "Coefficient"
+    "coefficient": "Coefficient",
+    "revisions_titre": "Révisions du jour",
+    "revisions_echues": "À réviser : {n}",
+    "revisions_rien": "Rien à réviser aujourd’hui.",
+    "voir_revisions": "Voir les révisions",
+    "entrainement": "S’entraîner sur un point faible"
   },
   "diagnostic": {
     "oeil": "Diagnostic",
@@ -280,5 +285,61 @@
     "erreurs_certitude": "Erreurs avec certitude : {n}",
     "hasard": "Réussites au hasard : {n}",
     "aucun": "Aucun domaine mesuré pour l’instant."
+  },
+  "entrainement": {
+    "oeil": "Entraînement",
+    "titre": "Entraînement ciblé",
+    "intro": "Une série courte sur un point faible. Elle ne compte pas comme un diagnostic : les questions visent ce qui manque, pas l’ensemble de l’épreuve.",
+    "domaine": "Domaine à travailler",
+    "domaine_auto": "Laisser Naja7i choisir",
+    "domaine_auto_aide": "D’après votre ordonnance.",
+    "nombre": "Nombre de questions",
+    "lancer": "Lancer l’entraînement",
+    "lancement": "Ouverture…",
+    "perimetre_vide": "Aucun domaine à travailler pour l’instant sur cette épreuve.",
+    "perimetre_etroit": "Le périmètre est trop mince pour une série utile : {available} question(s) disponible(s), {minimum} au minimum.",
+    "court_titre": "Série plus courte que demandée",
+    "court_texte": "{served} questions servies sur {requested} demandées — c’est tout ce que le périmètre contient. La série n’est jamais complétée hors du domaine visé.",
+    "resservies": "Dont {n} déjà réussies, resservies faute de questions neuves.",
+    "pas_une_note": "Série d’entraînement : le résultat n’est pas représentatif du concours."
+  },
+  "revisions": {
+    "oeil": "Mémoire",
+    "titre": "Vos révisions du jour",
+    "intro": "Les pièges sur lesquels vous vous êtes déjà trompé reviennent à intervalles croissants, tant qu’ils ne sont pas acquis.",
+    "rien_titre": "Rien à réviser aujourd’hui",
+    "rien_texte": "Vous êtes à jour.",
+    "prochain": "Prochain rendez-vous : {date}",
+    "plus_de_rendez_vous": "Aucun rendez-vous programmé pour l’instant.",
+    "servis": "Aujourd’hui : {n}",
+    "en_attente": "En attente : {n}",
+    "plafond": "Le serveur en sert au plus {n} par jour.",
+    "sans_soeur": "Sans question disponible : {n}",
+    "sans_soeur_aide": "La banque ne tend pas encore ces pièges. Rien à faire de votre côté.",
+    "palier": "Palier {n}",
+    "erreur_certitude": "Erreur commise avec certitude",
+    "cause_fermee": "Cause réservée aux abonnés",
+    "lancer": "Commencer la séance",
+    "lancement": "Ouverture…",
+    "aucune_epreuve": "Passez d’abord un diagnostic : les rendez-vous naissent de vos erreurs.",
+    "resservies_identiques": "Dont {n} servies avec l’énoncé déjà vu, faute de question sœur.",
+    "couvertes": "Causes couvertes : {n}"
+  },
+  "miroir": {
+    "action": "Vérifier sur une autre question",
+    "aide": "Le même piège, un autre énoncé.",
+    "ouverture": "Ouverture…",
+    "indisponible": "Aucune autre question ne tend ce piège pour l’instant.",
+    "titre": "Question miroir",
+    "contexte": "Ce piège vous a coûté une réponse. On le retend, autrement."
+  },
+  "file": {
+    "refus_bloque": "Une réponse n’a pas pu être enregistrée. Terminez sa vérification avant de clore la série.",
+    "echecs_titre": "Réponses non enregistrées",
+    "echecs_texte": "Ces réponses ont été refusées par le serveur. Elles ne sont pas perdues, mais elles ne comptent pas tant qu’elles restent ici.",
+    "question": "Question {n}",
+    "acquitter": "J’ai pris connaissance",
+    "proprietaire_titre": "Ces réponses appartiennent à un autre compte",
+    "proprietaire_texte": "Elles ont été saisies sous une autre session et ne peuvent partir que sous celle-ci. Reconnectez-vous avec le compte propriétaire pour les envoyer."
   }
 }

@@ -454,3 +454,223 @@ nombre, pas après.
 
 **Justification.** Un avertissement placé sous le résultat arrive trop tard : le
 nombre a déjà été lu comme une note. L'ordre est la moitié du message.
+
+## FRONT-4 — E7, l'entraînement ciblé
+
+## D-F24 — Les domaines proposés SONT les lignes de l'ordonnance
+
+**Décision.** E7 n'appelle pas la maîtrise pour composer sa propre liste de
+domaines : il affiche `GET me/plan`, dans l'ordre servi, avec le motif de chaque
+ligne.
+
+**Justification.** Recomposer une liste créerait un second classement, qui
+finirait par diverger de celui de l'ordonnance — et le candidat verrait deux
+priorités différentes pour la même épreuve. Afficher le motif à côté de chaque
+domaine ferme aussi la boucle que le lot vise : l'ordonnance disait quoi
+réviser, elle devient cliquable sans rien réinterpréter.
+
+## D-F25 — `short_of_scope` transmis par l'URL, pas par un état partagé
+
+**Contexte.** La règle 3 exige de montrer que la série est plus courte que
+demandée. L'information vient du `meta` de l'ouverture (E7), l'écran qui doit
+l'afficher est la passation (E3).
+
+**Décision.** Trois paramètres d'URL — `demandees`, `servies`, `resservies`.
+
+**Justification.** La passation est atteignable par son adresse et doit
+survivre à un rechargement : c'est acquis depuis FRONT-3 et vérifié par la
+reprise multi-appareil. Un état en mémoire disparaîtrait au premier F5, et le
+candidat verrait six questions sans savoir qu'il en avait demandé quinze —
+exactement ce que la règle interdit. L'URL, elle, se recharge et se partage.
+
+**Corollaire.** Le bandeau paraît AVANT la première question. Une série plus
+courte qu'annoncée se lit autrement si on l'apprend à la fin.
+
+## D-F26 — La clé d'idempotence est portée par une PORTÉE, pas par l'épreuve
+
+**Constat.** `cleIdempotence(codeEpreuve)` aurait donné la même clé au
+diagnostic et à l'entraînement de la même épreuve. Le backend refuse désormais
+ce rejeu (empreinte d'idempotence, migration `000400`), mais le refus serait
+survenu à l'usage plutôt qu'à la conception.
+
+**Décision.** La portée devient `entrainement.{épreuve}.{domaine ou 'auto'}` —
+deux domaines visés sont deux intentions distinctes, et méritent deux clés.
+
+## D-F27 — `dir="auto"` marqué par `data-domaine`
+
+**Constat, par la recette.** Le contrôle « toute chaîne d'API porte
+`dir="auto"` » signalait un manquant sur E7. Vérifié : c'était « Laisser Naja7i
+choisir », une chaîne TRADUITE, déjà dans la langue de la page. Les dix noms de
+domaine servis par l'API le portaient tous.
+
+**Décision.** Les choix dont le libellé vient de l'API portent `data-domaine`.
+La recette ne contrôle qu'eux, et vérifie en plus qu'il y en a — un test qui
+passe sur zéro élément ne prouve rien.
+
+**Encore la même leçon.** Troisième fois qu'un test accuse du code juste
+(cf. D-F21). Le réflexe est acquis : vérifier ce que la recette mesure avant de
+corriger ce qu'elle désigne.
+
+## D-F28 — `.champ__aide` était inline
+
+**Constat.** Le premier champ étroit du produit — le nombre de questions — a
+collé son aide « 5 – 40 » contre la saisie. `.champ__aide` est un `<span>` sans
+`display: block` ; tant que les champs occupaient toute la largeur, il passait à
+la ligne de lui-même et l'omission ne se voyait pas.
+
+**Décision.** `display: block` dans `commun.css`. Vu sur capture, pas déduit.
+
+## FRONT-4 — E8, miroir, tableau de bord
+
+## D-F29 — `/app/revisions` résout l'épreuve, elle ne la porte pas
+
+**Contexte.** Les routes mémoire sont par épreuve (`me/memory/{examCode}/due`),
+mais la révision est une porte QUOTIDIENNE : le candidat y va le matin, il ne
+choisit pas une épreuve avant de savoir s'il a quelque chose à faire.
+
+**Décision.** `/app/revisions` sans paramètre. L'épreuve est résolue par l'index
+des tentatives — la même source que le tableau de bord — et `?epreuve=CODE`
+reste accepté pour qui en suit plusieurs.
+
+**Justification.** Mettre l'épreuve dans le chemin aurait obligé à la choisir
+avant de savoir s'il y a lieu. La réponse « rien aujourd'hui » ne vaut pas un
+détour par un sélecteur.
+
+## D-F30 — La clé d'idempotence de la séance est datée, pas aléatoire
+
+**Décision.** `revision.{épreuve}.{AAAA-MM-JJ}`.
+
+**Justification.** Le rendez-vous mémoire est quotidien : deux clics à dix
+minutes d'écart visent la MÊME séance. Une clé aléatoire par visite en ouvrirait
+deux, et la seconde viderait le calendrier de la première. La date est celle du
+poste — le serveur reste seul juge de ce qui est échu, la clé ne sert qu'à ne
+pas redemander deux fois la même chose.
+
+## D-F31 — `MIRROR_ALREADY_OPEN` mène au miroir, il ne l'annonce pas indisponible
+
+**Constat, à l'exécution.** Un quatrième code de refus existe, que je ne
+traitais pas : `MIRROR_ALREADY_OPEN`. Mon premier filet attrapait tout
+`MIRROR_*` et affichait « aucune autre question ne tend ce piège » — ce qui est
+FAUX dans ce cas, et laisse le candidat sans moyen de retrouver la série ouverte
+à son nom.
+
+**Décision.** Le refus porte `details.attempt_uuid` : on y navigue. Les deux
+autres (`MIRROR_NOT_AVAILABLE`, `MIRROR_NOT_APPLICABLE`) gardent le message
+d'indisponibilité.
+
+**La leçon.** Un filet qui attrape une famille entière de codes traite le cas
+qu'on n'a pas lu comme celui qu'on a lu. Ici, trois refus se ressemblent et
+n'appellent pas la même conduite — le backend le dit d'ailleurs en toutes
+lettres dans ses propres commentaires.
+
+## D-F32 — Un 429 n'est pas un résultat de recette
+
+**Constat.** Le contrôle « la séance s'ouvre » est passé au vert sur un
+**429 de limitation de débit** provoqué par la recette elle-même
+(`throttle:10,1`). Le test cherchait « un message est affiché » : il en a trouvé
+un, et n'a rien prouvé.
+
+**Décision.** Un 429 déclenche une attente de la fenêtre puis une reprise ; s'il
+persiste, seul un refus RECONNAISSABLE (« à jour », « banque ») vaut succès.
+
+**Pourquoi c'est consigné.** C'est le défaut symétrique de D-F21 : là une
+recette accusait du code juste, ici elle absolvait du code non vérifié. Les deux
+viennent de tests qui mesurent la présence d'un signe plutôt que sa nature.
+
+## D-F33 — Deux issues légitimes pour l'ouverture d'une séance
+
+**Décision.** La recette accepte l'ouverture ET le refus annoncé sans
+navigation.
+
+**Justification.** « Rien d'échu » est le cas le plus fréquent une fois la
+boucle installée : un candidat à jour est un candidat qui va bien. Exiger la
+navigation ferait échouer la recette sur le comportement nominal du produit.
+
+## D-F34 — Les rendez-vous de recette sont antidatés localement
+
+**Décision.** `review_schedules.due_on` reculé d'un jour, et neuf lignes ajoutées
+pour dépasser le plafond de vingt. Hors dépôt, par `tinker`.
+
+**Justification.** Le plafond ne se vérifie qu'au-delà de vingt échus, et le
+calendrier réel met des semaines à en produire autant. Mesuré :
+26 échus → 20 servis, 6 annoncés en attente.
+
+## FRONT-4 — les deux bloquants de l'audit tournée 2
+
+## D-F35 — La conséquence du BLOC-5, mesurée avant correction
+
+**Ce qui était écrit.** Un 422, 409 ou 404 retirait l'entrée de la file, au
+motif que « l'appelant a déjà reçu l'erreur ». C'est faux pour une entrée créée
+HORS CONNEXION : son premier échange avec le serveur a lieu dans `ecouler()`.
+Personne n'avait donc jamais vu cette erreur.
+
+**Mesure, sur une vraie série, avant de toucher au code.** Ouverture d'un
+diagnostic à cinq questions, quatre réponses envoyées, une jetée comme le
+faisait le client, puis soumission :
+
+| | avant | après |
+|---|---|---|
+| `skipped_count` cumulé sur l'épreuve | 0 | **1** |
+
+Le compteur nourrit `RemediationPlanner` (`$partSautee`), qui remonte le domaine
+et bascule son motif vers `questions_sautees` quand la part sautée dépasse la
+part mesurée. Le candidat avait répondu ; le produit lui reproche une esquive.
+
+**Décision.** Trois états — `envoye`, `a_reessayer`, `refuse`. **Seul un 2xx
+retire une entrée.** Un refus reste dans une boîte d'échec explicite, bloque la
+soumission, et se présente avec l'item concerné. La seule suppression d'une
+entrée non envoyée passe par un geste humain (`acquitterRefus`).
+
+## D-F36 — Enveloppe de file : propriétaire, version, entrées
+
+**Décision.** `{ownerUserUuid, version, entries}` à la place du tableau nu.
+`ecouler()` refuse d'émettre quand le propriétaire n'est pas l'utilisateur
+connecté, et l'écran propose de reconnecter le compte propriétaire.
+
+**Justification.** La file ne portait aucune identité. Une reconnexion sous un
+autre compte l'écoulait : les réponses partaient sous la mauvaise identité,
+recevaient 404, et le chemin du BLOC-5 les supprimait. Deux défauts se
+composaient pour effacer le travail d'un candidat au profit d'un autre.
+
+**Migration.** Une file v1 (tableau nu) est relue avec `ownerUserUuid: null` et
+ADOPTÉE par le premier utilisateur identifié, plutôt que jetée : un candidat en
+passation au moment du déploiement ne perd rien.
+
+## D-F37 — Verrou inter-onglets, et relecture DANS le verrou
+
+**Décision.** Toute mutation passe par `avecVerrou` — Web Locks quand il existe,
+sinon un mutex de page — et **relit le stockage à l'intérieur du verrou**.
+
+**Justification.** Le défaut n'était pas l'absence de verrou seule : c'était le
+cycle « lire en mémoire, muter, réécrire tout le tableau ». Un onglet écrasait
+ce qu'un autre venait de poser. Relire dans le verrou fait du stockage la source
+de vérité ; l'identifiant stable par entrée (le chemin de la ressource) rend la
+fusion déterministe quand Web Locks n'est pas disponible.
+
+## D-F38 — Le contrôle de non-fuite passe du typage au HTML servi
+
+**Constat de l'audit.** Le contrôle reposait sur les types, qui ne retirent
+aucun champ à l'exécution. Si le backend régressait, les types deviendraient
+rouges à la compilation SUIVANTE — mais le HTML servi contiendrait déjà la
+correction.
+
+**Décision.** La recette lit la charge utile HYDRATÉE d'une passation, sous
+session, et y cherche `is_correct`, `rationale`, `cause`, `explanation`.
+Mesuré : 15 ko de HTML authentifié, aucune occurrence.
+
+## D-F39 — Trois tests de recette faux, corrigés avant le code
+
+Aucun des trois échecs BLOC-4 du premier passage ne venait du code :
+
+1. Les deux onglets visaient le MÊME item : le dédoublonnage par chemin les
+   fondait, à juste titre. Le test vise maintenant deux items distincts, et
+   vérifie ce qui compte — que l'écriture d'un onglet ne fasse pas disparaître
+   celle de l'autre.
+2. Le réseau était rétabli AVANT le changement de compte : la file partait sous
+   A, correctement. La file est désormais posée une fois la session close.
+3. L'écouteur de requêtes était attaché avant la déconnexion, et comptait au
+   débit de B un PUT émis sous A.
+
+**Quatrième occurrence du même piège** (D-F21, D-F27, D-F32). La règle est
+maintenant systématique : quand une recette échoue, on vérifie ce qu'elle mesure
+avant de corriger ce qu'elle désigne.

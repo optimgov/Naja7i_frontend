@@ -284,6 +284,11 @@
 }
 
 .champ__aide {
+  /* `display: block` explicite : c'est un `<span>`, donc inline par défaut.
+     Tant que les champs occupaient toute la largeur, il passait à la ligne de
+     lui-même et l'omission ne se voyait pas. Le premier champ étroit — le
+     nombre de questions de l'entraînement — l'a collé contre la saisie. */
+  display: block;
   margin-block: var(--e-2) 0;
   font-size: var(--t-xs);
   color: var(--texte-doux);

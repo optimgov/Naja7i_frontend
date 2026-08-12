@@ -26,6 +26,10 @@ const file = useFileEnvoi()
 onMounted(async () => {
   reseau.ecouter()
   file.reprendre()
+  // Une file migrée de la version 1 n'a pas de propriétaire : le premier
+  // utilisateur identifié l'adopte, ce qui préserve les réponses d'un candidat
+  // déjà en passation au moment du déploiement.
+  await file.adopter()
   // Le réseau est peut-être revenu pendant que l'onglet était fermé.
   await file.ecouler()
 })
@@ -72,6 +76,12 @@ watch(
     </header>
 
     <main id="contenu" class="appli__contenu">
+      <!-- La boîte d'échec précède le contenu : ce qui bloque la suite se lit
+           avant ce qu'on allait faire. -->
+      <div class="enveloppe">
+        <BoiteEchecs />
+      </div>
+
       <slot />
     </main>
 

@@ -14,6 +14,7 @@ const { t } = useI18n()
 const localePath = useLocalePath()
 const { parcours, enCours, dernierePassee, estEntrainement } = useParcours()
 const { ordonnance } = useOrdonnance()
+const { echeances } = useMemoire()
 
 const { data: liste } = await parcours()
 
@@ -40,6 +41,23 @@ const { data: plan } = await useAsyncData(
 )
 
 const mission = computed(() => plan.value?.data?.slice(0, 3) ?? [])
+
+/*
+ * Le compte des rendez-vous échus. Il n'est pas décoratif : c'est la seule
+ * chose sur cet écran qui change tous les jours, et donc la raison de revenir.
+ * Zéro est une information — « rien à réviser aujourd'hui » — pas un vide.
+ */
+const { data: echus } = await useAsyncData(
+  () => `echus-${code.value || 'aucune'}`,
+  async () => {
+    if (!code.value) return null
+    const { data } = await echeances(code)
+    return data.value
+  },
+  { watch: [code] },
+)
+
+const nombreEchus = computed(() => echus.value?.meta?.due_total ?? 0)
 
 useHead({ title: t('app.titre') })
 </script>
@@ -93,6 +111,10 @@ useHead({ title: t('app.titre') })
             {{ t('diagnostic.lancer') }}
           </NuxtLink>
 
+          <NuxtLink class="lien-second" :to="localePath(`/app/entrainement/${epreuve.code}`)">
+            {{ t('app.entrainement') }}
+          </NuxtLink>
+
           <NuxtLink class="lien-second" :to="localePath(`/app/maitrise/${epreuve.code}`)">
             {{ t('app.voir_maitrise') }}
           </NuxtLink>
@@ -101,6 +123,21 @@ useHead({ title: t('app.titre') })
             {{ t('app.voir_ordonnance') }}
           </NuxtLink>
         </div>
+      </section>
+
+      <!-- Ce qui change chaque jour vient AVANT ce qui change chaque
+           diagnostic : c'est la raison de revenir demain. -->
+      <section class="revisions">
+        <h2 class="revisions__titre">{{ t('app.revisions_titre') }}</h2>
+
+        <p v-if="nombreEchus > 0" class="revisions__compte">
+          {{ t('app.revisions_echues', { n: nombreEchus }) }}
+        </p>
+        <p v-else class="revisions__vide">{{ t('app.revisions_rien') }}</p>
+
+        <NuxtLink class="btn" :to="localePath('/app/revisions')">
+          {{ t('app.voir_revisions') }}
+        </NuxtLink>
       </section>
 
       <section class="mission">
@@ -155,6 +192,19 @@ useHead({ title: t('app.titre') })
   gap: var(--e-4);
   align-items: center;
 }
+
+.revisions {
+  margin-block-end: var(--e-6);
+  padding: var(--e-5);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-inline-start: 3px solid var(--peda-remede);
+  border-radius: var(--r);
+}
+
+.revisions__titre { margin-block: 0 var(--e-2); font-size: var(--t-lg); font-weight: 800; }
+.revisions__compte { margin-block: 0 var(--e-4); font-size: var(--t-xl); font-weight: 800; }
+.revisions__vide { margin-block: 0 var(--e-4); color: var(--texte-doux); }
 
 .mission__titre { margin-block: 0 var(--e-3); font-size: var(--t-lg); font-weight: 800; }
 

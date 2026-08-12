@@ -26,6 +26,20 @@ const {
 
 const uuid = computed(() => String(route.params.uuid ?? ''))
 
+/*
+ * SÉRIE PLUS COURTE QUE DEMANDÉE — règle 3.
+ *
+ * Le serveur sert parfois moins que demandé quand le périmètre est mince ; il
+ * ne complète jamais hors périmètre. L'écart est transmis par E7 dans l'URL,
+ * pas dans un état partagé : cet écran est atteignable par son adresse et
+ * survit aux rechargements, un état en mémoire ne le ferait pas — et le
+ * candidat verrait six questions sans savoir qu'il en avait demandé quinze.
+ */
+const demandees = computed(() => Number(route.query.demandees ?? 0))
+const servies = computed(() => Number(route.query.servies ?? 0))
+const resservies = computed(() => Number(route.query.resservies ?? 0))
+const serieCourte = computed(() => demandees.value > 0 && servies.value > 0 && servies.value < demandees.value)
+
 const position = ref(0)
 const certitude = ref<Certitude | null>(null)
 const optionChoisie = ref<string | null>(null)
@@ -129,6 +143,18 @@ useHead({ title: () => t('passation.question_sur', { n: position.value + 1, tota
         <span dir="auto">{{ erreur.message }}</span>
         <span v-if="erreur.error.request_id" class="alerte__reference">
           {{ t('errors.reference') }} {{ erreur.error.request_id }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Dit AVANT la première question, pas au moment du résultat : une série
+         plus courte qu'annoncée se lit autrement si on l'apprend à la fin. -->
+    <div v-if="serieCourte" class="alerte alerte--info" role="status">
+      <div>
+        <strong>{{ t('entrainement.court_titre') }}</strong>
+        <span>{{ t('entrainement.court_texte', { served: servies, requested: demandees }) }}</span>
+        <span v-if="resservies > 0" class="court__resservies">
+          {{ t('entrainement.resservies', { n: resservies }) }}
         </span>
       </div>
     </div>
@@ -389,6 +415,8 @@ useHead({ title: () => t('passation.question_sur', { n: position.value + 1, tota
 }
 
 .passation__attente { color: var(--texte-doux); }
+
+.court__resservies { display: block; margin-block-start: var(--e-1); color: var(--texte-doux); }
 
 .voile {
   position: fixed;

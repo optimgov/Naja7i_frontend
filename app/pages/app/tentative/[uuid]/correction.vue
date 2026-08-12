@@ -13,13 +13,68 @@
  * `.autopsie__hypothese::after` dans `commun.css`. Ainsi aucun contenu futur ne
  * peut présenter une cause comme un verdict, quel que soit le texte servi.
  */
+import { ApiRequestError } from '~/composables/useApi'
+
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const route = useRoute()
 const localePath = useLocalePath()
 const { t } = useI18n()
-const { correction } = useCorrection()
+const { correction, ouvrirMiroir } = useCorrection()
 const { charger, tentative } = useTentative()
+
+/**
+ * Question miroir — F05.
+ *
+ * Le bouton n'apparaît QUE si `mirror_available`. Jamais désactivé, jamais
+ * masqué en CSS : soit l'action est proposée, soit elle n'existe pas dans le
+ * rendu. C'est la règle du mur payant, appliquée à une autre porte.
+ */
+const miroirEnCours = ref<string | null>(null)
+const miroirErreur = ref<string | null>(null)
+
+async function allerAuMiroir(itemUuid: string): Promise<void> {
+  if (miroirEnCours.value) return
+  miroirEnCours.value = itemUuid
+  miroirErreur.value = null
+
+  try {
+    const { tentative: serie } = await ouvrirMiroir(itemUuid)
+    await navigateTo(localePath(`/app/tentative/${serie.uuid}`))
+  } catch (e: unknown) {
+    if (!(e instanceof ApiRequestError)) throw e
+
+    /*
+     * Trois refus, trois conduites — les confondre serait mentir au candidat.
+     *
+     * MIRROR_ALREADY_OPEN n'est pas une indisponibilité : un miroir est DÉJÀ
+     * ouvert, sur cet item ou sur un autre, et le serveur en donne l'adresse.
+     * Le candidat voulait vérifier son piège ; on l'y emmène. Lui répondre
+     * « aucune autre question ne tend ce piège » serait faux, et il n'aurait
+     * aucun moyen de retrouver la série ouverte à son nom.
+     */
+    if (e.error.code === 'MIRROR_ALREADY_OPEN') {
+      const details = e.error.details
+      const ouvert =
+        details && !Array.isArray(details)
+          ? (details as unknown as { attempt_uuid?: string }).attempt_uuid
+          : undefined
+
+      if (ouvert) {
+        await navigateTo(localePath(`/app/tentative/${ouvert}`))
+        return
+      }
+    }
+
+    // Le piège a pu perdre sa sœur entre l'affichage et le clic, ou l'item
+    // n'appelle pas de miroir : on le dit, sans en faire une panne.
+    miroirErreur.value = e.error.code?.startsWith('MIRROR_')
+      ? t('miroir.indisponible')
+      : t('errors.network')
+  } finally {
+    miroirEnCours.value = null
+  }
+}
 
 const uuid = computed(() => String(route.params.uuid ?? ''))
 
@@ -133,6 +188,19 @@ useHead({ title: t('correction.titre') })
           {{ t('correction.cause_fermee_titre') }}
         </p>
 
+        <!-- F05 — proposé seulement si une autre question tend le même piège. -->
+        <p v-if="ligne.mirror_available" class="miroir">
+          <button
+            type="button"
+            class="lien-second miroir__action"
+            :disabled="miroirEnCours === ligne.item_uuid"
+            @click="allerAuMiroir(ligne.item_uuid)"
+          >
+            {{ miroirEnCours === ligne.item_uuid ? t('miroir.ouverture') : t('miroir.action') }}
+          </button>
+          <span class="miroir__aide">{{ t('miroir.aide') }}</span>
+        </p>
+
         <p v-if="ligne.remediation" class="remede">
           <span class="remede__libelle">{{ t('correction.remediation') }}</span>
           <span dir="auto">{{ ligne.remediation.title }}</span>
@@ -142,6 +210,10 @@ useHead({ title: t('correction.titre') })
         </p>
       </li>
     </ol>
+
+    <p v-if="miroirErreur" class="alerte alerte--info" role="status">
+      <span>{{ miroirErreur }}</span>
+    </p>
 
     <div v-if="tentative" class="suites">
       <NuxtLink class="btn" :to="localePath(`/app/maitrise/${tentative.exam.code}`)">
@@ -254,6 +326,27 @@ useHead({ title: t('correction.titre') })
   background: var(--peda-remede-fond);
   border-radius: var(--r);
 }
+
+.miroir {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-3);
+  align-items: baseline;
+  margin: var(--e-3) 0 0;
+}
+
+/* `.lien-second` a été écrit pour des ancres : sur un <button>, il faut
+   neutraliser l'apparence native. */
+.miroir__action {
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.miroir__aide { font-size: var(--t-xs); color: var(--texte-doux); }
 
 .suites { display: flex; flex-wrap: wrap; gap: var(--e-4); align-items: center; margin-block-start: var(--e-6); }
 </style>
