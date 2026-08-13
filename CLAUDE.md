@@ -103,3 +103,4 @@ n'existe pas dans le rendu.
   Chromium : `npm i -D playwright && npx playwright install chromium`.
 - Une autre session peut travailler sur le dépôt backend en parallèle. Ne va
   jamais y vérifier quoi que ce soit sans y avoir été invité.
+- Pour LIRE un fichier ou en extraire un passage : Read, grep -n -A/-B, head, tail — jamais sed pour lire. Le détecteur de sécurité de sed déclenche une demande d'approbation même sur un sed inoffensif, et chaque demande interrompt le travail.

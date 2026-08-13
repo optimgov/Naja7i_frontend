@@ -1,0 +1,165 @@
+name: Recette
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TRAVAIL SÉPARÉ DE LA CI RAPIDE, ET C'EST VOULU
+#
+# `ci.yml` rend son verdict en une minute et demie : typage, jetons, locales,
+# compilation, revue de rendu sur les écrans indépendants de l'API. Il ne doit
+# pas attendre PostgreSQL, Redis, Mailpit, un backend PHP et quatre recettes de
+# bout en bout. Deux fichiers, deux rythmes, deux usages.
+#
+# AUCUN SECRET N'EST REQUIS
+#
+# `optimgov/Naja7i_frontend` et `optimgov/Naja7i_backend_front` sont tous deux
+# PUBLICS : `actions/checkout` clone le second avec le `GITHUB_TOKEN` implicite,
+# sans jeton personnel ni clé de déploiement. Si l'un des deux passait un jour
+# en privé, il faudrait alors — et seulement alors — un secret de dépôt lisant
+# l'autre, et cette étape le dirait en échouant sur un 404 de clonage.
+#
+# ÉPINGLAGE : `main` DU BACKEND, DÉLIBÉRÉMENT
+#
+# On suit la tête de `main` plutôt qu'un SHA noté dans un fichier. Le coût est
+# assumé : un changement de contrat côté backend fait rougir la recette
+# frontend le jour même. C'est bruyant, et c'est le but — un SHA épinglé
+# dériverait en silence, et le décalage ne se découvrirait qu'à la fusion
+# suivante, quand il coûte davantage. Le SHA réellement utilisé est journalisé
+# à chaque exécution, pour que l'échec soit reproductible.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: recette-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  recette:
+    name: Recette de bout en bout
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Reprise de la configuration de la CI backend plutôt qu'une invention :
+    # mêmes images, mêmes identifiants, même sonde de santé.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: naja7i
+          POSTGRES_USER: naja7i
+          POSTGRES_PASSWORD: naja7i_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U naja7i"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      # La recette lit les jetons de vérification dans la boîte, comme en
+      # développement : l'envoi réel est éprouvé au passage.
+      mailpit:
+        image: axllent/mailpit
+        ports:
+          - 1025:1025
+          - 8025:8025
+
+    steps:
+      - name: Frontend
+        uses: actions/checkout@v4
+        with:
+          path: Naja7i_frontend
+
+      - name: Backend (main, dépôt public — aucun secret)
+        uses: actions/checkout@v4
+        with:
+          repository: optimgov/Naja7i_backend_front
+          ref: main
+          path: Naja7i_backend_front
+
+      - name: Journaliser le SHA backend
+        run: |
+          echo "Backend à $(git -C Naja7i_backend_front rev-parse HEAD)"
+          echo "Backend à $(git -C Naja7i_backend_front rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Installer PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql, mbstring, bcmath, intl
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: Naja7i_backend_front/vendor
+          key: composer-recette-${{ hashFiles('Naja7i_backend_front/composer.lock') }}
+          restore-keys: composer-recette-
+
+      - name: Dépendances backend
+        working-directory: Naja7i_backend_front
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Environnement backend
+        working-directory: Naja7i_backend_front
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          # Le frontend appelle l'API par le relais Nitro : les deux origines
+          # doivent rester « statefull » pour Sanctum.
+          {
+            echo "APP_URL=http://localhost:8000"
+            echo "SANCTUM_STATEFUL_DOMAINS=localhost,localhost:3000,127.0.0.1:3000"
+            echo "SESSION_DOMAIN=localhost"
+            echo "PASSWORD_CHECK_COMPROMISED=false"
+          } >> .env
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: Naja7i_frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: Naja7i_frontend/package-lock.json
+
+      - name: Dépendances frontend
+        working-directory: Naja7i_frontend
+        run: npm ci
+
+      - name: Installer Chromium
+        working-directory: Naja7i_frontend
+        run: npx playwright install --with-deps chromium
+
+      # Une seule commande, la MÊME qu'en local : si elle diverge, la recette
+      # cesse d'être reproductible sur un poste.
+      - name: Recette
+        working-directory: Naja7i_frontend
+        env:
+          BACKEND_DIR: ${{ github.workspace }}/Naja7i_backend_front
+          API_BASE_URL: http://localhost:8000
+          BASE_URL: http://localhost:3000
+          MAILPIT_URL: http://localhost:8025
+          SORTIE: ${{ runner.temp }}/recette
+        run: npm run recette
+
+      # Les captures sont la moitié de la valeur d'une recette : sans elles, un
+      # échec en CI se relit en aveugle.
+      - name: Captures et rapports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recette-${{ github.run_number }}
+          path: ${{ runner.temp }}/recette*
+          if-no-files-found: warn
+          retention-days: 14

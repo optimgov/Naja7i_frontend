@@ -216,7 +216,13 @@ const uuidTentative = urlTentative.split('/app/tentative/')[1].split(/[?#]/)[0]
   const repriseVisible = await page.locator('[role="dialog"]').first().isVisible().catch(() => false)
   const enFile = await page.evaluate(() => {
     try {
-      return JSON.parse(localStorage.getItem('naja7i.file-envoi') ?? '[]').length
+      /* La file est une ENVELOPPE depuis le BLOC-4 : {ownerUserUuid, version,
+         entries}. On accepte encore le tableau nu de la v1 — une recette qui
+         ne lit qu'une seule forme rend `undefined` au lieu d'échouer, et
+         `undefined` se lit comme un test qui passe. */
+      const brut = JSON.parse(localStorage.getItem('naja7i.file-envoi') ?? 'null')
+      if (brut === null) return 0
+      return Array.isArray(brut) ? brut.length : (brut.entries?.length ?? 0)
     } catch {
       return -1
     }
@@ -249,7 +255,13 @@ const uuidTentative = urlTentative.split('/app/tentative/')[1].split(/[?#]/)[0]
   const banniere = await page.locator('[data-hors-ligne]').isVisible().catch(() => false)
   const enFile = await page.evaluate(() => {
     try {
-      return JSON.parse(localStorage.getItem('naja7i.file-envoi') ?? '[]').length
+      /* La file est une ENVELOPPE depuis le BLOC-4 : {ownerUserUuid, version,
+         entries}. On accepte encore le tableau nu de la v1 — une recette qui
+         ne lit qu'une seule forme rend `undefined` au lieu d'échouer, et
+         `undefined` se lit comme un test qui passe. */
+      const brut = JSON.parse(localStorage.getItem('naja7i.file-envoi') ?? 'null')
+      if (brut === null) return 0
+      return Array.isArray(brut) ? brut.length : (brut.entries?.length ?? 0)
     } catch {
       return -1
     }
@@ -264,7 +276,13 @@ const uuidTentative = urlTentative.split('/app/tentative/')[1].split(/[?#]/)[0]
   const putApres = trafic.filter((t) => t.url.includes('/items/')).length
   const resteEnFile = await page.evaluate(() => {
     try {
-      return JSON.parse(localStorage.getItem('naja7i.file-envoi') ?? '[]').length
+      /* La file est une ENVELOPPE depuis le BLOC-4 : {ownerUserUuid, version,
+         entries}. On accepte encore le tableau nu de la v1 — une recette qui
+         ne lit qu'une seule forme rend `undefined` au lieu d'échouer, et
+         `undefined` se lit comme un test qui passe. */
+      const brut = JSON.parse(localStorage.getItem('naja7i.file-envoi') ?? 'null')
+      if (brut === null) return 0
+      return Array.isArray(brut) ? brut.length : (brut.entries?.length ?? 0)
     } catch {
       return -1
     }
