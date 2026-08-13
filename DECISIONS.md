@@ -854,3 +854,44 @@ ce qu'il n'a pas écrit, et une banque de développement qui accumule des jumell
 **Ce que ça dit.** L'idempotence par clé naturelle suppose que la clé soit
 unique en base. Ici elle ne l'est pas, et la supposition tenait tant que le
 semis était le seul écrivain.
+
+## D-F48 — Le D-F44 est levé : la limite se règle par PROFIL, pas par attente
+
+**Ce que disait le D-F44, et il avait raison.** Relever la limite côté backend
+pour faire passer la recette, c'est modifier le produit pour qu'il ressemble au
+test. La décision d'alors — 65 s d'attente entre deux recettes — était la bonne
+avec les moyens d'alors : le seuil était écrit en clair dans `routes/api.php`,
+et le relever aurait relevé le produit.
+
+**Ce qui a changé, et pourquoi ce n'est pas le même geste.** Le PAS-34 du
+backend ne relève pas « la limite » : il déclare DEUX PROFILS, dont le défaut
+est `production`. Le profil de recette relève les seuils de TRANSPORT, et le
+backend prouve par ses propres tests ce qu'il ne relève pas :
+
+| Ce qui reste réel en recette | Pourquoi |
+|---|---|
+| `reponse`, la route qu'écoule la file d'envoi | un vrai 429 y avait produit un faux vert ; la recette doit rencontrer un limiteur réel |
+| `LoginThrottle`, trois agrégats | c'est de la sécurité, pas du transport |
+| le renvoi de vérification, 3 par 900 s | idem — arme de harcèlement si débridée |
+
+Le produit ne bouge pas : ce qui bouge, c'est ce que l'environnement de recette
+déclare de lui-même. La distinction n'est pas rhétorique — elle est vérifiée par
+`RateLimitProfileTest`, dont deux cas éprouvent les limiteurs de sécurité SOUS
+le profil de recette, là où la garantie a de la valeur.
+
+**Le profil se pose par l'ORCHESTRATEUR, pas par le `.env` du backend.** Une
+variable de processus l'emporte sur le fichier et disparaît avec le serveur :
+une recette ne laisse pas derrière elle un backend aux limites relevées. Et
+comme c'est l'orchestrateur qui décide, le poste et l'intégration continue se
+comportent à l'identique — la commande reste la même des deux côtés.
+
+**Si l'API tourne déjà, on ne devine pas son profil.** La pause du D-F44 reprend
+alors ses droits, et la ligne de bilan le dit. `RECETTE_PAUSE` tranche
+explicitement dans les deux sens.
+
+**La garde du 429 reste en place** dans `recette-front4.mjs` : un 429 n'est
+toujours pas un résultat, et refuser de le lire comme tel ne coûte rien tant
+qu'aucun 429 ne survient. C'était le point du D-F39, et il ne se lève pas.
+
+**Mesuré, en local, base déjà semée :** 8 min 44 → **3 min 07**, dont 0 s
+d'attente de fenêtre contre 260 s auparavant.

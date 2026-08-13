@@ -157,12 +157,33 @@ if (dejaSeme) {
 // ────────────────────────────────────────────────────────────────── API
 titre('API')
 
+/*
+ * LE PROFIL DE LIMITATION SE POSE ICI, ET SEULEMENT SI C'EST NOUS QUI DÉMARRONS.
+ *
+ * `RATE_LIMIT_PROFILE=recette` (PAS-34 du backend) relève les seuils de
+ * TRANSPORT — pas ceux de la file d'envoi, pas ceux de la sécurité. C'est ce qui
+ * remplace les 260 s d'attente pure que mesurait le D-F44.
+ *
+ * On ne le pose pas dans le `.env` du backend : une variable d'environnement du
+ * processus l'emporte sur le fichier (phpdotenv n'écrase jamais l'existant), et
+ * surtout elle disparaît avec le serveur. Une recette ne doit pas laisser
+ * derrière elle un backend aux limites relevées.
+ *
+ * SI L'API TOURNE DÉJÀ, on ne sait pas sous quel profil — et on ne le devine
+ * pas. La pause du D-F44 reprend alors ses droits, et le bilan dit pourquoi.
+ */
+let apiSousProfilRecette = false
+
 if (!(await repond(`${API}/up`, 2, 500))) {
-  console.log('  API absente — démarrage de php artisan serve')
-  lancerEnFond('php', ['artisan', 'serve', '--port=8000'], { cwd: BACKEND, env })
+  console.log('  API absente — démarrage de php artisan serve (profil de limitation : recette)')
+  lancerEnFond('php', ['artisan', 'serve', '--port=8000'], {
+    cwd: BACKEND,
+    env: { ...env, RATE_LIMIT_PROFILE: 'recette' },
+  })
   if (!(await repond(`${API}/up`))) echouer("l'API n'a pas démarré")
+  apiSousProfilRecette = true
 } else {
-  console.log('  API déjà en marche')
+  console.log('  API déjà en marche — profil de limitation inconnu, la pause est maintenue')
 }
 
 // ─────────────────────────────────────────────────────── banque de recette
@@ -265,18 +286,33 @@ const RECETTES = [
 ]
 
 /*
- * PAUSE ENTRE LES RECETTES — imposée par le produit, pas par un caprice.
+ * PAUSE ENTRE LES RECETTES — désormais l'exception, plus la règle.
  *
- * `me/diagnostics` et `me/training` portent `throttle:10,1`. Quatre recettes
- * enchaînées ouvrent bien plus de dix séries par minute : la deuxième a reçu un
- * 429 dès le premier essai de cette commande.
+ * CE QUE DISAIT LE D-F44, ET POURQUOI ÇA A CHANGÉ. Quatre recettes enchaînées
+ * ouvrent bien plus de dix séries par minute, et `ouverture-serie` porte 10/min :
+ * la deuxième recevait un 429. On attendait donc la fenêtre — 260 s d'attente
+ * pure sur 521. Relever la limite « pour faire passer la recette » était refusé,
+ * à juste titre : c'eût été modifier le produit pour qu'il ressemble au test.
  *
- * On attend donc la fenêtre. Relever la limite côté backend pour faire passer
- * la recette reviendrait à modifier le produit pour qu'il ressemble au test —
- * exactement ce que D-F39 interdit. La limite est correcte ; c'est
- * l'enchaînement qui doit s'y plier.
+ * CE QUE LE PAS-34 A CHANGÉ. La limite n'est plus relevée « pour le test » : le
+ * backend porte deux PROFILS déclarés, et le profil de recette ne touche que le
+ * TRANSPORT. Ce qu'il ne relève jamais, par construction et par test :
+ *
+ *   - `reponse`, la route qu'écoule la file d'envoi — un vrai limiteur reste en
+ *     face de la recette, parce qu'un vrai 429 y avait déjà produit un faux vert ;
+ *   - `LoginThrottle` et le renvoi de vérification — de la sécurité, pas du
+ *     transport, et le backend les vérifie SOUS le profil de recette.
+ *
+ * La garde de `recette-front4.mjs` qui refuse de lire un 429 comme un résultat
+ * reste en place, et ne coûte rien tant qu'aucun 429 ne survient.
+ *
+ * LA PAUSE SUBSISTE POUR LE CAS OÙ ON NE MAÎTRISE PAS LE BACKEND : une API déjà
+ * en marche sur un poste tourne sous un profil qu'on ne connaît pas.
+ * `RECETTE_PAUSE` tranche explicitement dans les deux sens.
  */
-const FENETRE_THROTTLE = Number(process.env.RECETTE_PAUSE ?? 65)
+const FENETRE_THROTTLE = process.env.RECETTE_PAUSE !== undefined
+  ? Number(process.env.RECETTE_PAUSE)
+  : (apiSousProfilRecette ? 0 : 65)
 
 const depart = Date.now()
 const bilan = []
@@ -317,7 +353,9 @@ console.log('\n\x1b[1m── Bilan\x1b[0m')
 for (const b of bilan) console.log(`  ok  ${b.nom} — ${b.duree} s`)
 console.log(
   `\n\x1b[32mToutes les recettes sont passées\x1b[0m — ${total} s au total, `
-    + `dont ${attente} s d'attente imposée par la limitation de débit.`,
+    + (attente > 0
+      ? `dont ${attente} s d'attente imposée par la limitation de débit.`
+      : 'sans aucune attente de fenêtre (backend sous profil de recette).'),
 )
 
 arreter()
