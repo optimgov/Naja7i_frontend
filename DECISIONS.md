@@ -674,3 +674,183 @@ Aucun des trois échecs BLOC-4 du premier passage ne venait du code :
 **Quatrième occurrence du même piège** (D-F21, D-F27, D-F32). La règle est
 maintenant systématique : quand une recette échoue, on vérifie ce qu'elle mesure
 avant de corriger ce qu'elle désigne.
+
+## FRONT-5 — les recettes entrent en CI
+
+## D-F40 — Semis par `tinker` : provisoire, avec sa date de sortie
+
+**Ce qui était demandé.** Semer par l'API de la chaîne éditoriale — le semis
+éprouverait alors la chaîne à chaque exécution, deux gardes pour une.
+
+**L'obstacle, vérifié dans `routes/api.php` du backend.** Trois transitions du
+cycle éditorial n'ont AUCUN point d'entrée HTTP :
+
+| Transition | Service | Route |
+|---|---|---|
+| `draft` → `a_verifier` | `QuestionTransitionService::submitForReview()` | **aucune** |
+| `a_verifier` → `reviewed` | `::markReviewed()` | **aucune** |
+| `reviewed` → `pedagogically_validated` | `::validate()` | **aucune** |
+
+Existent en revanche : `POST admin/questions`, `PATCH admin/questions/{uuid}`,
+`POST admin/questions/{uuid}/publish`, `/retire`, et les lectures.
+
+Or `publish()` refuse toute question qui n'est pas `pedagogically_validated` et
+porteuse d'un `validator_id` distinct de son auteur. Une question créée par
+l'API reste donc en `draft`, et `publish` répond 422. La permission
+`questions.validate` figure pourtant au référentiel du PAS-9 — elle n'a
+simplement aucune route.
+
+**Décision.** `scripts/recette/semer-banque.php`, exécuté par `php artisan
+tinker`, passant par le SERVICE de domaine. `QuestionIntegrityChecker`
+s'applique donc : quatre options, valideur ≠ auteur, distracteurs tous
+étiquetés, source vérifiée, remédiation. Un semis en insertion directe aurait
+contourné tout cela.
+
+**BASCULE PRÉVUE, pour que ce provisoire ne s'installe pas.** Dès que les trois
+routes existent — c'est un pas de la session backend, rien n'a été écrit dans
+son dépôt — `semer-banque.php` est remplacé par un client HTTP de la chaîne
+éditoriale. Le reste de l'outillage ne bouge pas : l'orchestrateur appelle un
+script de semis, il ne connaît pas son moyen.
+
+## D-F41 — Aucun secret GitHub : les deux dépôts sont publics
+
+**Vérifié** — `gh repo view` : `Naja7i_frontend` PUBLIC,
+`Naja7i_backend_front` PUBLIC. `actions/checkout` clone le second avec le
+`GITHUB_TOKEN` implicite. Ni jeton personnel, ni clé de déploiement.
+
+Le workflow le dit en commentaire ET dans le nom de l'étape, pour que la
+question ne se repose pas. Si l'un des dépôts passait en privé, l'étape
+échouerait sur un 404 de clonage — un signal net plutôt qu'une dérive.
+
+## D-F42 — Épinglage sur `main` du backend, et son coût
+
+**Décision.** `ref: main`, et le SHA obtenu est journalisé à chaque exécution.
+
+**Le coût des deux options.** `main` : un changement de contrat backend fait
+rougir la recette frontend le jour même — bruyant, parfois sur un lot qui n'y
+est pour rien. SHA épinglé dans un fichier : la CI reste verte pendant que le
+contrat s'éloigne, et l'écart se découvre à la fusion suivante, quand il coûte
+davantage et qu'on ne sait plus quel changement l'a causé.
+
+Le bruit est un symptôme ; le silence est une dette. On garde le bruit. Le SHA
+journalisé rend l'échec reproductible : on sait contre quel backend il s'est
+produit.
+
+## D-F43 — `CatalogueSeeder` n'est pas idempotent : on ne sème qu'une base vierge
+
+**Constat, dès la première exécution.** `php artisan db:seed` sur une base déjà
+semée viole `filieres_slug_unique`. C'est une propriété du backend, et on n'y
+touche pas depuis ici.
+
+**Décision.** L'orchestrateur compte les filières et ne sème que si la base est
+vide. En intégration continue elle l'est toujours ; sur un poste, le semis n'a
+lieu qu'une fois. `semer-banque.php`, lui, est idempotent par construction —
+l'énoncé numéroté sert de clé naturelle.
+
+## D-F44 — Une pause entre les recettes, imposée par le produit
+
+**Constat, à la première exécution enchaînée.** La deuxième recette a reçu
+`429 RATE_LIMIT_EXCEEDED` : `me/diagnostics` et `me/training` portent
+`throttle:10,1`, et quatre recettes à la suite ouvrent bien plus de dix séries
+par minute.
+
+**Décision.** 65 secondes d'attente entre deux recettes, réglables par
+`RECETTE_PAUSE`, et comptées à part dans le bilan pour que la durée annoncée
+reste honnête.
+
+**Ce qui a été écarté.** Relever la limite côté backend le temps de la recette :
+ce serait modifier le produit pour qu'il ressemble au test. La limite est
+correcte — c'est l'enchaînement qui doit s'y plier. D-F39 s'applique à
+l'outillage comme au reste.
+
+## D-F45 — La première exécution groupée a trouvé une recette périmée
+
+**Constat.** Deux contrôles de `recette-front3.mjs` — « session expirée » et
+« réponse hors connexion » — ont échoué en rendant `undefined`. Le produit,
+lui, se comportait correctement : reprise proposée sur place, bandeau affiché,
+réponse rejouée au retour du réseau.
+
+**Cause.** La recette lisait `localStorage['naja7i.file-envoi']` comme un
+TABLEAU. Depuis le BLOC-4, c'est une ENVELOPPE `{ownerUserUuid, version,
+entries}`. `objet.length` vaut `undefined`, et `undefined` ne lève pas.
+
+**Décision.** Les trois lectures acceptent les deux formes. Ce n'est pas un
+assouplissement du contrôle : c'est la correction d'une lecture devenue fausse.
+
+**Ce que ça dit du lot.** Le changement de format datait du lot précédent, et
+personne ne l'avait vu — parce que `recette-front3.mjs` ne tournait plus depuis.
+C'est exactement le constat qui a motivé FRONT-5 : ce qu'on ne rejoue pas
+pourrit en silence. La première exécution groupée l'a montré en trois minutes.
+
+**Corollaire, à surveiller.** Un test qui rend `undefined` là où il attend un
+nombre ne signale rien de lui-même. Les assertions de file comparent désormais à
+un entier, jamais à une valeur potentiellement absente.
+
+## D-F46 — La bascule annoncée au D-F40 est faite : le semis passe par l'API
+
+**Ce qui a levé l'obstacle.** Le PAS-33 a ouvert les trois routes qui
+manquaient — `POST admin/questions/{uuid}/submit`, `/review`, `/validate`. La
+condition posée au D-F40 est remplie, et le provisoire sort par la porte qu'on
+lui avait laissée.
+
+**Décision.** `semer-banque.php` est supprimé. `semer-banque.mjs` mène chaque
+question du brouillon au publié PAR L'API, sous trois identités distinctes —
+auteur, relecteur, valideur — chacune avec sa session. La chaîne s'écrit comme
+une table d'états plutôt que comme une suite d'appels : c'est ce qui rend la
+reprise gratuite.
+
+**LA SECONDE GARDE EST GAGNÉE.** C'était l'argument du D-F40, et il se vérifie :
+une régression de la chaîne éditoriale ne se manifeste plus au bout de la
+recette par une banque vide et inexplicable. Elle échoue au semis, à l'étape qui
+l'a causée, en nommant le métier et le refus.
+
+**IDEMPOTENT PAR VÉRIFICATION D'ÉTAT, ET C'EST LA SEULE FAÇON.** Une transition
+rejouée répond 422 : `a_verifier → a_verifier` n'est pas une arête, et le
+service refuse au lieu de faire croire qu'il a agi. Le semis lit donc l'état
+courant et ne joue QUE les transitions manquantes. Vérifié sur une base vierge :
+20 créées ; une question laissée à mi-chaîne : 19 créées + 1 reprise ; rejoué :
+0 écriture.
+
+**Le contrôle documentaire vient en premier.** Publier pour le diagnostic exige
+une source VÉRIFIÉE, et citer une source ne la vérifie pas (DET-46). Le semis
+appelle `POST admin/sources/{uuid}/verify` AVANT de rédiger : une source vérifiée
+qualifie les citations faites après son contrôle, donc chaque citation n'a plus
+qu'un seul état possible.
+
+**CE QUI RESTE EN `tinker`, ET POURQUOI CE N'EST PAS UN REPLI.**
+`preparer-referentiel.php` ne crée que ce qui n'a AUCUNE route — vérifié dans
+`routes/api.php` :
+
+| Ce qu'il fait | Pourquoi pas par l'API |
+|---|---|
+| comptes éditoriaux et leurs rôles | `auth/register` crée un candidat ; rattacher un rôle n'a pas de route |
+| remédiations | exigées au diagnostic, ne sortent que par le plan de révision d'un candidat — circulaire |
+| uuid de la source | `verify` prend un uuid, et aucune lecture ne le rend : les ressources ne citent la source que par son CODE |
+
+Ce sont du RÉFÉRENTIEL et du PERSONNEL, pas de la chaîne éditoriale. La
+frontière se relit d'un coup d'œil : ce fichier écrit une passation, il ne crée
+aucune question. Le semis, lui, ne touche plus la base.
+
+## D-F47 — Un énoncé numéroté est une clé naturelle, pas une contrainte d'unicité
+
+**Constat, à la première exécution du nouveau semis.** Échec sur la question
+n° 1 : « doit renvoyer vers une remédiation », « aucune source vérifiée ». Le
+réflexe du D-F39 a servi une cinquième fois — vérifier ce que le test mesure
+avant de corriger ce qu'il désigne.
+
+**Cause.** DEUX questions portaient l'énoncé n° 1 : une publiée par l'ancien
+semis, et une orpheline restée `pedagogically_validated`, laissée par une
+exécution interrompue d'avant le lot. Rien en base n'interdit ce doublon. Le
+semis construisait sa table par énoncé avec « la dernière servie gagne » —
+c'est-à-dire au hasard de l'ordre de tri. Il avait tiré l'orpheline, et les deux
+blocages annoncés étaient exacts.
+
+**Décision.** À énoncé égal, on retient la question LA PLUS AVANCÉE dans la
+chaîne. Si l'une est publiée, le but du semis est atteint, quoi qu'il traîne à
+côté. Le doublon est ÉNONCÉ au rapport, jamais supprimé : le semis n'efface pas
+ce qu'il n'a pas écrit, et une banque de développement qui accumule des jumelles
+à mi-chaîne doit se voir. En CI la base est neuve, la liste est toujours vide.
+
+**Ce que ça dit.** L'idempotence par clé naturelle suppose que la clé soit
+unique en base. Ici elle ne l'est pas, et la supposition tenait tant que le
+semis était le seul écrivain.
