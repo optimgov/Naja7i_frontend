@@ -240,8 +240,11 @@ if (partie === '2' || partie === 'toutes') {
     await page.waitForTimeout(900)
 
     const due = JSON.parse((await api(`/me/memory/${codeEpreuve}/due`)).corps)
-    // `.enveloppe` est aussi la barre du gabarit : on vise le contenu.
-    const texte = (await page.locator('main .enveloppe').innerText()) ?? ''
+    /* On lit TOUT le contenu principal, sans viser une enveloppe précise :
+     * `.enveloppe` est la largeur de lecture partagée, et le gabarit en a ajouté
+     * une seconde dans `<main>` avec la boîte d'échec du BLOC-5. Un sélecteur
+     * qui suppose un exemplaire unique casse au premier ajout de bloc. */
+    const texte = (await page.locator('main').innerText()) ?? ''
 
     const servisAffiches = texte.includes(String(due.meta.served))
     const attenteAffichee = due.meta.pending === 0 || texte.includes(String(due.meta.pending))
