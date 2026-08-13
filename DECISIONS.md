@@ -895,3 +895,43 @@ qu'aucun 429 ne survient. C'était le point du D-F39, et il ne se lève pas.
 
 **Mesuré, en local, base déjà semée :** 8 min 44 → **3 min 07**, dont 0 s
 d'attente de fenêtre contre 260 s auparavant.
+
+## D-F49 — La recette dépendait de l'ANCIENNETÉ de la base, et ne le disait pas
+
+**Constat, à la deuxième exécution en intégration continue.** La limitation de
+débit levée, la recette est allée bien plus loin — et a buté sur FRONT-4 :
+« 0 échus · 0 servis », puis un `locator.click` de 30 s dans le vide sur un
+bouton d'ouverture de séance qui n'existait pas.
+
+**Ce n'était ni le produit ni la recette.** Un rendez-vous de révision naît au
+palier 1, donc `due_on` = demain. Sur un poste, les comptes de recette traînent
+depuis des jours : tout y est échu, et la branche « j'ai des révisions » est
+jouée. Sur une base neuve — donc en CI, toujours — RIEN n'est jamais échu, et
+c'est la branche « je suis à jour » qui est jouée.
+
+**La recette mesurait donc deux choses différentes selon la machine.** C'est
+pire qu'un échec : pendant que le poste validait la boucle quotidienne, la CI
+n'en aurait jamais rien vu, et personne n'aurait su lequel des deux verdicts
+comptait. Le réflexe du D-F39 a servi une sixième fois.
+
+**Décision.** `echoir-revisions.php`, joué entre la passation et FRONT-4 :
+il recule `due_on` à HIER pour le seul compte A, sur la seule épreuve de
+recette. Simuler le temps est la seule issue — l'alternative est d'attendre un
+jour.
+
+**Hier et non aujourd'hui** : `scopeDue` compare à la date de journée du
+candidat dans son fuseau. Poser la date du jour ferait dépendre le résultat de
+l'heure à laquelle la CI tourne, à cheval sur une frontière de journée. « En
+retard » est par ailleurs un état légitime, que `scopeDue` prévoit
+explicitement.
+
+**CE QU'IL NE TOUCHE PAS, et c'est là qu'est la ligne.** `due_on` seulement.
+Ni `palier`, ni `consecutive_sure`, ni `blind_error`, ni `last_reviewed_at` :
+ceux-là encodent la PROGRESSION, et les écrire fabriquerait un état que le
+produit n'a pas calculé. Reculer une échéance, c'est avancer l'horloge ;
+toucher au palier, ce serait mentir sur ce que le candidat a appris.
+
+**Zéro rendez-vous est une ERREUR, pas un cas.** Le script sort en 1 avec un
+message qui nomme la cause probable — le calendrier mémoire n'a pas été
+alimenté par la passation. C'est un défaut réel, et il ne doit pas se déguiser
+en écran vide.

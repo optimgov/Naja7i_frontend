@@ -277,7 +277,25 @@ const B = comptes.find((c) => c.cle === 'B')
 const RECETTES = [
   ['passation d’un diagnostic', 'scripts/recette-passation.mjs', [A.email, A.motDePasse]],
   ['FRONT-3 — les cas qui doivent échouer', 'scripts/recette-front3.mjs', [A.email, A.motDePasse]],
-  ['FRONT-4 — la boucle quotidienne', 'scripts/recette-front4.mjs', [A.email, A.motDePasse]],
+  /*
+   * FRONT-4 EXIGE UN CALENDRIER ÉCHU, et il faut le lui donner.
+   *
+   * Un rendez-vous naît au palier 1 : `due_on` = demain. Sur un poste les
+   * comptes traînent depuis des jours et tout est échu ; sur une base neuve
+   * RIEN ne l'est jamais. La recette mesurait donc deux choses différentes
+   * selon la machine, et la première exécution en CI l'a montré — « 0 échus »,
+   * puis un clic dans le vide. Voir `echoir-revisions.php` : il recule
+   * l'échéance, et elle seule.
+   */
+  [
+    'FRONT-4 — la boucle quotidienne',
+    'scripts/recette-front4.mjs',
+    [A.email, A.motDePasse],
+    { avant: ['php', ['artisan', 'tinker', `${ICI}/echoir-revisions.php`], {
+      cwd: BACKEND,
+      env: { ...env, COMPTE_EMAIL: A.email, CODE_EPREUVE: 'CRMEF-FR-SPEC-2025' },
+    }] },
+  ],
   [
     'file d’envoi — BLOC-4, BLOC-5 et SSR',
     'scripts/recette-file-envoi.mjs',
@@ -318,7 +336,7 @@ const depart = Date.now()
 const bilan = []
 let attente = 0
 
-for (const [i, [nom, script, args]] of RECETTES.entries()) {
+for (const [i, [nom, script, args, options = {}]] of RECETTES.entries()) {
   /* La pause précède AUSSI la première recette. Deux exécutions rapprochées de
    * `npm run recette` se marchent dessus autrement : la seconde hérite du
    * budget consommé par la première et échoue sur un 429 dès l'ouverture. Une
@@ -332,6 +350,13 @@ for (const [i, [nom, script, args]] of RECETTES.entries()) {
   }
 
   titre(nom)
+
+  /* Une préparation qui échoue arrête tout : jouer la recette sur un état
+   * qu'on n'a pas su poser rendrait son verdict ininterprétable. */
+  if (options.avant && lancer(...options.avant) !== 0) {
+    echouer(`la préparation de « ${nom} » a échoué`)
+  }
+
   const t0 = Date.now()
   const code = lancer('node', [script, ...args], {
     cwd: FRONT,
