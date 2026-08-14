@@ -935,3 +935,114 @@ toucher au palier, ce serait mentir sur ce que le candidat a appris.
 message qui nomme la cause probable — le calendrier mémoire n'a pas été
 alimenté par la passation. C'est un défaut réel, et il ne doit pas se déguiser
 en écran vide.
+
+## FRONT-6 — l'examen blanc
+
+## D-F50 — Le mode examen est une VARIANTE de la passation, pas un second écran
+
+**La tentation.** Un écran dédié `/app/examen/{uuid}` : le mode examen ajoute
+une grille de navigation, un marquage, un avertissement de fin, une bascule à
+l'échéance et une sortie différente. Cinq différences, c'est beaucoup.
+
+**Pourquoi non.** Ce que les deux écrans PARTAGENT est plus lourd que ce qui les
+sépare : les questions, la certitude obligatoire, la file d'envoi hors
+connexion, et surtout `data-zone="examen"` — donc les masquages CSS de R06.
+Un écran jumeau aurait divergé au premier correctif appliqué d'un seul côté, et
+R06 est exactement la règle qu'on ne veut pas voir diverger. Le `kind` de la
+tentative suffit à faire apparaître les cinq ajouts.
+
+**Vérifié, pas supposé** : les masquages de `[data-zone='examen']` s'appliquent
+déjà, ils n'ont pas été réécrits.
+
+## D-F51 — À zéro, le client DEMANDE ; il ne conclut pas
+
+**Le piège.** « À l'échéance, l'écran bascule sur la soumission » se code
+naturellement en `if (tempsEcoule) soumettre()`. C'est faux, et c'est faux dans
+le sens le plus coûteux : un poste dont l'horloge avance de trois minutes
+fermerait l'épreuve trois minutes trop tôt, et le candidat perdrait un temps
+qu'il avait réellement.
+
+**Décision.** À zéro, l'écran RELIT la tentative auprès du serveur. Trois
+issues : le serveur rend encore du temps → le décompte repart et l'incident
+n'existe pas ; la tentative n'est plus en cours → on va au rapport ; le serveur
+rend zéro → on va au rapport, dont l'appel clôt la tentative côté serveur.
+
+Le client n'a jamais raison sur l'heure. Il ne fait que demander plus tôt.
+
+## D-F52 — Le marquage vit dans `sessionStorage`, et le serveur n'en sait rien
+
+Marquer une question pour y revenir est un repère de NAVIGATION, pas une
+réponse. L'envoyer au serveur créerait un état à synchroniser, à purger, à
+autoriser — pour une information qui ne survit pas à l'épreuve.
+
+Il vit donc dans `sessionStorage`, porté par l'uuid de la tentative : un
+rechargement en pleine épreuve est le cas NORMAL d'une épreuve de quatre heures,
+et perdre ses marques à cette occasion serait une punition gratuite. Deux
+onglets restent deux sessions — même règle que la clé d'idempotence.
+
+## D-F53 — `correction.vue` déduisait le genre par la négative, et se trompait
+
+**Constat, en écrivant E11.** `estEntrainement` valait « tout ce qui n'est pas
+un diagnostic ». À l'arrivée du simulateur, il valait donc VRAI pour un examen
+blanc, et l'écran de correction lui aurait apposé « série d'entraînement : ce
+résultat n'est pas représentatif du concours ».
+
+C'est faux, et c'est l'inverse exact de ce que le rapport affirme un écran plus
+loin : la série d'un examen blanc reproduit les poids officiels, et c'est
+précisément ce qui l'autorise à porter une note.
+
+**Décision.** Le genre est ÉNUMÉRÉ (`training`, `review`, `mirror`), jamais
+déduit par la négative. Le prochain `kind` ajouté au contrat n'héritera plus
+d'un cadrage écrit pour un autre.
+
+## D-F54 — Aucun `n()` : les chiffres restent ceux du produit
+
+`vue-i18n` propose `n()` pour formater les nombres. Employé sous locale `ar`,
+`Intl` rend des chiffres arabo-indiens (٢٠) — là où tout le reste du produit
+interpole le nombre brut. Deux systèmes de chiffres selon l'écran serait une
+incohérence visible, et le choix du système est une décision de produit qui
+n'appartient pas à ce lot.
+
+Les nombres sont donc interpolés comme partout ailleurs. Le signe pour cent, lui,
+est bien localisé : `٪` en arabe.
+
+**Terme soumis à relecture** : `٪` (U+066A) plutôt que `%` sur les pages arabes.
+C'est la forme standard en écriture arabe, mais l'usage marocain accepte les
+deux — à confirmer.
+
+## D-F55 — Ce que les captures ont trouvé, et que les tests ne pouvaient pas voir
+
+**Trois défauts, dont deux dans mon propre outillage.**
+
+1. **Six captures sur douze portaient un nom faux.** Le clair est l'état SANS
+   attribut — `useThemeApplique` n'écrit `data-theme` que pour le sombre. Ma
+   bascule comparait l'attribut à « clair », donc basculait toujours, et à
+   contresens. Une capture mal nommée est pire qu'une capture manquante : on la
+   relit en croyant avoir vu l'autre thème. Le thème se pose maintenant par son
+   COOKIE, et la passe VÉRIFIE le thème obtenu — elle rougit si l'un des douze
+   n'y est pas.
+
+2. **« 4 h 0 » n'est pas une durée.** Corrigé : une durée ronde n'affiche pas
+   ses minutes.
+
+3. **Les citations officielles s'affichent en français sur la page arabe.** Ce
+   n'est PAS un défaut de cet écran : `SetLocale` suit la locale du COMPTE, et
+   `official_scoring_note_fr` n'a tout simplement aucune colonne `_ar` en base.
+   Inscrit en DET-54 côté backend. Aucun test ne pouvait l'attraper — le
+   contrat est respecté, et `dir="auto"` rend le mélange lisible, donc le masque.
+
+**Ce que ça dit du dispositif** : les tests éprouvent le contrat, les captures
+éprouvent ce que le candidat LIT. Les seconds ne remplacent pas les premiers, et
+ici ils ont trouvé ce qu'aucune assertion ne cherchait.
+
+## D-F56 — Une réponse tardive porte son propre code, et l'écran l'explique
+
+`ATTEMPT_EXPIRED` est distinct d'`ATTEMPT_CLOSED` côté serveur, et l'interface
+en dépend : « votre temps est écoulé, cette réponse est perdue » et « cette
+série est déjà terminée » n'appellent pas la même phrase.
+
+Le même refus arrive aussi par la FILE hors connexion, quand une réponse posée
+avant l'échéance s'écoule après. La boîte d'échecs la montre — c'est le BLOC-5,
+inchangé — et le bandeau de l'écran dit pourquoi. Sans ce code distinct,
+l'interface afficherait le message brut du serveur dans une alerte système, ce
+qui ressemble à un incident alors que c'est une règle du produit qui s'applique.

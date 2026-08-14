@@ -93,7 +93,24 @@ await charger(uuid.value).catch(() => {})
 
 const genre = computed(() => tentative.value?.kind ?? null)
 const estDiagnostic = computed(() => genre.value === 'diagnostic')
-const estEntrainement = computed(() => genre.value !== null && genre.value !== 'diagnostic')
+
+/**
+ * L'EXAMEN BLANC N'EST NI UN DIAGNOSTIC NI UN ENTRAÎNEMENT.
+ *
+ * `estEntrainement` valait « tout ce qui n'est pas un diagnostic » — donc, à
+ * l'arrivée du simulateur, il valait VRAI pour un examen blanc, et cet écran
+ * lui aurait apposé « série d'entraînement : ce résultat n'est pas
+ * représentatif du concours ». C'est faux, et c'est exactement l'inverse de ce
+ * que le rapport affirme deux écrans plus loin : la série d'un examen blanc
+ * reproduit les poids officiels, c'est ce qui l'autorise à porter une note.
+ *
+ * Le genre est donc énuméré, et non déduit par la négative. Le prochain `kind`
+ * ajouté au contrat n'héritera plus d'un cadrage écrit pour un autre.
+ */
+const estSimulation = computed(() => genre.value === 'simulation')
+const estEntrainement = computed(
+  () => genre.value === 'training' || genre.value === 'review' || genre.value === 'mirror',
+)
 
 const meta = computed(() => data.value?.meta ?? null)
 const lignes = computed(() => data.value?.data ?? [])
@@ -115,6 +132,16 @@ useHead({ title: t('correction.titre') })
          annoncé après coup a déjà été lu comme une note. -->
     <p v-if="estEntrainement" class="alerte alerte--info" role="note">
       <span>{{ t('correction.entrainement_avertissement') }}</span>
+    </p>
+
+    <!-- Un examen blanc a SA restitution : la note au barème pondéré et le
+         détail par section. Cette page reste la correction question par
+         question — utile, mais ce n'est pas le résultat de l'épreuve. -->
+    <p v-if="estSimulation" class="alerte alerte--info" role="note">
+      <span>{{ t('correction.simulation_renvoi') }}</span>
+      <NuxtLink class="lien" :to="localePath(`/app/simulation/${uuid}/rapport`)">
+        {{ t('correction.simulation_lien') }}
+      </NuxtLink>
     </p>
 
     <p v-if="meta" class="resultat">

@@ -232,6 +232,44 @@ export function useTentative() {
     }
   }
 
+  /**
+   * Ouvre un EXAMEN BLANC, ou rend celui déjà en cours.
+   *
+   * Même patron que les deux précédents — clé d'idempotence, le serveur tranche
+   * entre 201 et 200 — mais la clé n'est PAS portée par l'épreuve.
+   *
+   * Le serveur n'autorise qu'une seule simulation ouverte TOUTES ÉPREUVES
+   * CONFONDUES, à la différence du diagnostic qui est unique par épreuve : deux
+   * échéances dures qui courent en parallèle feraient découvrir au candidat une
+   * épreuve expirée qu'il n'a jamais passée. Une clé par épreuve laisserait
+   * croire à deux intentions distinctes là où le serveur n'en reconnaît qu'une.
+   *
+   * `total` n'est pas exposé à l'écran : la LONGUEUR d'un examen blanc est une
+   * convention du produit — le descriptif officiel ne donne pas le nombre de
+   * questions — et laisser le candidat la choisir lui ferait croire qu'il
+   * règle le format de l'épreuve.
+   */
+  async function ouvrirSimulation(codeEpreuve: string): Promise<Tentative> {
+    chargement.value = true
+    erreur.value = null
+
+    try {
+      const reponse = await api.post<{ data: Tentative }>(
+        `/me/simulations/${encodeURIComponent(codeEpreuve)}`,
+        {},
+        { 'Idempotency-Key': cleIdempotence('simulation') },
+      )
+      tentative.value = reponse.data
+      ancrerTemps(reponse.data.seconds_remaining)
+      return reponse.data
+    } catch (e: unknown) {
+      if (e instanceof ApiRequestError) erreur.value = e
+      throw e
+    } finally {
+      chargement.value = false
+    }
+  }
+
   async function charger(uuid: string): Promise<Tentative> {
     chargement.value = true
     erreur.value = null
@@ -356,6 +394,7 @@ export function useTentative() {
     tempsEcoule,
     ouvrir,
     ouvrirEntrainement,
+    ouvrirSimulation,
     charger,
     repondre,
     soumettre,

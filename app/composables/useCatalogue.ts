@@ -84,7 +84,53 @@ export function useCatalogue() {
       transform: (r) => r.data,
     })
 
-  return { filieres, filiere, famille, specialite, calendrier }
+  /**
+   * La matrice d'une ÉPREUVE : ses domaines, leurs poids, sa durée officielle.
+   *
+   * Route PUBLIQUE du PAS-4.1, déjà servie par le catalogue — on ne crée pas
+   * une seconde lecture du référentiel pour le simulateur. C'est la même
+   * matrice qui compose la série côté serveur, et l'écran de seuil doit
+   * annoncer exactement ce qui sera composé.
+   *
+   * On garde la réponse ENTIÈRE (`data` + `meta`) : `meta.exam` porte la durée
+   * et le coefficient, `data` porte l'arbre des domaines. Les deux sont
+   * nécessaires à E9, et les séparer obligerait à deux appels.
+   */
+  const referentielEpreuve = (code: string) =>
+    useAsyncData(
+      `epreuve:competences:${code}`,
+      () => api.get<ReferentielEpreuve>(`/catalogue/epreuves/${encodeURIComponent(code)}/competences`),
+    )
+
+  return { filieres, filiere, famille, specialite, calendrier, referentielEpreuve }
+}
+
+/** Un domaine du référentiel. `weight_percent` est nul quand le descriptif ne le donne pas. */
+export interface NoeudDeCompetence {
+  uuid: string
+  code: string
+  name: string
+  depth: number
+  level_name: string | null
+  weight_percent: number | null
+  source: string | null
+  children?: NoeudDeCompetence[]
+}
+
+export interface ReferentielEpreuve {
+  data: NoeudDeCompetence[]
+  meta: {
+    exam: {
+      code: string
+      name: string
+      coefficient: number | null
+      /** Nulle tant qu'une source officielle ne l'établit pas. */
+      duration_minutes: number | null
+      provenance: string | null
+    }
+    levels: { depth: number; name: string }[]
+    node_count: number
+  }
 }
 
 /**
