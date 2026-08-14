@@ -1046,3 +1046,90 @@ avant l'échéance s'écoule après. La boîte d'échecs la montre — c'est le 
 inchangé — et le bandeau de l'écran dit pourquoi. Sans ce code distinct,
 l'interface afficherait le message brut du serveur dans une alerte système, ce
 qui ressemble à un incident alors que c'est une règle du produit qui s'applique.
+
+## ZP-1 — la zone publique v1
+
+## D-F57 — La maquette fait autorité sur la FORME ; le dépôt garde son vocabulaire
+
+`public-v1.css` est intégré, pas copié : 503 lignes retenues sur 705, et chaque
+écart porte sa raison dans l'en-tête du bloc ajouté à `commun.css`.
+
+**Dans `commun.css` et pas dans un troisième fichier.** `tokens.css` est une
+copie conforme du socle et n'accepte aucune règle de composant ; la convention
+envoie les classes partagées dans `commun.css`, et c'est ce fichier que lit le
+second passage du validateur de jetons. Un fichier à part aurait échappé
+précisément au contrôle qui vérifie que l'erreur système et l'erreur
+pédagogique ne se distinguent pas par la seule couleur.
+
+**Deux renommages, pour collision réelle.** `.fil` désigne le fil d'ARIANE dans
+le dépôt depuis le FRONT-1 et le fil d'ACTUALITÉ dans la source : celui qui
+était là reste, le nouveau devient `.fil-actu`. `.fait*` est déjà employé en
+style scopé par l'écran de seuil de l'examen blanc — et un style scopé
+l'emporte sur les propriétés qu'il DÉCLARE, pas sur les autres : les bordures
+de la fiche d'annonce auraient fui sur E9 sans que rien ne le signale.
+
+**Le vocabulaire des jetons est traduit en v3** (`--err*` → `--sys-err*`). Le
+validateur a attrapé le seul endroit où la traduction mécanique se trompait :
+`color: var(--sys-err)` sur du texte, quand v3 réserve l'aplat au fond.
+
+## D-F58 — `jours` est périssable : le BFF le recalcule
+
+Le collecteur sert un nombre de jours calculé À L'INSTANT DE LA COLLECTE. La
+fixture du 8 août le démontre : elle annonce encore ouvertes trois annonces
+dont l'échéance est passée, dont le concours de professeur des écoles.
+
+Afficher « Clôture dans 1 jour » sur un dépôt fermé depuis cinq jours n'est pas
+une imprécision d'affichage : c'est la seule erreur de ce produit qui puisse
+coûter à un candidat sa candidature. Le BFF recalcule donc depuis `deadline`,
+qui est une DATE et ne périme pas.
+
+La forme rendue ne bouge pas — le client lit toujours `jours` — donc rien à
+réécrire au branchement. Mesuré : 26 ouvertes au 9 août, 24 aujourd'hui.
+
+## D-F59 — Ce que les captures ont trouvé et que le typage ne pouvait pas voir
+
+**Quatre défauts, tous invisibles aux contrôles automatiques**, parce que le
+typage était vert, les jetons verts, les locales vertes et l'audit de rendu
+sans anomalie.
+
+1. **J'avais écarté la section « 11. Écrans » en bloc**, la croyant purement
+   échafaudage. Elle est MIXTE : la grille du fil à trois colonnes et le rail
+   de filtres repliable y sont, avec leur raison écrite. Conséquence mesurée :
+   quatre colonnes au lieu de trois, cartes plus étroites, titres enroulés,
+   496 px de haut contre 357 à la référence. **Une exclusion par titre de
+   section ne vaut pas un examen règle par règle.**
+2. **L'organisme était dans le rang de la nature**, pas sous le titre : 79 px
+   au lieu de 22, un nom de ministère enroulant sur trois lignes.
+3. **Les faits étaient un `<ul>`** — donc des puces et un retrait que la
+   maquette n'a jamais eus. La source emploie `<p>` + `<span>`.
+4. **« 1 postes »**. La source pluralise ; je ne le faisais pas.
+
+Aucun de ces quatre n'aurait été trouvé sans regarder l'écran à côté de la
+capture de référence.
+
+## D-F60 — A2 se contredit avec sa propre maquette, et je ne tranche pas seul
+
+**Mesuré, aux deux largeurs, sur la maquette de référence ET sur notre accueil :**
+
+| | référence (maquette) | notre accueil |
+|---|---|---|
+| 1440 px | 996 / 3063 = **32,5 %** | 885 / 1948 = **45,4 %** |
+| 390 px | 2439 / 6244 = **39,1 %** | 2145 / 4011 = **53,5 %** |
+
+A2 exige « moins de 22 % de la surface. Pas plus », et « une section « Le fil »
+en bas (6 cartes) ». **La maquette de référence elle-même est à 32,5 %.**
+
+Notre NUMÉRATEUR est plus petit que le sien (885 contre 996) : le bloc
+d'annonces est fidèle, et même plus serré. L'écart de pourcentage vient
+entièrement du DÉNOMINATEUR — l'accueil du dépôt fait 1948 px là où celui de la
+maquette en fait 3063, parce qu'il a moins de contenu hors annonces (la
+maquette porte notamment un pied à trois colonnes que le dépôt n'a pas).
+
+Les deux moitiés d'A2 sont arithmétiquement incompatibles sur une page de cette
+longueur : six cartes en bas font ~900 px, et 22 % de 1948 px font 428 px.
+
+**Je n'ai pas tranché.** L'implémentation suit la maquette — six cartes, forme
+conforme — et la question est portée au point d'arrêt avec ses mesures. Trois
+issues existent : garder six cartes et accepter la proportion de la référence ;
+descendre à trois cartes pour tenir 22 % ; ou allonger l'accueil (le pied de la
+maquette est déjà intégré au CSS, il n'est pas encore posé dans le gabarit).

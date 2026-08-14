@@ -59,6 +59,12 @@ const dateEcheance = computed(() => {
 
       <!-- Canal 1 : le libellé écrit. Il se suffit seul, sans couleur ni jauge. -->
       <span>{{ t(echeance.cle, { n: echeance.jours ?? 0 }) }}</span>
+
+      <!-- La date est DANS la ligne, à sa fin — pas sous la jauge. Ordre de la
+           source : le décompte et sa date se lisent d'un seul regard. -->
+      <time v-if="dateEcheance" class="echeance__date" :datetime="annonce.deadline ?? undefined">
+        {{ dateEcheance }}
+      </time>
     </p>
 
     <!-- Canal 2 : la longueur. Redondante par construction, donc masquée aux
@@ -67,8 +73,5 @@ const dateEcheance = computed(() => {
       <span class="echeance__jauge" :style="{ inlineSize: `${echeance.part}%` }" />
     </span>
 
-    <time v-if="dateEcheance" class="echeance__date" :datetime="annonce.deadline ?? undefined">
-      {{ t('opportunites.echeance_le', { date: dateEcheance }) }}
-    </time>
   </div>
 </template>

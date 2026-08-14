@@ -112,7 +112,11 @@
     "portes_oeil": "من أين تبدأ",
     "portes_titre": "اختر مسلكك",
     "seo_titre": "نجاحي — التحضير لمباريات الوظيفة العمومية بالمغرب",
-    "seo_description": "تشخيص وتصحيحات مشروحة والمرجع الرسمي للمباريات المغربية. كل جواب خاطئ مبرَّر، لا معدود فقط."
+    "seo_description": "تشخيص وتصحيحات مشروحة والمرجع الرسمي للمباريات المغربية. كل جواب خاطئ مبرَّر، لا معدود فقط.",
+    "fil_oeil": "الجديد",
+    "fil_titre": "ما فُتح حديثا",
+    "fil_tout_voir": "كل الفرص",
+    "fil_fixture": "بيانات نموذجية — {source}. لم يُربط بعد مجمّع الإعلانات."
   },
   "catalogue": {
     "concours": "المباريات",
@@ -418,10 +422,9 @@
     "echeance_aujourdhui": "الترشيح ينتهي اليوم",
     "echeance_demain": "الترشيح ينتهي غدا",
     "echeance_jours": "الترشيح ينتهي بعد {n} أيام",
-    "echeance_le": "في {date}",
     "rattachement_prepare": "نجاحي يهيّئ لهذه المباراة",
     "rattachement_attente": "التهييء غير متاح بعد",
-    "n_postes": "{n} منصب",
+    "n_postes": "منصب {n} | {n} منصب",
     "echelle_n": "السلّم {n}",
     "type_concours": "مباراة",
     "type_poste_responsabilite": "منصب مسؤولية",

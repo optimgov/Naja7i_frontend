@@ -41,7 +41,14 @@ const faits = computed(() => {
   const out: { cle: string, valeur: string }[] = []
 
   if (props.annonce.postes !== null) {
-    out.push({ cle: 'postes', valeur: t('opportunites.n_postes', { n: props.annonce.postes }) })
+    /* PLURALISATION RÉELLE : « 1 poste », pas « 1 postes ». La source le fait,
+     * et un pluriel faux sur la première carte d'un accueil se remarque.
+     * `nombre()` pose la fine insécable de milliers — sans elle, « 4 200 » se
+     * lit « 200 4 » en arabe. */
+    out.push({
+      cle: 'postes',
+      valeur: t('opportunites.n_postes', props.annonce.postes, { named: { n: nombre(props.annonce.postes) } }),
+    })
   }
   if (props.annonce.regions.length) {
     out.push({ cle: 'regions', valeur: props.annonce.regions.join(' · ') })
@@ -56,10 +63,14 @@ const faits = computed(() => {
 
 <template>
   <article class="annonce">
+    <!-- ORDRE DE LA SOURCE : rang (nature seule), titre, PUIS organisme.
+         Ma première écriture mettait l'organisme dans le rang, à côté de la
+         pastille : mesuré à 79 px de haut au lieu de 22, parce qu'un nom de
+         ministère enroule sur trois lignes dans une colonne étroite. La
+         maquette le pose sous le titre, où il dispose de toute la largeur. -->
     <div class="annonce__rang">
       <!-- Pastille NEUTRE : la nature se lit, elle ne se devine pas à la teinte. -->
       <span class="nature">{{ nature }}</span>
-      <span class="annonce__org" dir="auto">{{ annonce.org }}</span>
     </div>
 
     <component :is="balise" class="annonce__titre">
@@ -68,9 +79,14 @@ const faits = computed(() => {
       </NuxtLink>
     </component>
 
-    <ul v-if="faits.length" class="annonce__faits">
-      <li v-for="fait in faits" :key="fait.cle" dir="auto">{{ fait.valeur }}</li>
-    </ul>
+    <p class="annonce__org" dir="auto">{{ annonce.org }}</p>
+
+    <!-- `<p>` + `<span>` comme la source, PAS une liste : un `<ul>` apporte ses
+         puces et son retrait, que la maquette n'a jamais eus. Vu à la capture,
+         pas au typage. -->
+    <p v-if="faits.length" class="annonce__faits">
+      <span v-for="fait in faits" :key="fait.cle" dir="auto">{{ fait.valeur }}</span>
+    </p>
 
     <BlocEcheance :annonce="annonce" />
 

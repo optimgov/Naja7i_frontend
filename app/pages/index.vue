@@ -7,6 +7,44 @@ const { filieres } = useCatalogue()
 const { data: portes } = await filieres()
 const chiffres = useChiffresReels()
 
+/*
+ * LES ANNONCES SUR L'ACCUEIL — ARBITRAGE A2, ET C'EST UN BUDGET DE SURFACE.
+ *
+ * Elles tiennent DEUX emplacements et pas un de plus : un bandeau d'une ligne
+ * au-dessus du héros, et une section « Le fil » en bas. Moins de 22 % de la
+ * hauteur de page. L'accueil VEND la méthode ; l'agrégat la nourrit, il ne la
+ * remplace pas — un accueil devenu tableau d'affichage aurait gagné en trafic
+ * ce qu'il aurait perdu en raison d'être.
+ *
+ * SIX CARTES, et le nombre est une contrainte. Le fil PROUVE que la plateforme
+ * est vivante ; il ne remplace pas le tapis, qui est à un clic.
+ */
+const { annonces } = useOpportunites()
+const { data: opportunites, error: erreurOpportunites } = await annonces()
+
+/* Illisible → la donnée DISPARAÎT. Ni bandeau, ni fil, aucun chiffre inventé. */
+const annoncesLues = computed(() =>
+  erreurOpportunites.value || !opportunites.value ? [] : opportunites.value.data,
+)
+
+/**
+ * Le fil : les six échéances les plus PROCHES parmi les annonces ouvertes.
+ *
+ * Trié par urgence et non par date de publication : un accueil qui montrerait
+ * les dernières collectées afficherait des concours clos en tête le jour où le
+ * collecteur tourne au ralenti. L'urgence, elle, reste vraie.
+ */
+const fil = computed(() =>
+  annoncesLues.value
+    .filter(a => estOuverte(a))
+    .sort((a, b) => (a.jours ?? 0) - (b.jours ?? 0))
+    .slice(0, 6),
+)
+
+const meta = computed(() =>
+  erreurOpportunites.value || !opportunites.value ? null : opportunites.value.meta,
+)
+
 useSeoCatalogue({
   title: t('accueil.seo_titre'),
   description: t('accueil.seo_description'),
@@ -16,6 +54,11 @@ useSeoCatalogue({
 
 <template>
   <div>
+    <!-- Au-dessus du héros, comme dans la maquette : une échéance qui presse se
+         lit avant la promesse, pas après. Le composant se TAIT quand rien ne
+         presse — un bandeau permanent devient du mobilier. -->
+    <BandeauEcheance :annonces="annoncesLues" />
+
     <section class="heros">
       <div class="enveloppe heros__grille">
         <div>
@@ -95,6 +138,36 @@ useSeoCatalogue({
         </div>
       </div>
     </section>
+
+    <!-- ─────────────────────────── LE FIL ───────────────────────────
+         En bas, et c'est sa place : il prouve que la plateforme est vivante à
+         qui a déjà lu la méthode. Le mettre plus haut aurait fait de l'accueil
+         un agrégateur. -->
+    <section v-if="fil.length" class="fil-actu section">
+      <div class="enveloppe">
+        <div class="fil-actu__entete">
+          <div>
+            <p class="oeil">{{ t('accueil.fil_oeil') }}</p>
+            <h2 class="titre-section">{{ t('accueil.fil_titre') }}</h2>
+          </div>
+
+          <NuxtLink class="lien-second" :to="localePath('/opportunites')">
+            {{ t('accueil.fil_tout_voir') }}
+          </NuxtLink>
+        </div>
+
+        <div class="fil-actu__grille">
+          <CarteAnnonce v-for="annonce in fil" :key="annonce.id" :annonce="annonce" />
+        </div>
+
+        <!-- LE MARQUEUR DE FIXTURE VIENT DU SERVEUR. S'il cesse d'être servi,
+             la mention disparaît — elle ne se replie pas sur une valeur en dur.
+             Règle « aucun repli en dur sur un marqueur contractuel ». -->
+        <p v-if="meta?.fixture" class="fil-actu__fixture" dir="auto">
+          {{ t('accueil.fil_fixture', { source: meta.source }) }}
+        </p>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -128,4 +201,14 @@ useSeoCatalogue({
   border-radius: 999px; background: var(--vert-700); color: #fff; font-size: var(--t-xs); font-weight: 800; margin-block-end: var(--e-2); }
 .etape__titre { font-size: var(--t-md); margin-block-end: 4px; }
 .etape__texte { font-size: var(--t-sm); color: var(--texte-doux); }
+
+/* `.fil-actu`, `.fil-actu__entete` et `.fil-actu__grille` viennent de
+   `commun.css` : la maquette les nommait `.fil*`, nom déjà pris par le fil
+   d'Ariane depuis le FRONT-1. Seule la mention de fixture est propre à cet
+   écran. */
+.fil-actu__fixture {
+  margin-block-start: var(--e-4);
+  font-size: var(--t-xs);
+  color: var(--texte-doux);
+}
 </style>

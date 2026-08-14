@@ -1098,3 +1098,41 @@ html[dir='rtl'] .annonce__titre { letter-spacing: normal; line-height: 1.45; }
   border-block-start: 1px solid var(--bordure-marque);
   font-size: var(--t-xs); color: var(--texte-inverse-doux);
 }
+
+/* ---------------------------------------------------------------------
+ * REPRISE DE LA SECTION « 11. Écrans » — correction d'une exclusion trop large
+ *
+ * Je l'avais écartée en bloc comme « échafaudage de la maquette autonome ».
+ * Elle est MIXTE : `.ecran`, `.barre-demo*` sont bien l'échafaudage du
+ * document de démonstration et restent dehors, mais trois règles sont des
+ * décisions de PRODUIT, avec leur raison écrite dans la source.
+ *
+ * Trouvé en mesurant l'accueil, pas en relisant : mes cartes du fil faisaient
+ * 496 px contre 357 à la référence, parce que quatre colonnes au lieu de trois
+ * les rendaient plus étroites — donc les titres et les organismes enroulaient.
+ * Une exclusion par titre de section ne vaut pas un examen règle par règle.
+ * --------------------------------------------------------------------- */
+
+/* Six cartes dans le fil : trois par rangée, sinon la dernière rangée laisse
+   un trou qui se lit comme un chargement inachevé. */
+@media (min-width: 62rem) {
+  .fil-actu__grille { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Sur téléphone, trente lignes de filtres avant la première annonce enterrent
+   le contenu. Le rail se replie derrière un bouton ; sur grand écran le bouton
+   disparaît et le rail est toujours ouvert. */
+.js-filtres { display: none; }
+@media (max-width: 61.99rem) {
+  .js-filtres { display: inline-flex; inline-size: 100%; }
+  .rail[data-ouvert='non'] { display: none; }
+  .rail[data-ouvert='oui'] {
+    padding: var(--e-4);
+    background: var(--surface);
+    border: 1px solid var(--bordure);
+    border-radius: var(--r-m);
+  }
+}
+
+/* État vide d'une liste filtrée. */
+.vide { padding: var(--e-7) var(--e-4); text-align: center; color: var(--texte-doux); }

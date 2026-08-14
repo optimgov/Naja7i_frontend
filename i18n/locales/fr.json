@@ -112,7 +112,11 @@
     "portes_oeil": "Par où commencer",
     "portes_titre": "Choisissez votre filière",
     "seo_titre": "Naja7i — préparation aux concours de la fonction publique marocaine",
-    "seo_description": "Diagnostic, corrections expliquées et référentiel officiel des concours marocains. Chaque réponse fausse est justifiée, pas seulement comptée."
+    "seo_description": "Diagnostic, corrections expliquées et référentiel officiel des concours marocains. Chaque réponse fausse est justifiée, pas seulement comptée.",
+    "fil_oeil": "Le fil",
+    "fil_titre": "Ce qui vient de s’ouvrir",
+    "fil_tout_voir": "Toutes les opportunités",
+    "fil_fixture": "Données d’exemple — {source}. Le collecteur d’annonces n’est pas encore branché."
   },
   "catalogue": {
     "concours": "Concours",
@@ -418,10 +422,9 @@
     "echeance_aujourdhui": "Clôture aujourd’hui",
     "echeance_demain": "Clôture demain",
     "echeance_jours": "Clôture dans {n} jours",
-    "echeance_le": "le {date}",
     "rattachement_prepare": "naja7i prépare ce concours",
     "rattachement_attente": "Préparation pas encore disponible",
-    "n_postes": "{n} postes",
+    "n_postes": "{n} poste | {n} postes",
     "echelle_n": "Échelle {n}",
     "type_concours": "Concours",
     "type_poste_responsabilite": "Poste de responsabilité",
