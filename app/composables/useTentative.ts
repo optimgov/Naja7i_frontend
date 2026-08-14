@@ -382,6 +382,32 @@ export function useTentative() {
       })
     }
 
+    /*
+     * BLOC-4 DE L'AUDIT TOURNÉE 3 — UNE RÉPONSE EN VOL BLOQUE AUSSI.
+     *
+     * Le verrou ci-dessus ne couvre que les refus DÉFINITIFS. Une entrée
+     * `a_reessayer` — un PUT coupé par le réseau, alors que la connectivité
+     * revient avant le POST — n'y entrait pas : `ecouler()` rendait la main,
+     * on soumettait, et le rejeu suivant recevait `ATTEMPT_CLOSED`. La réponse
+     * devenait définitivement refusée et la question était comptée SAUTÉE.
+     *
+     * Le dommage est exactement celui que le BLOC-5 disait interdire. Son
+     * verrou ne couvrait simplement pas cet état.
+     *
+     * ON RELIT LA FILE APRÈS LA VIDANGE, et sur CETTE tentative : une réponse
+     * en attente sur une autre série n'a pas à empêcher de rendre celle-ci.
+     * Seule une file vide ou entièrement acquittée laisse partir la soumission.
+     */
+    const enVol = file.resteAAcquitter(courante.uuid)
+
+    if (enVol.length > 0) {
+      throw new ApiRequestError(0, {
+        code: 'FILE_ENVOI_EN_COURS',
+        message: $i18n.t('file.envoi_en_cours', { n: enVol.length }),
+        request_id: '',
+      })
+    }
+
     await api.post(`/me/attempts/${courante.uuid}/submit`)
     await charger(courante.uuid)
   }

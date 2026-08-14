@@ -240,6 +240,136 @@ const lireFile = (page) =>
   await contexte.close()
 }
 
+// ═══════════════════ BLOC-4 (audit t3) — une réponse EN VOL bloque aussi
+/*
+ * L'ASYMÉTRIE QUE LA RECETTE NE CRÉAIT PAS : le PUT échoue en réseau, le POST
+ * reste disponible.
+ *
+ * Le verrou de soumission ne regardait que les refus DÉFINITIFS. Une entrée
+ * `a_reessayer` n'y entrait pas : `ecouler()` rendait la main, `soumettre()`
+ * fermait la tentative, et le rejeu suivant recevait `ATTEMPT_CLOSED`. La
+ * réponse devenait définitivement refusée et la question comptait pour SAUTÉE
+ * — précisément le dommage que le BLOC-5 disait interdire.
+ *
+ * On ne coupe donc PAS tout le réseau : on fait échouer le seul PUT.
+ */
+{
+  const contexte = await navigateur.newContext({ viewport: { width: 1280, height: 900 } })
+  const page = await contexte.newPage()
+  await connecter(page, emailA, mdpA)
+
+  const ouvert = await api(page, `/me/diagnostics/${codeEpreuve}`, {
+    method: 'POST',
+    headers: { 'Idempotency-Key': `bloc4-t3-${Date.now()}` },
+    body: { total: 5 },
+  })
+  const attempt = JSON.parse(ouvert.corps).data
+
+  if (!attempt) {
+    note('BLOC-4 — une réponse en vol bloque la soumission', false, `série indisponible : ${ouvert.corps.slice(0, 120)}`)
+  } else {
+    await page.goto(`${BASE}/fr/app/tentative/${attempt.uuid}`, { waitUntil: 'networkidle' })
+    await page.waitForSelector('.option', { timeout: 15000 })
+
+    /* Une réponse mise en file hors connexion. */
+    await contexte.setOffline(true)
+    await page.locator('.option__choix').first().check()
+    await page.locator('.certitude__radio').first().check()
+    await page.locator('.passation__actes .btn').nth(1).click()
+    await page.waitForTimeout(700)
+    await contexte.setOffline(false)
+
+    /* LE PUT ÉCHOUE, LE POST PASSE. C'est l'asymétrie exacte du scénario. */
+    let putsBloques = 0
+    await page.route('**/api/v1/me/attempts/*/items/*', (route) => {
+      putsBloques += 1
+      return route.abort('connectionfailed')
+    })
+
+    const submits = []
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && r.url().includes('/submit')) submits.push(r.url())
+    })
+
+    /*
+     * ON VA JUSQU'À LA DERNIÈRE QUESTION AVANT DE RENDRE.
+     *
+     * Première écriture : un clic sur le dernier bouton de `.passation__actes`
+     * depuis la question 1 — qui est « suivante », pas « terminer ». La
+     * soumission n'était jamais tentée, et le contrôle « aucun submit » passait
+     * pour la mauvaise raison. Un test vert qui ne joue pas le geste ne prouve
+     * rien.
+     *
+     * Les PUT étant coupés, chaque « suivante » met sa réponse en file : c'est
+     * précisément l'état qu'on veut au moment de rendre.
+     */
+    await page.goto(`${BASE}/fr/app/tentative/${attempt.uuid}`, { waitUntil: 'networkidle' })
+    await page.waitForSelector('.option', { timeout: 15000 })
+
+    for (let i = 0; i < 10; i++) {
+      const suivante = page.locator('.passation__actes .btn:not(.btn--fantome)')
+      const libelle = (await suivante.innerText().catch(() => '')) ?? ''
+
+      await page.locator('.option__choix').nth(i % 4).check().catch(() => {})
+      await page.locator('.certitude__radio').first().check().catch(() => {})
+      await suivante.click().catch(() => {})
+      await page.waitForTimeout(500)
+
+      if (/terminer/i.test(libelle)) break
+      if (await page.locator('.voile').isVisible().catch(() => false)) break
+    }
+
+    /* La confirmation : rendre fige la série, l'écran le dit avant. */
+    await page.locator('.voile__actes .btn').first().click().catch(() => {})
+    await page.waitForTimeout(3000)
+
+    const enFile = ((await lireFile(page))?.entries ?? []).length
+
+    note(
+      'BLOC-4 — aucune soumission tant qu’une réponse est en vol',
+      submits.length === 0 && enFile >= 1,
+      `${submits.length} POST /submit émis · ${enFile} entrée(s) toujours en file · ${putsBloques} PUT coupé(s)`,
+    )
+
+    const texte = (await page.locator('main').innerText().catch(() => '')) ?? ''
+    note(
+      'BLOC-4 — l’écran dit que l’envoi est en cours',
+      /envoi en cours/i.test(texte),
+      `message affiché : ${/envoi en cours/i.test(texte) ? 'oui' : `non — « ${texte.slice(0, 100)} »`}`,
+    )
+
+    await page.screenshot({ path: `${SORTIE}-04-en-vol.png`, fullPage: true })
+
+    /* LE RÉSEAU REVIENT : un seul PUT 2xx, puis un seul POST de soumission. */
+    await page.unroute('**/api/v1/me/attempts/*/items/*')
+
+    const puts2xx = []
+    page.on('response', (r) => {
+      if (r.request().method() === 'PUT' && r.url().includes('/items/') && r.status() < 300) {
+        puts2xx.push(r.url())
+      }
+    })
+
+    await page.evaluate(() => window.dispatchEvent(new Event('online')))
+    await page.waitForTimeout(3000)
+
+    await page.locator('.passation__actes .btn:not(.btn--fantome)').click().catch(() => {})
+    await page.waitForTimeout(600)
+    await page.locator('.voile__actes .btn').first().click().catch(() => {})
+    await page.waitForTimeout(3000)
+
+    const restant = ((await lireFile(page))?.entries ?? []).length
+
+    note(
+      'BLOC-4 — la file acquittée, la soumission part',
+      restant === 0 && submits.length === 1,
+      `file résiduelle : ${restant} · ${puts2xx.length} PUT 2xx · ${submits.length} POST /submit`,
+    )
+  }
+
+  await contexte.close()
+}
+
 // ════════════════════════════════════ BLOC-5 — un refus bloque la soumission
 {
   const contexte = await navigateur.newContext({ viewport: { width: 1280, height: 900 } })

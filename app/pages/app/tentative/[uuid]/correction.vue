@@ -108,9 +108,12 @@ const estDiagnostic = computed(() => genre.value === 'diagnostic')
  * ajouté au contrat n'héritera plus d'un cadrage écrit pour un autre.
  */
 const estSimulation = computed(() => genre.value === 'simulation')
-const estEntrainement = computed(
-  () => genre.value === 'training' || genre.value === 'review' || genre.value === 'mirror',
-)
+
+/* UN SEUL PRÉDICAT, PARTAGÉ — audit tournée 3, BLOC-5. Cet écran énumérait le
+ * genre depuis le FRONT-6, mais `useParcours` continuait de le déduire par la
+ * négative, et le tableau de bord contredisait le rapport. Deux définitions
+ * d'une même règle finissent toujours par diverger : il n'y en a plus qu'une. */
+const estEntrainement = computed(() => estNonRepresentatif(genre.value ?? ''))
 
 const meta = computed(() => data.value?.meta ?? null)
 const lignes = computed(() => data.value?.data ?? [])

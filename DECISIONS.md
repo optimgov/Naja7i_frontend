@@ -1187,3 +1187,83 @@ de spécialité était restée en arrière. Corrigé de la même façon.
 
 Et la fiche d'annonce répond bien 404 sur un slug inconnu, côté SERVEUR : une
 page vide en 200 se ferait indexer comme une fiche valide.
+
+## Audit tournée 3 — les deux bloquants frontend
+
+## D-F64 — Le genre de tentative est une CARTE EXHAUSTIVE, pas une négation
+
+**Constat de l'audit (BLOC-5).** `useParcours.estEntrainement` valait encore
+`kind !== 'diagnostic'`. Le tableau de bord annonçait donc « série
+d'entraînement : ce résultat n'est pas représentatif du concours » sur un
+examen blanc — l'inverse exact de ce que le rapport de la MÊME tentative
+affirme deux écrans plus loin.
+
+Le FRONT-6 avait énuméré le genre dans `correction.vue`, et **là seulement**.
+La décision D-F53 annonçait pourtant que le genre était « désormais énuméré » :
+elle n'était vraie que sur un écran. Une correction locale présentée comme
+générale, c'est une dette qu'on ne sait plus qu'on a.
+
+**Décision.** Un seul prédicat, `estNonRepresentatif`, exporté et employé par
+les deux écrans. Et surtout une CARTE :
+
+```ts
+} as const satisfies Record<GenreDeTentative, boolean>
+```
+
+**Ce n'est pas un test, c'est une garantie de compilation.** Ajouter un genre à
+l'union sans le classer fait rougir `nuxt typecheck`, en nommant le genre
+manquant. Vérifié par mutation : ajouter `'atelier'` produit
+« Property 'atelier' is missing in type ». Le prochain `kind` ne peut plus
+rouvrir le trou par oubli — il faut un choix explicite.
+
+Un genre inconnu du contrat rend `false` : ne rien affirmer vaut mieux
+qu'affirmer une qualification fausse, qui est le défaut corrigé.
+
+## D-F65 — Soumettre attend l'acquittement, pas seulement l'absence de refus
+
+**Constat de l'audit (BLOC-4).** Le verrou de soumission ne regardait que les
+refus DÉFINITIFS. Une entrée `a_reessayer` — un PUT coupé par le réseau alors
+que la connectivité revient avant le POST — n'y entrait pas. `ecouler()` rendait
+la main, `soumettre()` fermait la tentative, le rejeu suivant recevait
+`ATTEMPT_CLOSED`, et la question était comptée SAUTÉE.
+
+C'est très exactement le dommage que le BLOC-5 disait interdire : son verrou ne
+couvrait pas cet état-là. Corriger un cas et croire la classe traitée est le
+même défaut que le D-F64, sur un autre sujet.
+
+**Décision.** `resteAAcquitter(attemptUuid)` : toute entrée encore en file pour
+CETTE tentative bloque la soumission. Par tentative et non globalement — une
+réponse en attente sur une autre série n'a pas à empêcher de rendre celle-ci.
+
+La règle s'énonce simplement parce qu'une entrée acquittée QUITTE la file : il
+n'y a pas d'état « envoyé » à filtrer. File vide pour cette série, ou refus
+motivé — et l'écran dit « envoi en cours », pas « erreur ».
+
+## D-F66 — La recette passait GRÂCE à un bogue, et le bogue la masquait
+
+**Le constat le plus instructif de cette tournée.**
+
+Le contrôle « la cause est présentée comme une hypothèse » de
+`recette-front3.mjs` est devenu ROUGE après la correction du BLOC-1 backend —
+sur un poste, pas en CI.
+
+**Cause.** Le quota F03 est CUMULATIF et ne se remet jamais à zéro (fiche F03,
+et c'est une bonne décision : un compteur quotidien ferait attendre le lendemain
+plutôt que s'abonner). Sur un poste, le compte de recette épuise ses deux unités
+à la première exécution et ne les retrouve jamais. En CI la base est neuve.
+
+Tant que les causes fuyaient — elles sortaient sans acquisition — il y avait
+TOUJOURS une cause à l'écran, quota épuisé ou non. Le contrôle passait donc
+grâce à la fuite. Fermer la fuite l'a rendu rouge, et il aurait dû l'être depuis
+le début.
+
+**Décision.** `remettre-quota.php`, joué avant FRONT-3 : le compte de recette
+retrouve l'état d'un candidat neuf, ce qu'un candidat réel est une fois. Même
+geste et même frontière que `echoir-revisions.php` au D-F49 — on remet un état
+de départ, on ne touche ni au produit ni à la règle.
+
+**Ce que ça dit du dispositif.** Un test vert n'est pas une preuve que la règle
+tient : il peut être vert POUR LA MAUVAISE RAISON. Ici, deux défauts se
+masquaient l'un l'autre — la dépendance à l'état accumulé (D-F49, jamais vue sur
+ce quota) et la fuite du BLOC-1. Il a fallu corriger le second pour voir le
+premier.

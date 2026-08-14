@@ -187,6 +187,31 @@ export function useFileEnvoi() {
   /** La soumission est bloquée tant qu'un refus n'a pas été vu. */
   const soumissionBloquee = computed(() => refuses.value.length > 0)
 
+  /**
+   * Ce qui reste à acquitter POUR UNE TENTATIVE DONNÉE — audit tournée 3, BLOC-4.
+   *
+   * Le verrou de soumission ne regardait que les refus DÉFINITIFS. Une entrée
+   * `a_reessayer` — un PUT coupé par le réseau — n'y entrait pas : `ecouler()`
+   * rendait la main, `soumettre()` fermait la tentative, et le rejeu suivant
+   * recevait `ATTEMPT_CLOSED`. La réponse devenait alors définitivement
+   * refusée, et le serveur comptait la question comme SAUTÉE.
+   *
+   * C'est exactement le dommage que le BLOC-5 disait interdire — son verrou ne
+   * couvrait simplement pas cet état-là.
+   *
+   * PAR TENTATIVE, et non globalement : une réponse en attente sur une AUTRE
+   * série ne doit pas empêcher de rendre celle-ci. Le repère porte déjà
+   * `attemptUuid`, il n'y a rien à deviner.
+   */
+  function resteAAcquitter(attemptUuid: string): EnvoiEnAttente[] {
+    /* TOUTE entrée encore en file est non acquittée : une réponse acceptée par
+     * le serveur en SORT (`muter(id, () => null)`), elle n'y reste pas dans un
+     * état « envoyé ». Le filtre porte donc sur la seule tentative — et c'est
+     * aussi ce qui rend la règle simple à énoncer : file vide pour cette série,
+     * ou soumission refusée. */
+    return file.value.filter((e) => e.repere?.attemptUuid === attemptUuid)
+  }
+
   function rafraichir(): void {
     const env = lireEnveloppe()
     proprietaire.value = env.ownerUserUuid
@@ -272,6 +297,13 @@ export function useFileEnvoi() {
    * Un REFUS DÉFINITIF, lui, ne bloque pas les suivants — il est marqué et la
    * file continue. Il reste dans la boîte d'échec jusqu'à ce que le candidat
    * l'ait vu.
+   */
+  /**
+   * Le résultat d'une vidange, ÉNONCÉ plutôt que déduit d'états globaux.
+   *
+   * L'appelant ne doit pas avoir à recouper `enAttente`, `refuses` et
+   * `reauthRequise` pour savoir si la file est réellement vide : c'est ce
+   * recoupement manquant qui a laissé passer le BLOC-4.
    */
   async function ecouler(): Promise<number> {
     if (import.meta.server || enCours.value) return 0
@@ -373,6 +405,7 @@ export function useFileEnvoi() {
     proprietaire,
     proprietaireAutre,
     soumissionBloquee,
+    resteAAcquitter,
     reauthRequise,
     reprendre,
     rafraichir,

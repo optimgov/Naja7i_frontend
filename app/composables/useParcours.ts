@@ -68,10 +68,50 @@ export function useParcours() {
    * poids officiels. Il ne se présente jamais comme une note d'épreuve.
    */
   function estEntrainement(t: { kind: string }): boolean {
-    return t.kind !== 'diagnostic'
+    return estNonRepresentatif(t.kind)
   }
 
   return { parcours, enCours, dernierePassee, estEntrainement }
 }
 
 export type { Certitude }
+
+/**
+ * LES GENRES DE TENTATIVE, ÉNUMÉRÉS — audit tournée 3, BLOC-5.
+ *
+ * `estEntrainement` valait `kind !== 'diagnostic'`. À l'arrivée du simulateur,
+ * il valait donc VRAI pour un examen blanc, et le tableau de bord annonçait
+ * « série d'entraînement : ce résultat n'est pas représentatif du concours » —
+ * l'inverse exact de ce que le rapport de la MÊME tentative affirme, à savoir
+ * que la répartition officielle autorise le score pondéré.
+ *
+ * Le FRONT-6 avait énuméré le genre dans `correction.vue`, et là seulement. La
+ * déduction par la négative avait survécu ici.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * POURQUOI UNE CARTE ET NON UNE LISTE
+ *
+ * `satisfies Record<GenreDeTentative, boolean>` rend la carte EXHAUSTIVE :
+ * ajouter un genre à l'union sans le classer ici fait ROUGIR LE TYPAGE. C'est
+ * une garantie de compilation, pas un test qu'il faut penser à écrire — et
+ * c'est ce qui empêche le prochain `kind` de rouvrir le trou.
+ *
+ * Un genre INCONNU du contrat rend `false` : ne rien affirmer vaut mieux
+ * qu'affirmer une qualification fausse, qui est précisément le défaut corrigé.
+ */
+export type GenreDeTentative = 'diagnostic' | 'training' | 'review' | 'mirror' | 'simulation'
+
+const NON_REPRESENTATIF = {
+  /* Composé aux poids officiels : représentatif par construction. */
+  diagnostic: false,
+  /* Composé aux poids officiels lui aussi — c'est ce qui autorise sa note. */
+  simulation: false,
+  /* Ciblés sur une faiblesse, une échéance ou un piège : jamais représentatifs. */
+  training: true,
+  review: true,
+  mirror: true,
+} as const satisfies Record<GenreDeTentative, boolean>
+
+export function estNonRepresentatif(kind: string): boolean {
+  return NON_REPRESENTATIF[kind as GenreDeTentative] ?? false
+}

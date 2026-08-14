@@ -352,7 +352,8 @@
     "question": "Question {n}",
     "acquitter": "J’ai pris connaissance",
     "proprietaire_titre": "Ces réponses appartiennent à un autre compte",
-    "proprietaire_texte": "Elles ont été saisies sous une autre session et ne peuvent partir que sous celle-ci. Reconnectez-vous avec le compte propriétaire pour les envoyer."
+    "proprietaire_texte": "Elles ont été saisies sous une autre session et ne peuvent partir que sous celle-ci. Reconnectez-vous avec le compte propriétaire pour les envoyer.",
+    "envoi_en_cours": "Envoi en cours : {n} réponse(s) ne sont pas encore enregistrées. La série ne peut pas être rendue tant qu’elles n’ont pas été acquittées."
   },
   "simulation": {
     "oeil": "Examen blanc",

@@ -285,7 +285,26 @@ const RECETTES = [
    */
   ['zone publique — ZP-1', 'scripts/recette-zone-publique.mjs', []],
   ['passation d’un diagnostic', 'scripts/recette-passation.mjs', [A.email, A.motDePasse]],
-  ['FRONT-3 — les cas qui doivent échouer', 'scripts/recette-front3.mjs', [A.email, A.motDePasse]],
+  /*
+   * LE QUOTA F03 EST REMIS À NEUF AVANT FRONT-3.
+   *
+   * Il est CUMULATIF par conception et ne se remet jamais à zéro : sur un
+   * poste, le compte de recette épuise ses deux unités à la première
+   * exécution ; en CI la base est neuve et il les a toutes. La recette
+   * mesurait donc deux choses différentes selon la machine — même défaut que
+   * le calendrier au D-F49, et invisible jusqu'ici parce que le BLOC-1 le
+   * masquait : les causes sortaient sans acquisition, donc il y en avait
+   * toujours à l'écran.
+   */
+  [
+    'FRONT-3 — les cas qui doivent échouer',
+    'scripts/recette-front3.mjs',
+    [A.email, A.motDePasse],
+    { avant: ['php', ['artisan', 'tinker', `${ICI}/remettre-quota.php`], {
+      cwd: BACKEND,
+      env: { ...env, COMPTE_EMAIL: A.email },
+    }] },
+  ],
   /*
    * FRONT-4 EXIGE UN CALENDRIER ÉCHU, et il faut le lui donner.
    *
