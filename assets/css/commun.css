@@ -529,3 +529,572 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+
+/* =====================================================================
+ * ZONE PUBLIQUE v1 — lot ZP-1
+ * ---------------------------------------------------------------------
+ * Source : ~/Downloads/naja7i-zone-publique-v1/public-v1.css (9 août 2026).
+ * Elle fait autorité sur la forme ; ce qui suit en est l'INTÉGRATION, pas
+ * une copie — et les écarts sont listés ici plutôt que dispersés.
+ *
+ * POURQUOI ICI ET PAS DANS UN FICHIER À PART. `tokens.css` est une copie
+ * conforme du socle et n'accepte aucune règle de composant ; la convention
+ * du dépôt envoie les classes partagées dans ce fichier, et c'est ce
+ * fichier que lit le second passage du validateur de jetons
+ * (`jetons.commun.config.json`). Un troisième fichier CSS aurait échappé
+ * à ce contrôle — c'est-à-dire précisément au contrôle qui vérifie que
+ * l'erreur système et l'erreur pédagogique ne se distinguent pas par la
+ * seule couleur.
+ *
+ * DEUX SECTIONS DE LA SOURCE NE SONT PAS REPRISES :
+ *
+ *   « 2. Le héros »  — l'accueil garde son héros et sa preuve intacts
+ *                      (arbitrage A2). `ProofDemonstration.vue` implémente
+ *                      déjà la preuve, et avec les jetons v3
+ *                      (`--peda-juste`, `--peda-faux-texte`) là où la
+ *                      source employait encore le vocabulaire v2. Porter
+ *                      ses règles aurait fait régresser la preuve.
+ *   « 11. Écrans »   — échafaudage de la maquette autonome (`.ecran`,
+ *                      `.barre-demo`, `.js-filtres`). Sans objet ici.
+ *
+ * QUATRE RÈGLES RETIRÉES, chacune parce que le dépôt a déjà la sienne :
+ *   `.heros__actes`  → l'accueil garde la sienne (A2) ;
+ *   `.fil-ariane`    → le dépôt a `.fil`, plus riche, déjà employé ;
+ *   `.bascule` et `.bascule:hover` → le dépôt a `.bascule-theme`.
+ * Les contextualisations qui les VISENT sont gardées : elles ne
+ * redéfinissent rien, elles adaptent un composant existant à son
+ * emplacement — c'est le cas de `.heros__actes .btn` à 390 px.
+ *
+ * LE VOCABULAIRE DES JETONS EST TRADUIT en v3, la source parlant encore
+ * v2 : `--err*` → `--sys-err*`, `--ok-*` → `--sys-ok-*`. Aucun jeton
+ * inventé, aucun ajout à `tokens.css`.
+ *
+ * DEUX FAMILLES DE CLASSES SONT RENOMMÉES, pour cause de collision réelle —
+ * pas de préférence de nommage :
+ *
+ *   `.fil` (le fil d'actualité de l'accueil) → `.fil-actu`.
+ *       Le dépôt appelle `.fil` le fil d'ARIANE depuis le FRONT-1, et la
+ *       source appelle `.fil` le fil d'ACTUALITÉ. Deux choses différentes,
+ *       un seul nom : celui qui était là reste. Le libellé à l'écran, lui,
+ *       reste « Le fil » — c'est la classe qui change, pas le produit.
+ *
+ *   `.fait`, `.faits`, `.fait__cle`, `.fait__val` (fiche d'annonce)
+ *       → `.fiche__fait*`.
+ *       L'écran de seuil de l'examen blanc (E9) emploie déjà `.fait` en
+ *       style scopé. Les styles scopés l'emportent sur les propriétés
+ *       qu'ils déclarent — mais PAS sur les autres : les bordures posées
+ *       ici auraient fui sur E9 sans que rien ne le signale.
+ *
+ * L'ÉCHÉANCE PORTE TROIS CANAUX REDONDANTS, et c'est une règle mesurée,
+ * pas une préférence : safran-700 et terre-700 sont à ΔE 4,8 en
+ * deutéranopie (valider-palette.mjs, 9 août 2026), donc une échelle
+ * d'urgence à quatre paliers colorés est IMPOSSIBLE. Le libellé écrit, la
+ * longueur de la jauge et l'icône au palier imminent portent l'information ;
+ * la couleur ne fait que la redoubler, en binaire.
+ * ===================================================================== */
+/* ------------------------------------------------ 0. Coquille publique */
+
+.peau {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 40;
+  background: rgb(250 248 243 / 88%);
+  backdrop-filter: blur(10px);
+  border-block-end: 1px solid var(--bordure);
+}
+[data-theme='sombre'] .peau { background: rgb(12 20 17 / 88%); }
+
+.peau__rang {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  min-block-size: 4.25rem;
+}
+@media (min-width: 62rem) { .peau__rang { gap: var(--e-5); } }
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--e-1);
+  min-inline-size: 0;
+  margin-inline-start: var(--e-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav::-webkit-scrollbar { display: none; }
+@media (min-width: 62rem) { .nav { margin-inline-start: var(--e-6); overflow: visible; } }
+.nav__lien { flex: none; }
+
+/* Sur téléphone la navigation quitte le haut de l'écran. Un rail
+   horizontal défilant reste hors du champ visible et hors du pouce ;
+   la barre basse est atteignable et donne à « Concours » la première
+   position, ce qui est aussi la hiérarchie du produit. */
+.barre-basse { display: none; }
+
+@media (max-width: 61.99rem) {
+  .nav { display: none; }
+
+  .barre-basse {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: var(--surface);
+    border-block-start: 1px solid var(--bordure);
+    padding-block-end: env(safe-area-inset-bottom, 0);
+  }
+  .barre-basse__lien {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    min-block-size: 3.5rem;
+    padding: 0.4rem 0.25rem;
+    font-size: var(--t-2xs);
+    font-weight: 700;
+    color: var(--texte-doux);
+    text-decoration: none;
+  }
+  .barre-basse__lien[aria-current='page'] { color: var(--accent-fort); }
+  [data-theme='sombre'] .barre-basse__lien[aria-current='page'] { color: var(--accent); }
+  .barre-basse__icone { inline-size: 1.35rem; block-size: 1.35rem; display: block; }
+  .barre-basse__pile { display: inline-flex; align-items: center; gap: 0.2rem; }
+  .barre-basse__pastille {
+    min-inline-size: 1.1rem;
+    padding-inline: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--vert-800);
+    background: var(--vert-100);
+    border-radius: var(--r-pilule);
+  }
+  [data-theme='sombre'] .barre-basse__pastille { color: var(--vert-300); background: #12251f; }
+  body { padding-block-end: 4rem; }
+}
+
+/* white-space: nowrap sur .btn fait déborder un libellé long à 390 px.
+   Correction au niveau du motif, pas du bouton : dans les zones d'appel
+   à l'action, le bouton prend la largeur et le texte se replie. */
+@media (max-width: 47.99rem) {
+  .heros__actes .btn,
+  .specialite__entete .btn {
+    inline-size: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+.nav__lien {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.7rem;
+  min-block-size: 2.5rem;
+  font-size: var(--t-s);
+  font-weight: 600;
+  color: var(--texte-doux);
+  text-decoration: none;
+  border-radius: var(--r-s);
+  transition: color var(--transition), background var(--transition);
+}
+.nav__lien:hover { color: var(--texte); background: var(--surface-douce); }
+
+/* L'ADN est typographiquement dominant dans la navigation elle-même. */
+.nav__lien--adn { font-size: var(--t-m); font-weight: 700; color: var(--texte); }
+.nav__lien[aria-current='page'] { color: var(--accent-fort); background: var(--accent-doux); }
+[data-theme='sombre'] .nav__lien[aria-current='page'] { color: var(--accent); }
+
+/* Le compteur vivant : c'est lui qui empêche « Opportunités » d'être
+   marginalisé, sans lui donner de poids typographique. */
+.nav__compteur {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding-inline: 0.42rem;
+  min-block-size: 1.25rem;
+  font-size: var(--t-2xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--vert-800);
+  background: var(--vert-100);
+  border-radius: var(--r-pilule);
+}
+[data-theme='sombre'] .nav__compteur { color: var(--vert-300); background: #12251f; }
+.nav__compteur::before {
+  content: '';
+  inline-size: 5px; block-size: 5px;
+  border-radius: 50%;
+  background: var(--vert-600);
+}
+
+.peau__actes { display: flex; align-items: center; gap: var(--e-2); margin-inline-start: auto; flex: none; }
+
+/* Sur téléphone, le rang du haut ne peut pas porter la navigation ET les
+   actions : la barre de langue/thème et le grand appel à l'action passent
+   à la trappe, l'inscription se joue dans le corps de page. */
+@media (max-width: 61.99rem) {
+  .peau__actes .bascule-theme,
+  .peau__actes .btn { display: none; }
+  .peau__actes .bascule-theme:first-child { display: inline-flex; }
+}
+
+
+/* ------------------------------------------- 1. Bandeau d'échéance */
+/* Une ligne. Sous le header, au-dessus du héros. Safran — seule
+   couleur de la page à cet endroit, donc aucune paire à distinguer. */
+
+.bandeau-echeance {
+  background: var(--safran-50);
+  border-block-end: 1px solid var(--safran-100);
+}
+[data-theme='sombre'] .bandeau-echeance { background: #29200c; border-block-end-color: #4a3a14; }
+
+.bandeau-echeance__rang {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-2) var(--e-4);
+  padding-block: 0.6rem;
+  font-size: var(--t-s);
+  color: var(--safran-800);
+}
+[data-theme='sombre'] .bandeau-echeance__rang { color: var(--safran-500); }
+
+.bandeau-echeance b { font-variant-numeric: tabular-nums; }
+
+/* Les séparateurs « · » mesuraient 2,29:1. Remplacés par un filet, qui
+   n'est pas du texte et relève du seuil non textuel de 3:1. */
+.bandeau-echeance__rang > span + span {
+  padding-inline-start: var(--e-4);
+  border-inline-start: 1px solid var(--safran-600);
+}
+
+.bandeau-echeance__lien {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-inline-start: auto;
+  min-block-size: 1.75rem;
+  font-weight: 700;
+  color: var(--safran-800);
+}
+[data-theme='sombre'] .bandeau-echeance__lien { color: var(--safran-500); }
+.bandeau-echeance__lien .fleche { transition: transform var(--transition); }
+.bandeau-echeance__lien:hover .fleche { transform: translateX(3px); }
+html[dir='rtl'] .fleche { transform: scaleX(-1); }
+html[dir='rtl'] .bandeau-echeance__lien:hover .fleche { transform: scaleX(-1) translateX(3px); }
+
+/* ---------------------------------------------------- 3. Les portes */
+
+.porte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+  padding: var(--e-5);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r-m);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+.porte:hover { border-color: var(--vert-300); box-shadow: var(--ombre-2); transform: translateY(-2px); }
+.porte__titre { font-size: var(--t-xl); font-weight: 800; margin: 0; }
+.porte__liste { margin: 0; padding: 0; list-style: none; font-size: var(--t-s); color: var(--texte-doux); }
+.porte__liste li { padding-block: 0.15rem; }
+.porte__pied {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--e-2);
+  margin-block-start: auto; padding-block-start: var(--e-3);
+  border-block-start: 1px solid var(--bordure);
+  font-size: var(--t-s); font-weight: 700; color: var(--accent);
+}
+
+/* ------------------------------------- 4. Le fil (section basse accueil) */
+/* Densité intermédiaire : plus riche que le bandeau, plus pauvre que
+   le tapis. Sa fonction est de prouver que la plateforme est vivante. */
+
+.fil-actu { background: var(--surface-douce); border-block: 1px solid var(--bordure); }
+
+.fil-actu__entete {
+  display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between;
+  gap: var(--e-4); margin-block-end: var(--e-5);
+}
+
+.fil-actu__grille {
+  display: grid;
+  gap: var(--e-3);
+  grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
+}
+
+/* ------------------------------------------------------- 5. Le tapis */
+
+.tapis { display: grid; gap: var(--e-5); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 62rem) {
+  .tapis { grid-template-columns: 15.5rem minmax(0, 1fr); gap: var(--e-6); }
+  .rail { position: sticky; inset-block-start: 5.5rem; }
+}
+
+.rail__groupe { padding-block-end: var(--e-4); margin-block-end: var(--e-4); border-block-end: 1px solid var(--bordure); }
+.rail__groupe:last-child { border-block-end: 0; }
+.rail__titre {
+  font-size: var(--t-2xs); font-weight: 800; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--texte-tenu); margin-block-end: var(--e-2);
+}
+
+.filtre {
+  display: flex; align-items: center; gap: var(--e-2);
+  min-block-size: 2.25rem; padding-inline: 0.35rem;
+  font-size: var(--t-s); color: var(--texte-doux); cursor: pointer; border-radius: var(--r-xs);
+}
+.filtre:hover { background: var(--surface-douce); color: var(--texte); }
+/* 24 px exactement : WCAG 2.2 « Target Size (Minimum) ». Une case à
+   1,05 rem tombait à 17 px — c'est le défaut le plus banal d'un rail
+   de filtres, et il se paie au pouce sur téléphone. */
+.filtre input { inline-size: 1.5rem; block-size: 1.5rem; margin: 0; accent-color: var(--vert-700); flex: none; }
+.filtre__n { margin-inline-start: auto; font-size: var(--t-2xs); font-variant-numeric: tabular-nums; color: var(--texte-tenu); }
+
+.barre-tapis {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3);
+  margin-block-end: var(--e-4);
+}
+.recherche { position: relative; flex: 1 1 16rem; }
+.recherche input {
+  inline-size: 100%; min-block-size: 2.75rem;
+  padding: 0.65rem 0.9rem 0.65rem 2.5rem;
+  padding-inline-start: 2.5rem; padding-inline-end: 0.9rem;
+  font: inherit; font-size: var(--t-m);
+  color: var(--texte); background: var(--surface);
+  border: 1px solid var(--bordure-forte); border-radius: var(--r-s);
+}
+.recherche input::placeholder { color: var(--texte-tenu); }
+.recherche input:focus { outline: 2px solid var(--vert-500); outline-offset: 1px; border-color: var(--vert-600); }
+.recherche__icone {
+  position: absolute; inset-block-start: 50%; inset-inline-start: 0.8rem;
+  transform: translateY(-50%); color: var(--texte-tenu); pointer-events: none;
+  display: block; inline-size: 1.1rem; block-size: 1.1rem;
+}
+
+.vues { display: flex; gap: 2px; padding: 3px; background: var(--surface-douce); border-radius: var(--r-s); }
+.vue {
+  min-block-size: 2.25rem; padding-inline: 0.85rem;
+  font: inherit; font-size: var(--t-s); font-weight: 600; color: var(--texte-doux);
+  background: none; border: 0; border-radius: var(--r-xs); cursor: pointer;
+}
+.vue[aria-pressed='true'] { color: var(--texte); background: var(--surface); box-shadow: var(--ombre-1); }
+
+.tapis__compte { font-size: var(--t-s); color: var(--texte-doux); font-variant-numeric: tabular-nums; }
+
+.tapis__grille { display: grid; gap: var(--e-3); grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); }
+.tapis__grille--liste { grid-template-columns: minmax(0, 1fr); }
+
+.tapis__palier {
+  display: flex; align-items: center; gap: var(--e-3);
+  margin-block: var(--e-5) var(--e-3); padding-block-end: var(--e-2);
+  border-block-end: 1px solid var(--bordure);
+  font-size: var(--t-s); font-weight: 800; color: var(--texte);
+}
+.tapis__palier:first-child { margin-block-start: 0; }
+.tapis__palier span { font-weight: 500; color: var(--texte-tenu); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------- 6. Carte d'annonce */
+
+.annonce {
+  display: flex; flex-direction: column; gap: var(--e-2);
+  padding: var(--e-4);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r-m);
+  text-decoration: none; color: inherit;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.annonce:hover { border-color: var(--vert-300); box-shadow: var(--ombre-2); }
+
+.annonce__rang { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-2); }
+
+/* 8 natures d'annonce : aucune n'est codée par la couleur — ce serait
+   un arc-en-ciel illisible. Une puce neutre + un glyphe. */
+.nature {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  font-size: var(--t-2xs); font-weight: 700; letter-spacing: 0.02em;
+  color: var(--texte-doux); background: var(--neutre-fond);
+  border: 1px solid var(--bordure); border-radius: var(--r-pilule);
+}
+
+.annonce__titre {
+  margin: 0; font-size: var(--t-l); font-weight: 700; line-height: 1.3;
+  letter-spacing: -0.012em; text-wrap: balance;
+}
+html[dir='rtl'] .annonce__titre { letter-spacing: normal; line-height: 1.45; }
+
+.annonce__org { font-size: var(--t-s); color: var(--texte-doux); }
+
+.annonce__faits {
+  display: flex; flex-wrap: wrap; gap: 0.2rem var(--e-3);
+  font-size: var(--t-s); color: var(--texte-doux);
+}
+.annonce__faits b { color: var(--texte); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Le rattachement à la préparation : c'est la ligne qui transforme du
+   trafic en compte. Elle n'apparaît que si la préparation existe. */
+.rattachement {
+  display: flex; align-items: center; gap: var(--e-2);
+  margin-block-start: 0.15rem; padding: 0.5rem 0.65rem;
+  font-size: var(--t-s); font-weight: 700;
+  color: var(--vert-800); background: var(--sys-ok-fond);
+  border: 1px solid var(--sys-ok-bordure); border-radius: var(--r-s);
+}
+[data-theme='sombre'] .rattachement { color: var(--vert-300); }
+.rattachement--attente {
+  color: var(--texte-doux); background: var(--neutre-fond);
+  border-color: var(--bordure); font-weight: 600;
+}
+.rattachement__icone { flex: none; inline-size: 1rem; block-size: 1rem; }
+
+/* ---------------------------------------------------- 7. L'échéance */
+/* Trois canaux redondants : libellé écrit, longueur de jauge, icône au
+   palier imminent. La couleur est le quatrième, jamais le premier. */
+
+.echeance { display: flex; flex-direction: column; gap: 0.3rem; margin-block-start: auto; padding-block-start: var(--e-2); }
+
+.echeance__ligne {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: var(--t-s); font-weight: 700; color: var(--texte-doux);
+  font-variant-numeric: tabular-nums;
+}
+.echeance__icone { flex: none; inline-size: 0.95rem; block-size: 0.95rem; }
+.echeance__date { margin-inline-start: auto; font-weight: 500; font-size: var(--t-xs); color: var(--texte-tenu); }
+
+.echeance__piste {
+  block-size: 4px; inline-size: 100%;
+  background: var(--surface-douce);
+  border-radius: var(--r-pilule);
+  overflow: hidden;
+}
+.echeance__jauge { display: block; block-size: 100%; background: var(--vert-500); border-radius: inherit; }
+
+.echeance--imminente .echeance__ligne { color: var(--sys-err-texte); }
+/* `--sys-err-texte` : en v3 le texte a son jeton, distinct de l'aplat. En
+   sombre les deux valent la même couleur aujourd'hui — raison de plus pour
+   écrire le bon, il n'en coûte rien et il tiendra s'ils divergent. */
+[data-theme='sombre'] .echeance--imminente .echeance__ligne { color: var(--sys-err-texte); }
+.echeance--imminente .echeance__jauge { background: var(--terre-600); }
+.echeance--close .echeance__ligne { color: var(--texte-tenu); }
+.echeance--close .echeance__jauge { background: var(--bordure-forte); }
+
+/* ------------------------------------------------- 8. Fiche d'annonce */
+
+.fiche { display: grid; gap: var(--e-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 62rem) {
+  .fiche { grid-template-columns: minmax(0, 1fr) 20rem; }
+  .fiche__cote { position: sticky; inset-block-start: 5.5rem; }
+}
+
+
+/* Les filets sont portés par les cellules, pas par un fond de grille :
+   sinon la dernière rangée incomplète laisse un rectangle de couleur
+   vide, qui se lit comme une donnée manquante. */
+.fiche__faits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r-m);
+  overflow: hidden;
+  margin-block: var(--e-5);
+}
+.fiche__fait {
+  padding: var(--e-3) var(--e-4);
+  border-inline-start: 1px solid var(--bordure);
+  border-block-start: 1px solid var(--bordure);
+}
+.fiche__fait-cle { font-size: var(--t-2xs); font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--texte-tenu); }
+.fiche__fait-val { font-size: var(--t-l); font-weight: 700; font-variant-numeric: tabular-nums; }
+.fiche__fait-val--texte { font-size: var(--t-m); font-weight: 600; }
+
+.source {
+  padding: var(--e-4);
+  font-size: var(--t-s); color: var(--texte-doux);
+  background: var(--surface-douce);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r-m);
+}
+.source__ligne { display: flex; flex-wrap: wrap; gap: 0.3rem var(--e-3); margin-block-end: var(--e-2); }
+.source code { font-family: var(--f-mono); font-size: var(--t-xs); }
+
+.revision {
+  display: flex; gap: var(--e-3);
+  padding-block: var(--e-2);
+  font-size: var(--t-s);
+  border-block-end: 1px dashed var(--bordure);
+}
+.revision:last-child { border-block-end: 0; }
+.revision__quand { flex: none; inline-size: 5.5rem; color: var(--texte-tenu); font-size: var(--t-xs); }
+
+.action {
+  padding: var(--e-5);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r-m);
+  box-shadow: var(--ombre-2);
+}
+.action__titre { font-size: var(--t-l); margin-block-end: var(--e-2); }
+.action__note { font-size: var(--t-s); color: var(--texte-doux); }
+
+/* ------------------------------------------------ 9. Page spécialité */
+
+.specialite__entete { padding-block: var(--e-7) var(--e-5); }
+
+.pilier {
+  padding: var(--e-4);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r-m);
+}
+.pilier__titre { font-size: var(--t-l); margin-block-end: var(--e-2); }
+.pilier__mesure { font-size: var(--t-s); color: var(--texte-doux); }
+
+/* Le retour du tapis vers l'ADN : la page de préparation affiche les
+   concours ouverts qui la concernent. C'est la boucle qui justifie
+   d'avoir agrégé les annonces. */
+.encart-ouverts {
+  padding: var(--e-4) var(--e-5) var(--e-5);
+  background: var(--accent-doux);
+  border: 1px solid var(--sys-ok-bordure);
+  border-radius: var(--r-m);
+}
+[data-theme='sombre'] .encart-ouverts { border-color: var(--sys-ok-bordure); }
+.encart-ouverts__entete {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: var(--e-2) var(--e-4); margin-block-end: var(--e-3);
+}
+.encart-ouverts__titre {
+  display: flex; align-items: center; gap: 0.45rem; margin: 0;
+  font-size: var(--t-s); font-weight: 800; color: var(--vert-800);
+}
+[data-theme='sombre'] .encart-ouverts__titre { color: var(--vert-300); }
+.encart-ouverts__grille {
+  display: grid; gap: var(--e-3);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+
+/* ---------------------------------------------------------- 10. Pied */
+
+.pied { padding-block: var(--e-7); background: var(--surface-marque); color: var(--texte-inverse); }
+.pied a { color: var(--vert-200); }
+.pied__grille { display: grid; gap: var(--e-5); grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+.pied__titre { font-size: var(--t-2xs); font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--texte-inverse-doux); margin-block-end: var(--e-2); }
+.pied__liste { margin: 0; padding: 0; list-style: none; font-size: var(--t-s); }
+.pied__liste li { padding-block: 0.22rem; }
+.pied__liste a { text-decoration: none; }
+.pied__liste a:hover { text-decoration: underline; }
+.pied__mention {
+  margin-block-start: var(--e-6); padding-block-start: var(--e-4);
+  border-block-start: 1px solid var(--bordure-marque);
+  font-size: var(--t-xs); color: var(--texte-inverse-doux);
+}
