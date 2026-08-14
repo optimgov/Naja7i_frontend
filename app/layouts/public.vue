@@ -20,8 +20,6 @@ const nomAutre = computed(
   () => locales.value.find((l: { code: string }) => l.code === autre.value)?.name ?? '',
 )
 
-const annee = new Date().getFullYear()
-
 /*
  * LE COMPTEUR DE LA PASTILLE, calculé une fois pour les deux navigations.
  *
@@ -82,17 +80,7 @@ const ouvertes = computed(() => {
     <!-- Sous 62 rem, la nav du haut cède la place à celle-ci. Voir BarreBasse. -->
     <BarreBasse :ouvertes="ouvertes" />
 
-    <footer class="publique__pied">
-      <div class="enveloppe">
-        <p class="publique__promesse">{{ t('marque.promesse') }}</p>
-
-        <p class="publique__mentions">
-          <!-- L'année passe par une variable : un millésime en dur vieillit
-               en silence, et personne ne le corrige. -->
-          {{ t('navigation.mentions', { annee }) }}
-        </p>
-      </div>
-    </footer>
+    <PiedPublique />
   </div>
 </template>
 
@@ -178,25 +166,8 @@ const ouvertes = computed(() => {
   flex: 1;
 }
 
-.publique__pied {
-  padding-block: var(--e-5);
-  border-block-start: 1px solid var(--bordure);
-  background: var(--surface-douce);
-}
 
-.publique__promesse {
-  margin: 0 0 var(--e-2);
-  max-inline-size: 44ch;
-  font-size: var(--t-md);
-  font-weight: 600;
-  color: var(--texte);
-}
 
-.publique__mentions {
-  margin: 0;
-  font-size: var(--t-sm);
-  color: var(--texte-doux);
-}
 
 :where(.publique) a:focus-visible {
   outline: 2px solid var(--accent);

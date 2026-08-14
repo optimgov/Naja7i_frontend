@@ -82,6 +82,64 @@ noter(
     : 'aucune valeur française laissée dans ar.json',
 )
 
+/* --- 1bis. Toute clé APPELÉE existe-t-elle ? --------------------------- *
+ *
+ * TROISIÈME DÉFAUT QUE LA COMPILATION NE VOIT PAS, et il est plus grave que
+ * les deux autres : une clé appelée mais jamais définie s'affiche TELLE QUELLE
+ * à l'écran. `t('navigation.inscription')` sur une clé absente rend
+ * « navigation.inscription » dans le pied de page, en français comme en arabe.
+ *
+ * La parité fr/ar ne l'attrape pas — la clé manque des DEUX côtés, donc la
+ * parité est tenue. Le typage ne l'attrape pas non plus : `t()` prend une
+ * chaîne. Seul un regard sur l'écran le voyait, et c'est exactement ce qui
+ * s'est produit au lot ZP-1, sur une capture.
+ *
+ * On ne lit que les appels à clé LITTÉRALE. Les clés construites —
+ * `t(\`opportunites.type_${code}\`)` — sont hors de portée d'une analyse
+ * statique, et le code qui les emploie passe déjà par `te()` pour se rabattre
+ * sur une valeur lisible plutôt que sur la clé.
+ * --------------------------------------------------------------------- */
+
+const SOURCES = ['app', 'server']
+
+function fichiersSources() {
+  const sortie = []
+  const parcourir = (racine) => {
+    for (const entree of readdirSync(racine)) {
+      const chemin = join(racine, entree)
+      if (statSync(chemin).isDirectory()) parcourir(chemin)
+      else if (['.vue', '.ts', '.mjs'].includes(extname(chemin))) sortie.push(chemin)
+    }
+  }
+  for (const racine of SOURCES) {
+    try { parcourir(racine) } catch { /* dossier absent */ }
+  }
+  return sortie
+}
+
+const definies = new Set(feuilles(fr))
+const appelees = new Map()
+
+for (const fichier of fichiersSources()) {
+  const source = readFileSync(fichier, 'utf8')
+  /* `t('x.y')` et `te('x.y')`, guillemets simples ou doubles. Les gabarits
+   * littéraux sont volontairement exclus — voir l'en-tête. */
+  for (const m of source.matchAll(/\bt[e]?\(\s*['"]([a-z][a-zA-Z0-9_.]*)['"]/g)) {
+    if (!appelees.has(m[1])) appelees.set(m[1], fichier)
+  }
+}
+
+const absentes = [...appelees.entries()].filter(([cle]) => !definies.has(cle))
+
+noter(
+  absentes.length === 0,
+  'I18N-04',
+  absentes.length
+    ? `${absentes.length} clé(s) appelée(s) mais jamais définie(s) — elles s'affichent telles quelles : `
+      + absentes.slice(0, 5).map(([c, f]) => `${c} (${f})`).join(', ')
+    : `aucune clé orpheline à l'appel — ${appelees.size} clés littérales vérifiées`,
+)
+
 /* --- 2. Propriétés logiques ------------------------------------------- */
 
 const PHYSIQUES = [

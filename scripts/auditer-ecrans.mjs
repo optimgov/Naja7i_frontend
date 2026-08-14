@@ -51,6 +51,15 @@ const ECRANS = [
   ['nouveau mot de passe', '/nouveau-mot-de-passe'],
   ['vérification e-mail', '/verifier-email'],
   ['page d’erreur', '/page-qui-n-existe-pas'],
+
+  /* Zone publique v1 (ZP-1). Ces deux écrans sont PUBLICS et leurs données
+   * viennent de la fixture servie par le BFF, pas de Laravel : ils sont donc
+   * auditables en intégration continue, contrairement aux cinq écrans de
+   * catalogue. Le slug est celui d'une annonce de la fixture, stable par
+   * construction — si la fixture change, l'audit le dira en 404. */
+  ['opportunités', '/opportunites'],
+  ['opportunités · par filière', '/opportunites?vue=filiere'],
+  ['fiche d’annonce', '/opportunites/administrateur-3eme-grade-session-juin-2026-b9b519'],
 ]
 
 /**
@@ -83,6 +92,8 @@ const CHEMINS_CI = new Set([
   '/nouveau-mot-de-passe',
   '/verifier-email',
   '/page-qui-n-existe-pas',
+  '/opportunites',
+  '/opportunites?vue=filiere',
 ])
 
 const LOCALES = ['fr', 'ar']

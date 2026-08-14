@@ -21,6 +21,39 @@ useSeoCatalogue({
 })
 
 const ouverte = computed(() => matiere.value?.availability === 'open')
+
+/*
+ * L'ENCART « CONCOURS OUVERTS » — P6.
+ *
+ * Il ferme la boucle du lot : la zone publique agrège des annonces, et c'est
+ * SUR LA PAGE DE PRÉPARATION qu'elles prennent leur sens. Un candidat qui lit
+ * « Mathématiques » doit voir que le concours correspondant ferme dans six
+ * jours, sans avoir à retourner au tapis.
+ *
+ * LE RATTACHEMENT VIENT DU COLLECTEUR, pas d'une correspondance de texte sur
+ * le nom de la spécialité. `naja7i.filiere` est le champ prévu pour cela, et
+ * il porte le motif du rattachement — rapprocher « Mathématiques » de
+ * « mathématiques » dans un titre d'annonce produirait des faux positifs que
+ * personne ne pourrait expliquer.
+ *
+ * TROIS AU PLUS, les plus proches. L'encart annonce, il ne remplace pas le
+ * tapis — qui est à un clic.
+ */
+const { annonces } = useOpportunites()
+const { data: charge, error: erreurAnnonces } = await annonces()
+
+/** La filière du collecteur qui correspond à cette famille de concours. */
+const filiereVisee = computed(() => matiere.value?.family?.slug ?? famille)
+
+const concoursOuverts = computed(() => {
+  if (erreurAnnonces.value || !charge.value) return []
+
+  return charge.value.data
+    .filter(a => estOuverte(a))
+    .filter(a => a.naja7i.prep_slug === filiereVisee.value || a.naja7i.filiere === 'education')
+    .sort((x, y) => (x.jours ?? 9999) - (y.jours ?? 9999))
+    .slice(0, 3)
+})
 </script>
 
 <template>
@@ -43,14 +76,40 @@ const ouverte = computed(() => matiere.value?.availability === 'open')
       Une spécialité en liste d'attente ne propose jamais de diagnostic :
       critère de recette de NAJA7I-ZP-001 §9.
     -->
+    <!-- `/methode/correction` N'EXISTE PAS, et ce bouton y menait encore. Le
+         FRONT-1 avait corrigé le même lien sur l'accueil en le remplaçant par
+         une ancre vers la démonstration, qui est la correction expliquée qu'il
+         promet ; la page de spécialité était restée en arrière. -->
     <div v-if="ouverte" class="actes">
-      <NuxtLink class="btn btn--grand" :to="localePath('/methode/correction')">
+      <NuxtLink class="btn btn--grand" :to="`${localePath('/')}#demonstration`">
         {{ t('catalogue.voir_correction') }}
       </NuxtLink>
     </div>
     <div v-else class="attente">
       <p>{{ t('catalogue.specialite_en_attente') }}</p>
     </div>
+
+    <!-- L'encart n'apparaît QUE s'il a quelque chose à dire. Un bloc « aucun
+         concours ouvert » sur une page de préparation démoralise sans informer :
+         l'absence d'annonce aujourd'hui ne dit rien du concours de l'an
+         prochain. -->
+    <section v-if="concoursOuverts.length" class="encart-ouverts">
+      <div class="encart-ouverts__entete">
+        <h2 class="encart-ouverts__titre">{{ t('catalogue.ouverts_titre') }}</h2>
+        <NuxtLink class="lien-second" :to="localePath('/opportunites')">
+          {{ t('catalogue.ouverts_tout_voir') }}
+        </NuxtLink>
+      </div>
+
+      <div class="encart-ouverts__grille">
+        <CarteAnnonce
+          v-for="a in concoursOuverts"
+          :key="a.id"
+          :annonce="a"
+          :titre-niveau="3"
+        />
+      </div>
+    </section>
   </div>
 </template>
 

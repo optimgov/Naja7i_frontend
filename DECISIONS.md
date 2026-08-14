@@ -1133,3 +1133,57 @@ conforme — et la question est portée au point d'arrêt avec ses mesures. Troi
 issues existent : garder six cartes et accepter la proportion de la référence ;
 descendre à trois cartes pour tenir 22 % ; ou allonger l'accueil (le pied de la
 maquette est déjà intégré au CSS, il n'est pas encore posé dans le gabarit).
+
+## D-F61 — A2 tranché faute de pouvoir l'être : six cartes, et le pied posé
+
+L'arbitrage exige « moins de 22 % » ET « 6 cartes ». Mesuré, les deux sont
+incompatibles : la maquette de référence elle-même est à 32,5 %.
+
+**Décision.** La maquette fait autorité sur la forme : on garde les six cartes.
+Et on pose le PIED à trois colonnes de la source (section 10 du CSS, intégrée
+au P1 mais jamais posée dans le gabarit), qui allonge légitimement la page et
+ramène la proportion de 45,4 % à 40,4 % à 1440 px.
+
+**Le pied garde la forme de la source et ses liens à nous.** La maquette liste
+« Annales », « Tarifs », « Alerte par filière », « Vérifier une attestation » :
+aucune de ces routes n'existe. Les poser referait exactement ce que le FRONT-1
+avait dû corriger sur l'accueil — un bouton principal menant à un 404. Les
+filières viennent du catalogue, pas d'une liste écrite ici.
+
+**Ce que le pied apporte vraiment**, et qui manquait : « naja7i.ma agrège des
+avis administratifs publics. Seul l'avis officiel publié par l'administration
+fait foi. » Un agrégateur qui ne le dit pas laisse croire qu'il est la source.
+
+**La recette RAPPORTE la mesure au lieu d'en faire un échec.** Faire rougir sur
+un seuil que la source ne tient pas rendrait la recette rouge en permanence, et
+une recette toujours rouge ne se lit plus. Le contrôle porte donc sur la
+DÉRIVE — seuil à 60 % — et le libellé dit le chiffre visé, le chiffre atteint
+et le chiffre de la référence. Le jour où A2 est arbitré, ce seuil devient réel.
+
+## D-F62 — I18N-04 : une clé appelée mais jamais définie s'affiche telle quelle
+
+**Constat, sur une capture de la fiche d'annonce.** Le pied affichait
+« navigation.inscription » en toutes lettres. La clé n'existait pas — la bonne
+est `inscription.titre`.
+
+**Aucun contrôle ne pouvait le voir.** La parité fr/ar est tenue : la clé
+manque des DEUX côtés. Le typage ne dit rien : `t()` prend une chaîne. Le
+validateur de jetons regarde le CSS. Seul un regard sur l'écran l'a trouvé.
+
+**Décision.** `verifier-locales.mjs` gagne I18N-04 : toute clé littérale
+appelée dans `app/` ou `server/` doit exister dans `fr.json`. 347 clés
+vérifiées. Les clés CONSTRUITES — `t(\`opportunites.type_${code}\`)` — restent
+hors de portée d'une analyse statique, et le code qui les emploie passe déjà
+par `te()` pour se rabattre sur une valeur lisible.
+
+Mutation : réintroduire `navigation.inscription` fait rougir la règle.
+
+## D-F63 — Deux 404 vivants trouvés en chemin
+
+`/methode/correction` était encore lié depuis la page de SPÉCIALITÉ. Le FRONT-1
+avait corrigé ce même lien sur l'accueil — en le remplaçant par une ancre vers
+la démonstration, qui EST la correction expliquée qu'il promet — mais la page
+de spécialité était restée en arrière. Corrigé de la même façon.
+
+Et la fiche d'annonce répond bien 404 sur un slug inconnu, côté SERVEUR : une
+page vide en 200 se ferait indexer comme une fiche valide.

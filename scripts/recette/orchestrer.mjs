@@ -275,6 +275,15 @@ const B = comptes.find((c) => c.cle === 'B')
  *               une entrée refusée derrière elle.
  */
 const RECETTES = [
+  /*
+   * LA ZONE PUBLIQUE EN PREMIER, et sans compte.
+   *
+   * Elle ne demande ni session ni backend : ses données viennent de la fixture
+   * servie par le BFF. La jouer avant les recettes authentifiées la rend
+   * lisible isolément — un échec du tapis n'a rien à voir avec l'état du
+   * candidat A, et l'ordre le dit.
+   */
+  ['zone publique — ZP-1', 'scripts/recette-zone-publique.mjs', []],
   ['passation d’un diagnostic', 'scripts/recette-passation.mjs', [A.email, A.motDePasse]],
   ['FRONT-3 — les cas qui doivent échouer', 'scripts/recette-front3.mjs', [A.email, A.motDePasse]],
   /*
