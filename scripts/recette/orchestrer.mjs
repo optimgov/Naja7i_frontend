@@ -296,6 +296,15 @@ const RECETTES = [
       env: { ...env, COMPTE_EMAIL: A.email, CODE_EPREUVE: 'CRMEF-FR-SPEC-2025' },
     }] },
   ],
+  /*
+   * L'EXAMEN BLANC AVANT LA FILE D'ENVOI, et l'ordre n'est pas indifférent.
+   *
+   * La recette du simulateur laisse derrière elle une simulation EXPIRÉE — elle
+   * fait exprès de dépasser l'échéance pour vérifier le refus. La file d'envoi,
+   * elle, pose des entrées et met délibérément la file en échec : elle doit
+   * rester la dernière, comme depuis le FRONT-5.
+   */
+  ['examen blanc — E9, E10, E11', 'scripts/recette-simulation.mjs', [A.email, A.motDePasse]],
   [
     'file d’envoi — BLOC-4, BLOC-5 et SSR',
     'scripts/recette-file-envoi.mjs',
