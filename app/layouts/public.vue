@@ -21,6 +21,26 @@ const nomAutre = computed(
 )
 
 const annee = new Date().getFullYear()
+
+/*
+ * LE COMPTEUR DE LA PASTILLE, calculé une fois pour les deux navigations.
+ *
+ * Il vit dans le GABARIT et non dans chaque composant : deux lectures
+ * donneraient deux nombres le jour où l'une échoue, et l'en-tête afficherait
+ * alors autre chose que la barre basse. `useAsyncData` déduplique par clé,
+ * donc une seule requête sert les deux.
+ *
+ * NUL EN CAS D'ÉCHEC, jamais zéro. `useAsyncData` place `undefined` dans
+ * `error` — on teste la véracité. Un « 0 » affiché serait une affirmation
+ * fausse ; l'absence de pastille ne dit rien, ce qui est exact.
+ */
+const { annonces } = useOpportunites()
+const { data: opportunites, error: erreurOpportunites } = await annonces()
+
+const ouvertes = computed(() => {
+  if (erreurOpportunites.value || !opportunites.value) return null
+  return opportunites.value.data.filter(a => estOuverte(a)).length
+})
 </script>
 
 <template>
@@ -34,13 +54,9 @@ const annee = new Date().getFullYear()
           <LogoNaja7i />
         </NuxtLink>
 
-        <nav class="publique__nav" :aria-label="t('navigation.principale')">
-          <NuxtLink :to="localePath('/concours')" class="publique__lien">
-            {{ t('catalogue.concours') }}
-          </NuxtLink>
-        </nav>
+        <NavPublique :ouvertes="ouvertes" />
 
-        <div class="publique__actions">
+        <div class="publique__actions peau__actes">
           <BasculeTheme />
 
           <NuxtLink
@@ -62,6 +78,9 @@ const annee = new Date().getFullYear()
     <main id="contenu" class="publique__contenu">
       <slot />
     </main>
+
+    <!-- Sous 62 rem, la nav du haut cède la place à celle-ci. Voir BarreBasse. -->
+    <BarreBasse :ouvertes="ouvertes" />
 
     <footer class="publique__pied">
       <div class="enveloppe">
@@ -118,10 +137,7 @@ const annee = new Date().getFullYear()
   outline-offset: 3px;
 }
 
-.publique__nav {
-  display: flex;
-  gap: var(--e-3);
-}
+/* `.publique__nav` a cédé la place à `NavPublique` (A1). */
 
 .publique__lien {
   font-size: var(--t-sm);

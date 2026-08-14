@@ -83,7 +83,11 @@
     "aller_au_contenu": "انتقل إلى المحتوى",
     "principale": "التنقل الرئيسي",
     "connexion": "تسجيل الدخول",
-    "mentions": "© {annee} نجاحي — التحضير لمباريات الوظيفة العمومية بالمغرب."
+    "mentions": "© {annee} نجاحي — التحضير لمباريات الوظيفة العمومية بالمغرب.",
+    "barre_accueil": "الرئيسية",
+    "barre_concours": "المباريات",
+    "barre_opportunites": "الفرص",
+    "barre_compte": "حسابي"
   },
   "accueil": {
     "oeil": "مباريات الوظيفة العمومية بالمغرب",
@@ -402,5 +406,30 @@
     "vers_entrainement": "تدرّب على نقاط ضعفي",
     "vers_correction": "راجع الأسئلة واحدا واحدا",
     "duree_h": "{h} س"
+  },
+  "opportunites": {
+    "titre": "الفرص",
+    "compteur_aria": "{n} فرص مفتوحة",
+    "bandeau_titre": "آجال قريبة",
+    "bandeau_imminentes": "{n} آجال تنتهي خلال 7 أيام",
+    "bandeau_postes": "{n} منصب مفتوح بالمغرب",
+    "bandeau_voir": "اطّلع عليها",
+    "echeance_close": "باب الترشيح مغلق",
+    "echeance_aujourdhui": "الترشيح ينتهي اليوم",
+    "echeance_demain": "الترشيح ينتهي غدا",
+    "echeance_jours": "الترشيح ينتهي بعد {n} أيام",
+    "echeance_le": "في {date}",
+    "rattachement_prepare": "نجاحي يهيّئ لهذه المباراة",
+    "rattachement_attente": "التهييء غير متاح بعد",
+    "n_postes": "{n} منصب",
+    "echelle_n": "السلّم {n}",
+    "type_concours": "مباراة",
+    "type_poste_responsabilite": "منصب مسؤولية",
+    "type_stage": "تدريب",
+    "type_concours_etablissement": "مباراة مؤسسة",
+    "type_eap": "توظيف بالتعاقد",
+    "type_concours_ecole": "مباراة مدرسة",
+    "type_emploi_superieur": "وظيفة عليا",
+    "type_bourse": "منحة"
   }
 }

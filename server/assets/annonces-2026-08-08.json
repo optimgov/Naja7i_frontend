@@ -1,0 +1,1528 @@
+[
+  {
+    "id": "b9b51962-f3c4-5a07-9329-278ed9e56a6e",
+    "slug": "administrateur-3eme-grade-session-juin-2026-b9b519",
+    "type": "concours",
+    "stage": "resultats",
+    "titre": "Administrateur 3ème grade — Session juin 2026",
+    "resume": "Haut-Commissariat au Plan ouvre 30 postes au grade d'administrateur 3ème grade (échelle 10) dans 2 spécialités : Statistiques, Démographie. Dépôt des candidatures jusqu'au 24/06/2026 à 16h30. Épreuves le 21/07/2026. Candidature en ligne.",
+    "org": "Haut-Commissariat au Plan",
+    "org_type": "service_etat",
+    "ref": "C55003/26",
+    "grade": "Administrateur 3ème grade",
+    "echelle": "10",
+    "specialites": [
+      "Statistiques",
+      "Démographie"
+    ],
+    "postes": 30,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-06-24T16:30:00+01:00",
+    "jours": -46,
+    "exam": "2026-07-21",
+    "publie": "2026-08-05T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.hcp.ma",
+    "diplomes": [
+      "Licence"
+    ],
+    "age": 45,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-029.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-029",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "pro",
+      "prep_slug": "administration",
+      "has_prep": false,
+      "match_reason": "Concours administration — motif « administrateur »",
+      "confidence": 0.4
+    },
+    "revision": 1
+  },
+  {
+    "id": "4951e5ab-67e9-5a4d-8f5e-29377499095a",
+    "slug": "directeur-provincial-de-l-education-nationale-taourirt-4951e5",
+    "type": "poste_responsabilite",
+    "stage": "convocation_oral",
+    "titre": "Directeur provincial de l'Éducation nationale — Taourirt",
+    "resume": "Ministère de l'Éducation nationale — AREF de l'Oriental ouvre 1 poste au grade de directeur provincial. Dépôt des candidatures jusqu'au 27/07/2026 à 16h30. Candidature en ligne.",
+    "org": "Ministère de l'Éducation nationale — AREF de l'Oriental",
+    "org_type": "service_etat",
+    "ref": "PR2244/26",
+    "grade": "Directeur provincial",
+    "echelle": "",
+    "specialites": [],
+    "postes": 1,
+    "regions": [
+      "L'Oriental"
+    ],
+    "deadline": "2026-07-27T16:30:00+01:00",
+    "jours": -13,
+    "exam": null,
+    "publie": "2026-08-05T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.men.gov.ma",
+    "diplomes": [
+      "Licence + expérience de direction"
+    ],
+    "age": null,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-020.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-020",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "85b321ee-8312-51d9-9906-ff3ccbf9ccd9",
+    "slug": "cadres-d-appui-pedagogique-et-administratif-crmef-85b321",
+    "type": "concours",
+    "stage": "convocation_ecrit",
+    "titre": "Cadres d'appui pédagogique et administratif — CRMEF",
+    "resume": "Centre Régional des Métiers de l'Éducation et de la Formation — Rabat ouvre 140 postes au grade de cadre d'appui (échelle 10) dans 1 spécialité : Administration éducative. Dépôt des candidatures jusqu'au 05/08/2026 à 16h30. Épreuves le 28/08/2026. Candidature en ligne.",
+    "org": "Centre Régional des Métiers de l'Éducation et de la Formation — Rabat",
+    "org_type": "service_etat",
+    "ref": "C99088/26",
+    "grade": "Cadre d'appui",
+    "echelle": "10",
+    "specialites": [
+      "Administration éducative"
+    ],
+    "postes": 140,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-08-05T16:30:00+01:00",
+    "jours": -4,
+    "exam": "2026-08-28",
+    "publie": "2026-08-02T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://tawdif.men.gov.ma",
+    "diplomes": [
+      "Licence"
+    ],
+    "age": 35,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-005.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-005",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "education",
+      "prep_slug": "crmef",
+      "has_prep": true,
+      "match_reason": "CRMEF — toutes spécialités — motif « \\bCRMEF\\b »",
+      "confidence": 0.71
+    },
+    "revision": 1
+  },
+  {
+    "id": "b762768b-9401-5cd3-85b2-60dd07db9b21",
+    "slug": "professeur-de-l-enseignement-primaire-b76276",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Professeur de l'enseignement primaire",
+    "resume": "Ministère de l'Éducation nationale — AREF Marrakech-Safi ouvre 1 250 postes au grade de professeur de l'enseignement primaire (échelle 10) dans 1 spécialité : Polyvalent. Dépôt des candidatures jusqu'au 10/08/2026 à 16h30. Épreuves le 23/09/2026. Candidature en ligne.",
+    "org": "Ministère de l'Éducation nationale — AREF Marrakech-Safi",
+    "org_type": "service_etat",
+    "ref": "C99051/26",
+    "grade": "Professeur de l'enseignement primaire",
+    "echelle": "10",
+    "specialites": [
+      "Polyvalent"
+    ],
+    "postes": 1250,
+    "regions": [
+      "Marrakech-Safi"
+    ],
+    "deadline": "2026-08-10T16:30:00+01:00",
+    "jours": 1,
+    "exam": "2026-09-23",
+    "publie": "2026-08-04T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://tawdif.men.gov.ma",
+    "diplomes": [
+      "Licence toutes filières"
+    ],
+    "age": 30,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-003.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-003",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "education",
+      "prep_slug": "crmef",
+      "has_prep": true,
+      "match_reason": "CRMEF — toutes spécialités — motif « professeur » + organisme concordant",
+      "confidence": 0.79
+    },
+    "revision": 1
+  },
+  {
+    "id": "235146b4-7655-5a70-bfb6-6c91399104d6",
+    "slug": "redacteur-judiciaire-de-3eme-grade-235146",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Rédacteur judiciaire de 3ème grade",
+    "resume": "Ministère de la Justice ouvre 500 postes au grade de rédacteur judiciaire (échelle 9) dans 1 spécialité : Droit. Dépôt des candidatures jusqu'au 13/08/2026 à 16h30. Épreuves le 15/09/2026. Candidature en ligne.",
+    "org": "Ministère de la Justice",
+    "org_type": "service_etat",
+    "ref": "C33044/26",
+    "grade": "Rédacteur judiciaire",
+    "echelle": "9",
+    "specialites": [
+      "Droit"
+    ],
+    "postes": 500,
+    "regions": [
+      "Tout le Royaume"
+    ],
+    "deadline": "2026-08-13T16:30:00+01:00",
+    "jours": 4,
+    "exam": "2026-09-15",
+    "publie": "2026-08-06T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.justice.gov.ma",
+    "diplomes": [
+      "Licence"
+    ],
+    "age": 45,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-010.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-010",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "pro",
+      "prep_slug": "administration",
+      "has_prep": false,
+      "match_reason": "Concours administration — motif « r[ée]dacteur »",
+      "confidence": 0.4
+    },
+    "revision": 1
+  },
+  {
+    "id": "859d5eed-f566-520b-9b6a-59e7c0e098c8",
+    "slug": "stages-de-fin-d-etudes-direction-du-budget-859d5e",
+    "type": "stage",
+    "stage": "annonce",
+    "titre": "Stages de fin d'études — Direction du Budget",
+    "resume": "Ministère de l'Économie et des Finances ouvre 40 postes dans 3 spécialités : Finances publiques, Économie, Statistiques. Dépôt des candidatures jusqu'au 14/08/2026 à 16h30.",
+    "org": "Ministère de l'Économie et des Finances",
+    "org_type": "service_etat",
+    "ref": "ST-2026-88",
+    "grade": "",
+    "echelle": "",
+    "specialites": [
+      "Finances publiques",
+      "Économie",
+      "Statistiques"
+    ],
+    "postes": 40,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-08-14T16:30:00+01:00",
+    "jours": 5,
+    "exam": null,
+    "publie": "2026-08-06T10:00:00+01:00",
+    "mode": "email",
+    "url": "https://www.finances.gov.ma",
+    "diplomes": [
+      "Master 2 en cours"
+    ],
+    "age": null,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-028.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-028",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "9e024a65-1fab-5004-bc0c-9565bb8bbdc0",
+    "slug": "chef-de-division-des-affaires-administratives-9e024a",
+    "type": "poste_responsabilite",
+    "stage": "annonce",
+    "titre": "Chef de division des affaires administratives",
+    "resume": "Académie Régionale d'Éducation et de Formation — Béni Mellal-Khénifra ouvre 1 poste au grade de chef de division. Dépôt des candidatures jusqu'au 15/08/2026 à 16h30. Candidature en ligne.",
+    "org": "Académie Régionale d'Éducation et de Formation — Béni Mellal-Khénifra",
+    "org_type": "service_etat",
+    "ref": "PR2210/26",
+    "grade": "Chef de division",
+    "echelle": "",
+    "specialites": [],
+    "postes": 1,
+    "regions": [
+      "Béni Mellal-Khénifra"
+    ],
+    "deadline": "2026-08-15T16:30:00+01:00",
+    "jours": 6,
+    "exam": null,
+    "publie": "2026-08-06T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.men.gov.ma",
+    "diplomes": [
+      "Licence + 5 ans dans l'administration"
+    ],
+    "age": null,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-019.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-019",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "aff8a743-9391-5521-963f-415de7fc5779",
+    "slug": "agent-de-circulation-ferroviaire-aff8a7",
+    "type": "concours_etablissement",
+    "stage": "annonce",
+    "titre": "Agent de circulation ferroviaire",
+    "resume": "Office National des Chemins de Fer (ONCF) ouvre 95 postes au grade d'agent d'exploitation dans 1 spécialité : Exploitation ferroviaire. Dépôt des candidatures jusqu'au 17/08/2026 à 16h30. Épreuves le 18/09/2026. Candidature en ligne.",
+    "org": "Office National des Chemins de Fer (ONCF)",
+    "org_type": "etablissement_public",
+    "ref": "ONCF-2026-0112",
+    "grade": "Agent d'exploitation",
+    "echelle": "",
+    "specialites": [
+      "Exploitation ferroviaire"
+    ],
+    "postes": 95,
+    "regions": [
+      "Rabat-Salé-Kénitra",
+      "Casablanca-Settat"
+    ],
+    "deadline": "2026-08-17T16:30:00+01:00",
+    "jours": 8,
+    "exam": "2026-09-18",
+    "publie": "2026-08-01T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.oncf.ma/fr/Recrutement",
+    "diplomes": [
+      "Bac + 2"
+    ],
+    "age": 30,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-015.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-015",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "22bb454d-a0bd-5edc-9a03-097308660aa0",
+    "slug": "technicien-de-3eme-grade-echelle-9-22bb45",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Technicien de 3ème grade — Échelle 9",
+    "resume": "Ministère de l'Agriculture, de la Pêche maritime, du Développement rural et des Eaux et Forêts ouvre 70 postes au grade de technicien de 3ème grade (échelle 9) dans 5 spécialités : Technico-commercial horticole, Gestion de l'eau et hydraulique, Élevage des ruminants, Gestion d'entreprises agricoles. Dépôt des candidatures jusqu'au 19/08/2026 à 16h30. Épreuves le 04/10/2026. Candidature en ligne.",
+    "org": "Ministère de l'Agriculture, de la Pêche maritime, du Développement rural et des Eaux et Forêts",
+    "org_type": "service_etat",
+    "ref": "C43113/26",
+    "grade": "Technicien de 3ème grade",
+    "echelle": "9",
+    "specialites": [
+      "Technico-commercial horticole",
+      "Gestion de l'eau et hydraulique",
+      "Élevage des ruminants",
+      "Gestion d'entreprises agricoles",
+      "Développement informatique"
+    ],
+    "postes": 70,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-08-19T16:30:00+01:00",
+    "jours": 10,
+    "exam": "2026-10-04",
+    "publie": "2026-08-01T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://concours.agriculture.gov.ma",
+    "diplomes": [
+      "Diplôme de technicien",
+      "DUT ou équivalent"
+    ],
+    "age": 45,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-006.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-006",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "pro",
+      "prep_slug": "administration",
+      "has_prep": false,
+      "match_reason": "Concours administration — motif « technicien de \\d(?:er|ème|eme) grade »",
+      "confidence": 0.4
+    },
+    "revision": 1
+  },
+  {
+    "id": "cbd68b8d-4902-5659-9d97-322dd29e6748",
+    "slug": "examen-d-aptitude-professionnelle-adjoint-administratif-2eme-cbd68b",
+    "type": "eap",
+    "stage": "annonce",
+    "titre": "Examen d'aptitude professionnelle — Adjoint administratif 2ème grade",
+    "resume": "Ministère de l'Économie et des Finances ouvre 320 postes au grade d'adjoint administratif 2ème grade (échelle 7). Dépôt des candidatures jusqu'au 20/08/2026 à 16h30. Épreuves le 21/09/2026. Candidature en ligne.",
+    "org": "Ministère de l'Économie et des Finances",
+    "org_type": "service_etat",
+    "ref": "EAP-2026-104",
+    "grade": "Adjoint administratif 2ème grade",
+    "echelle": "7",
+    "specialites": [],
+    "postes": 320,
+    "regions": [
+      "Tout le Royaume"
+    ],
+    "deadline": "2026-08-20T16:30:00+01:00",
+    "jours": 11,
+    "exam": "2026-09-21",
+    "publie": "2026-08-02T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.finances.gov.ma",
+    "diplomes": [
+      "Réservé aux fonctionnaires en poste"
+    ],
+    "age": null,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-023.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-023",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "4eb881f5-0f37-57e6-bf5a-b4905e11559d",
+    "slug": "charge-d-etudes-financieres-4eb881",
+    "type": "concours_etablissement",
+    "stage": "annonce",
+    "titre": "Chargé d'études financières",
+    "resume": "Caisse de Dépôt et de Gestion (CDG) ouvre 8 postes au grade de cadre dans 2 spécialités : Finance, Contrôle de gestion. Dépôt des candidatures jusqu'au 21/08/2026 à 16h30. Candidature en ligne.",
+    "org": "Caisse de Dépôt et de Gestion (CDG)",
+    "org_type": "etablissement_public",
+    "ref": "CDG-2026-058",
+    "grade": "Cadre",
+    "echelle": "",
+    "specialites": [
+      "Finance",
+      "Contrôle de gestion"
+    ],
+    "postes": 8,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-08-21T16:30:00+01:00",
+    "jours": 12,
+    "exam": null,
+    "publie": "2026-07-31T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.cdg.ma/fr/carrieres",
+    "diplomes": [
+      "Master en finance",
+      "Diplôme grande école"
+    ],
+    "age": null,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-016.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-016",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "2516bc4b-c222-5e3d-a7d8-671a93f9ff5a",
+    "slug": "ingenieur-d-etat-1er-grade-echelle-11-2516bc",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Ingénieur d'État 1er grade — Échelle 11",
+    "resume": "Ministère des Affaires étrangères, de la Coopération africaine et des MRE ouvre 12 postes au grade d'ingénieur d'État 1er grade (échelle 11) dans 3 spécialités : Informatique, Télécommunications, Cybersécurité. Dépôt des candidatures jusqu'au 22/08/2026 à 16h30. Épreuves le 25/09/2026. Candidature en ligne.",
+    "org": "Ministère des Affaires étrangères, de la Coopération africaine et des MRE",
+    "org_type": "service_etat",
+    "ref": "C12009/26",
+    "grade": "Ingénieur d'État 1er grade",
+    "echelle": "11",
+    "specialites": [
+      "Informatique",
+      "Télécommunications",
+      "Cybersécurité"
+    ],
+    "postes": 12,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-08-22T16:30:00+01:00",
+    "jours": 13,
+    "exam": "2026-09-25",
+    "publie": "2026-08-05T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.diplomatie.ma",
+    "diplomes": [
+      "Diplôme d'ingénieur d'État"
+    ],
+    "age": 45,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-011.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-011",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "postbac",
+      "prep_slug": "ingenieur",
+      "has_prep": false,
+      "match_reason": "Concours ingénieur (ENSA, ENSAM, EMI) — motif « ing[ée]nieur d'[ÉE]tat »",
+      "confidence": 0.47
+    },
+    "revision": 1
+  },
+  {
+    "id": "4cb67313-1849-5b04-b932-06a2891b8019",
+    "slug": "technicien-de-3eme-grade-urbanisme-4cb673",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Technicien de 3ème grade — Urbanisme",
+    "resume": "Commune Urbaine de Marrakech ouvre 18 postes au grade de technicien de 3ème grade (échelle 9) dans 2 spécialités : Urbanisme, Topographie. Dépôt des candidatures jusqu'au 24/08/2026 à 16h30. Épreuves le 27/09/2026.",
+    "org": "Commune Urbaine de Marrakech",
+    "org_type": "collectivite",
+    "ref": "CUM-2026-14",
+    "grade": "Technicien de 3ème grade",
+    "echelle": "9",
+    "specialites": [
+      "Urbanisme",
+      "Topographie"
+    ],
+    "postes": 18,
+    "regions": [
+      "Marrakech-Safi"
+    ],
+    "deadline": "2026-08-24T16:30:00+01:00",
+    "jours": 15,
+    "exam": "2026-09-27",
+    "publie": "2026-07-30T10:00:00+01:00",
+    "mode": "depot_physique",
+    "url": "",
+    "diplomes": [
+      "DUT",
+      "Licence professionnelle"
+    ],
+    "age": 45,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-017.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-017",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "pro",
+      "prep_slug": "administration",
+      "has_prep": false,
+      "match_reason": "Concours administration — motif « technicien de \\d(?:er|ème|eme) grade »",
+      "confidence": 0.4
+    },
+    "revision": 1
+  },
+  {
+    "id": "b5cfbb8c-8383-5e0b-8fbf-41d0055ee34b",
+    "slug": "infirmier-polyvalent-de-1er-grade-echelle-10-b5cfbb",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Infirmier polyvalent de 1er grade — Échelle 10",
+    "resume": "Ministère de la Santé et de la Protection sociale ouvre 1 800 postes au grade d'infirmier polyvalent 1er grade (échelle 10) dans 3 spécialités : Soins infirmiers, Anesthésie-réanimation, Urgences. Dépôt des candidatures jusqu'au 25/08/2026 à 16h30. Épreuves le 29/09/2026. Candidature en ligne.",
+    "org": "Ministère de la Santé et de la Protection sociale",
+    "org_type": "service_etat",
+    "ref": "C24501/26",
+    "grade": "Infirmier polyvalent 1er grade",
+    "echelle": "10",
+    "specialites": [
+      "Soins infirmiers",
+      "Anesthésie-réanimation",
+      "Urgences"
+    ],
+    "postes": 1800,
+    "regions": [
+      "Tout le Royaume"
+    ],
+    "deadline": "2026-08-25T16:30:00+01:00",
+    "jours": 16,
+    "exam": "2026-09-29",
+    "publie": "2026-08-04T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://recrutement.sante.gov.ma",
+    "diplomes": [
+      "Diplôme d'État ISPITS"
+    ],
+    "age": 45,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-012.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-012",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "pro",
+      "prep_slug": "sante",
+      "has_prep": false,
+      "match_reason": "Concours santé (ISPITS, infirmiers) — motif « infirmier »",
+      "confidence": 0.67
+    },
+    "revision": 1
+  },
+  {
+    "id": "0fd6f304-202c-5453-98ee-383444660ef0",
+    "slug": "ingenieur-procedes-site-de-jorf-lasfar-0fd6f3",
+    "type": "concours_etablissement",
+    "stage": "annonce",
+    "titre": "Ingénieur procédés — Site de Jorf Lasfar",
+    "resume": "OCP Group ouvre 25 postes au grade d'ingénieur dans 2 spécialités : Génie des procédés, Génie chimique. Dépôt des candidatures jusqu'au 27/08/2026 à 16h30. Candidature en ligne.",
+    "org": "OCP Group",
+    "org_type": "etablissement_public",
+    "ref": "OCP-2026-0431",
+    "grade": "Ingénieur",
+    "echelle": "",
+    "specialites": [
+      "Génie des procédés",
+      "Génie chimique"
+    ],
+    "postes": 25,
+    "regions": [
+      "Casablanca-Settat"
+    ],
+    "deadline": "2026-08-27T16:30:00+01:00",
+    "jours": 18,
+    "exam": null,
+    "publie": "2026-08-03T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.ocpgroup.ma/fr/careers",
+    "diplomes": [
+      "Diplôme d'ingénieur"
+    ],
+    "age": null,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-013.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-013",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "7ccbab0c-0cb5-5e30-9170-847d9fdb9cae",
+    "slug": "concours-d-acces-aux-facultes-de-medecine-et-de-pharmacie-20-7ccbab",
+    "type": "concours_ecole",
+    "stage": "annonce",
+    "titre": "Concours d'accès aux Facultés de Médecine et de Pharmacie 2026",
+    "resume": "Ministère de l'Enseignement supérieur — Concours national commun ouvre 3 400 postes dans 3 spécialités : Médecine, Pharmacie, Médecine dentaire. Dépôt des candidatures jusqu'au 28/08/2026 à 16h30. Épreuves le 15/09/2026. Candidature en ligne.",
+    "org": "Ministère de l'Enseignement supérieur — Concours national commun",
+    "org_type": "universite",
+    "ref": "FMP-2026",
+    "grade": "",
+    "echelle": "",
+    "specialites": [
+      "Médecine",
+      "Pharmacie",
+      "Médecine dentaire"
+    ],
+    "postes": 3400,
+    "regions": [
+      "Tout le Royaume"
+    ],
+    "deadline": "2026-08-28T16:30:00+01:00",
+    "jours": 19,
+    "exam": "2026-09-15",
+    "publie": "2026-08-01T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.enssup.gov.ma",
+    "diplomes": [
+      "Baccalauréat scientifique — mention Bien minimum"
+    ],
+    "age": 21,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-024.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-024",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "postbac",
+      "prep_slug": "medecine",
+      "has_prep": false,
+      "match_reason": "Concours médecine / pharmacie — motif « \\bm[ée]decine\\b »",
+      "confidence": 1.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "c4a9c67e-654e-5dd4-8fde-72365b5b965f",
+    "slug": "inspecteur-pedagogique-de-l-enseignement-secondaire-c4a9c6",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Inspecteur pédagogique de l'enseignement secondaire",
+    "resume": "Ministère de l'Éducation nationale, du Préscolaire et des Sports ouvre 85 postes au grade d'inspecteur pédagogique (échelle 11) dans 1 spécialité : Toutes disciplines. Dépôt des candidatures jusqu'au 29/08/2026 à 16h30. Épreuves le 09/10/2026. Candidature en ligne.",
+    "org": "Ministère de l'Éducation nationale, du Préscolaire et des Sports",
+    "org_type": "service_etat",
+    "ref": "C99070/26",
+    "grade": "Inspecteur pédagogique",
+    "echelle": "11",
+    "specialites": [
+      "Toutes disciplines"
+    ],
+    "postes": 85,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-08-29T16:30:00+01:00",
+    "jours": 20,
+    "exam": "2026-10-09",
+    "publie": "2026-08-03T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://tawdif.men.gov.ma",
+    "diplomes": [
+      "Licence + 6 ans d'ancienneté"
+    ],
+    "age": 45,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-004.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-004",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "education",
+      "prep_slug": "inspection",
+      "has_prep": false,
+      "match_reason": "Inspection de l'enseignement — motif « inspecteur.{0,30}(enseignement|p[ée]dagogique) »",
+      "confidence": 0.67
+    },
+    "revision": 1
+  },
+  {
+    "id": "c10d826d-d45a-5125-83a6-a5d9c9674b18",
+    "slug": "inspecteur-des-douanes-de-2eme-grade-echelle-10-c10d82",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Inspecteur des Douanes de 2ème grade — Échelle 10",
+    "resume": "Ministère de l'Économie et des Finances — Administration des Douanes et Impôts Indirects ouvre 150 postes au grade d'inspecteur des douanes de 2ème grade (échelle 10) dans 4 spécialités : Droit, Économie, Gestion, Informatique. Dépôt des candidatures jusqu'au 29/08/2026 à 16h30. Épreuves le 18/10/2026. Candidature en ligne.",
+    "org": "Ministère de l'Économie et des Finances — Administration des Douanes et Impôts Indirects",
+    "org_type": "service_etat",
+    "ref": "C21007/26",
+    "grade": "Inspecteur des douanes de 2ème grade",
+    "echelle": "10",
+    "specialites": [
+      "Droit",
+      "Économie",
+      "Gestion",
+      "Informatique"
+    ],
+    "postes": 150,
+    "regions": [
+      "Casablanca-Settat"
+    ],
+    "deadline": "2026-08-29T16:30:00+01:00",
+    "jours": 20,
+    "exam": "2026-10-18",
+    "publie": "2026-07-31T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.douane.gov.ma/concours",
+    "diplomes": [
+      "Licence ou équivalent"
+    ],
+    "age": 40,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-007.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-007",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "pro",
+      "prep_slug": "finances",
+      "has_prep": false,
+      "match_reason": "Concours finances et douanes — motif « inspecteur des (douanes|imp[ôo]ts|finances) »",
+      "confidence": 0.67
+    },
+    "revision": 1
+  },
+  {
+    "id": "6b3d2cf8-a2c7-52d7-bde8-892cdd3a4b33",
+    "slug": "administrateur-2eme-grade-echelle-11-6b3d2c",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Administrateur 2ème grade — Échelle 11",
+    "resume": "Ministère de l'Intérieur ouvre 45 postes au grade d'administrateur 2ème grade (échelle 11) dans 3 spécialités : Droit public, Sciences politiques, Économie. Dépôt des candidatures jusqu'au 30/08/2026 à 16h30. Épreuves le 20/09/2026. Candidature en ligne.",
+    "org": "Ministère de l'Intérieur",
+    "org_type": "service_etat",
+    "ref": "C11220/26",
+    "grade": "Administrateur 2ème grade",
+    "echelle": "11",
+    "specialites": [
+      "Droit public",
+      "Sciences politiques",
+      "Économie"
+    ],
+    "postes": 45,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-08-30T16:30:00+01:00",
+    "jours": 21,
+    "exam": "2026-09-20",
+    "publie": "2026-07-30T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://concours.interieur.gov.ma",
+    "diplomes": [
+      "Master ou équivalent"
+    ],
+    "age": 45,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-008.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-008",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "pro",
+      "prep_slug": "administration",
+      "has_prep": false,
+      "match_reason": "Concours administration — motif « administrateur »",
+      "confidence": 0.4
+    },
+    "revision": 1
+  },
+  {
+    "id": "2d1f42b5-e417-5abb-a5ff-8b197f75e061",
+    "slug": "directeur-de-l-agence-nationale-des-registres-2d1f42",
+    "type": "emploi_superieur",
+    "stage": "annonce",
+    "titre": "Directeur de l'Agence Nationale des Registres",
+    "resume": "Chef du Gouvernement ouvre 1 poste au grade de directeur d'administration centrale. Dépôt des candidatures jusqu'au 01/09/2026 à 16h30. Candidature en ligne.",
+    "org": "Chef du Gouvernement",
+    "org_type": "service_etat",
+    "ref": "ES-2026-019",
+    "grade": "Directeur d'administration centrale",
+    "echelle": "",
+    "specialites": [],
+    "postes": 1,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-09-01T16:30:00+01:00",
+    "jours": 23,
+    "exam": null,
+    "publie": "2026-08-04T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.emploi-public.ma",
+    "diplomes": [
+      "Diplôme supérieur + 10 ans d'expérience"
+    ],
+    "age": null,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-021.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-021",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "ea4d9ba5-0a1e-5883-8919-40d7ac8da1cb",
+    "slug": "concours-national-commun-d-acces-aux-ensa-2026-ea4d9b",
+    "type": "concours_ecole",
+    "stage": "annonce",
+    "titre": "Concours national commun d'accès aux ENSA 2026",
+    "resume": "Réseau des Écoles Nationales des Sciences Appliquées ouvre 5 200 postes dans 1 spécialité : Cycle préparatoire intégré. Dépôt des candidatures jusqu'au 02/09/2026 à 16h30. Épreuves le 22/09/2026. Candidature en ligne.",
+    "org": "Réseau des Écoles Nationales des Sciences Appliquées",
+    "org_type": "universite",
+    "ref": "ENSA-2026",
+    "grade": "",
+    "echelle": "",
+    "specialites": [
+      "Cycle préparatoire intégré"
+    ],
+    "postes": 5200,
+    "regions": [
+      "Tout le Royaume"
+    ],
+    "deadline": "2026-09-02T16:30:00+01:00",
+    "jours": 24,
+    "exam": "2026-09-22",
+    "publie": "2026-07-31T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.ensa.ac.ma",
+    "diplomes": [
+      "Baccalauréat sciences mathématiques ou physiques"
+    ],
+    "age": 21,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-025.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-025",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "postbac",
+      "prep_slug": "ingenieur",
+      "has_prep": false,
+      "match_reason": "Concours ingénieur (ENSA, ENSAM, EMI) — motif « \\bENSA\\b »",
+      "confidence": 0.47
+    },
+    "revision": 1
+  },
+  {
+    "id": "7105a4b4-5ab1-5c65-aecf-c8492fe80c37",
+    "slug": "technicien-exploitation-reseau-electrique-7105a4",
+    "type": "concours_etablissement",
+    "stage": "annonce",
+    "titre": "Technicien exploitation réseau électrique",
+    "resume": "Office National de l'Électricité et de l'Eau Potable (ONEE) ouvre 180 postes au grade de technicien dans 2 spécialités : Électrotechnique, Maintenance industrielle. Dépôt des candidatures jusqu'au 03/09/2026 à 16h30. Épreuves le 07/10/2026. Candidature en ligne.",
+    "org": "Office National de l'Électricité et de l'Eau Potable (ONEE)",
+    "org_type": "etablissement_public",
+    "ref": "ONEE-BE-2026-77",
+    "grade": "Technicien",
+    "echelle": "",
+    "specialites": [
+      "Électrotechnique",
+      "Maintenance industrielle"
+    ],
+    "postes": 180,
+    "regions": [
+      "Tout le Royaume"
+    ],
+    "deadline": "2026-09-03T16:30:00+01:00",
+    "jours": 25,
+    "exam": "2026-10-07",
+    "publie": "2026-08-02T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "http://www.one.org.ma",
+    "diplomes": [
+      "DUT",
+      "BTS"
+    ],
+    "age": 35,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-014.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-014",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "b76d1663-169c-5b60-88b2-9dc488a78bab",
+    "slug": "attache-de-justice-institut-superieur-de-la-magistrature-b76d16",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Attaché de justice — Institut Supérieur de la Magistrature",
+    "resume": "Ministère de la Justice ouvre 240 postes au grade d'attaché de justice (échelle 10) dans 2 spécialités : Droit privé, Droit public. Dépôt des candidatures jusqu'au 05/09/2026 à 16h30. Épreuves le 13/10/2026. Candidature en ligne.",
+    "org": "Ministère de la Justice",
+    "org_type": "service_etat",
+    "ref": "C33018/26",
+    "grade": "Attaché de justice",
+    "echelle": "10",
+    "specialites": [
+      "Droit privé",
+      "Droit public"
+    ],
+    "postes": 240,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-09-05T16:30:00+01:00",
+    "jours": 27,
+    "exam": "2026-10-13",
+    "publie": "2026-08-07T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.justice.gov.ma",
+    "diplomes": [
+      "Licence en droit"
+    ],
+    "age": 45,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-009.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-009",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "pro",
+      "prep_slug": "justice",
+      "has_prep": false,
+      "match_reason": "Concours justice — motif « attach[ée] de justice »",
+      "confidence": 0.89
+    },
+    "revision": 1
+  },
+  {
+    "id": "455360e8-f182-5b49-ba41-410dc8712a81",
+    "slug": "directeur-de-l-institut-national-des-greffes-455360",
+    "type": "poste_responsabilite",
+    "stage": "annonce",
+    "titre": "Directeur de l'Institut National des Greffes",
+    "resume": "Ministère de la Justice ouvre 1 poste au grade de directeur d'institut. Dépôt des candidatures jusqu'au 06/09/2026 à 16h30.",
+    "org": "Ministère de la Justice",
+    "org_type": "service_etat",
+    "ref": "PR3391/26",
+    "grade": "Directeur d'institut",
+    "echelle": "",
+    "specialites": [],
+    "postes": 1,
+    "regions": [
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-09-06T16:30:00+01:00",
+    "jours": 28,
+    "exam": null,
+    "publie": "2026-08-07T10:00:00+01:00",
+    "mode": "depot_physique",
+    "url": "https://www.justice.gov.ma",
+    "diplomes": [
+      "Doctorat ou diplôme équivalent"
+    ],
+    "age": null,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-018.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-018",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "7b9a1d00-0f70-5a53-b646-6e960d136107",
+    "slug": "president-de-l-universite-hassan-ii-de-casablanca-7b9a1d",
+    "type": "emploi_superieur",
+    "stage": "annonce",
+    "titre": "Président de l'Université Hassan II de Casablanca",
+    "resume": "Ministère de l'Enseignement supérieur, de la Recherche scientifique et de l'Innovation ouvre 1 poste au grade de président d'université. Dépôt des candidatures jusqu'au 08/09/2026 à 16h30.",
+    "org": "Ministère de l'Enseignement supérieur, de la Recherche scientifique et de l'Innovation",
+    "org_type": "universite",
+    "ref": "ES-2026-023",
+    "grade": "Président d'université",
+    "echelle": "",
+    "specialites": [],
+    "postes": 1,
+    "regions": [
+      "Casablanca-Settat"
+    ],
+    "deadline": "2026-09-08T16:30:00+01:00",
+    "jours": 30,
+    "exam": null,
+    "publie": "2026-08-03T10:00:00+01:00",
+    "mode": "depot_physique",
+    "url": "https://www.enssup.gov.ma",
+    "diplomes": [
+      "Professeur de l'enseignement supérieur"
+    ],
+    "age": null,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-022.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-022",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": null,
+      "prep_slug": null,
+      "has_prep": false,
+      "match_reason": "aucun motif de rattachement",
+      "confidence": 0.0
+    },
+    "revision": 1
+  },
+  {
+    "id": "2175fed8-27c1-5052-8084-72d0652455aa",
+    "slug": "concours-d-acces-a-l-iscae-cycle-normal-2175fe",
+    "type": "concours_ecole",
+    "stage": "annonce",
+    "titre": "Concours d'accès à l'ISCAE — Cycle normal",
+    "resume": "Institut Supérieur de Commerce et d'Administration des Entreprises ouvre 280 postes dans 2 spécialités : Gestion, Commerce. Dépôt des candidatures jusqu'au 10/09/2026 à 16h30. Épreuves le 05/10/2026. Candidature en ligne.",
+    "org": "Institut Supérieur de Commerce et d'Administration des Entreprises",
+    "org_type": "universite",
+    "ref": "ISCAE-2026",
+    "grade": "",
+    "echelle": "",
+    "specialites": [
+      "Gestion",
+      "Commerce"
+    ],
+    "postes": 280,
+    "regions": [
+      "Casablanca-Settat",
+      "Rabat-Salé-Kénitra"
+    ],
+    "deadline": "2026-09-10T16:30:00+01:00",
+    "jours": 32,
+    "exam": "2026-10-05",
+    "publie": "2026-07-30T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.groupeiscae.ma",
+    "diplomes": [
+      "Baccalauréat toutes séries"
+    ],
+    "age": 22,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-026.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-026",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "postbac",
+      "prep_slug": "commerce",
+      "has_prep": false,
+      "match_reason": "Concours commerce (ENCG, ISCAE) — motif « \\bISCAE\\b »",
+      "confidence": 0.67
+    },
+    "revision": 1
+  },
+  {
+    "id": "0cfb4a25-c7c2-50fb-8b27-c62006f8487a",
+    "slug": "professeur-de-l-enseignement-secondaire-qualifiant-francais-0cfb4a",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Professeur de l'enseignement secondaire qualifiant — Français",
+    "resume": "Ministère de l'Éducation nationale, du Préscolaire et des Sports — AREF Fès-Meknès ouvre 320 postes au grade de professeur de l'enseignement secondaire qualifiant (échelle 10) dans 1 spécialité : Français. Dépôt des candidatures jusqu'au 12/09/2026 à 16h30. Épreuves le 25/10/2026. Candidature en ligne.",
+    "org": "Ministère de l'Éducation nationale, du Préscolaire et des Sports — AREF Fès-Meknès",
+    "org_type": "service_etat",
+    "ref": "C99042/26",
+    "grade": "Professeur de l'enseignement secondaire qualifiant",
+    "echelle": "10",
+    "specialites": [
+      "Français"
+    ],
+    "postes": 320,
+    "regions": [
+      "Fès-Meknès"
+    ],
+    "deadline": "2026-09-12T16:30:00+01:00",
+    "jours": 34,
+    "exam": "2026-10-25",
+    "publie": "2026-08-06T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://tawdif.men.gov.ma",
+    "diplomes": [
+      "Licence en études françaises"
+    ],
+    "age": 30,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-001.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-001",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "education",
+      "prep_slug": "crmef/francais",
+      "has_prep": true,
+      "match_reason": "CRMEF — Français — motif « enseignement secondaire.{0,40}fran[çc]ais » + organisme concordant",
+      "confidence": 0.92
+    },
+    "revision": 1
+  },
+  {
+    "id": "4d1d28ea-925b-547d-94a0-2a3a8d3f1654",
+    "slug": "professeur-de-l-enseignement-secondaire-qualifiant-mathemati-4d1d28",
+    "type": "concours",
+    "stage": "annonce",
+    "titre": "Professeur de l'enseignement secondaire qualifiant — Mathématiques",
+    "resume": "Ministère de l'Éducation nationale, du Préscolaire et des Sports — AREF Casablanca-Settat ouvre 410 postes au grade de professeur de l'enseignement secondaire qualifiant (échelle 10) dans 1 spécialité : Mathématiques. Dépôt des candidatures jusqu'au 12/09/2026 à 16h30. Épreuves le 25/10/2026. Candidature en ligne.",
+    "org": "Ministère de l'Éducation nationale, du Préscolaire et des Sports — AREF Casablanca-Settat",
+    "org_type": "service_etat",
+    "ref": "C99043/26",
+    "grade": "Professeur de l'enseignement secondaire qualifiant",
+    "echelle": "10",
+    "specialites": [
+      "Mathématiques"
+    ],
+    "postes": 410,
+    "regions": [
+      "Casablanca-Settat"
+    ],
+    "deadline": "2026-09-12T16:30:00+01:00",
+    "jours": 34,
+    "exam": "2026-10-25",
+    "publie": "2026-08-05T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://tawdif.men.gov.ma",
+    "diplomes": [
+      "Licence en mathématiques"
+    ],
+    "age": 30,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-002.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-002",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "education",
+      "prep_slug": "crmef/mathematiques",
+      "has_prep": true,
+      "match_reason": "CRMEF — Mathématiques — motif « enseignement secondaire.{0,40}math » + organisme concordant",
+      "confidence": 0.92
+    },
+    "revision": 1
+  },
+  {
+    "id": "c1a8e7ea-e516-54fb-b923-7124cdafa18c",
+    "slug": "bourses-d-excellence-pour-etudes-superieures-a-l-etranger-20-c1a8e7",
+    "type": "bourse",
+    "stage": "annonce",
+    "titre": "Bourses d'excellence pour études supérieures à l'étranger 2026-2027",
+    "resume": "Ministère de l'Enseignement supérieur — Agence Marocaine de Coopération Internationale ouvre 150 postes dans 1 spécialité : Toutes filières. Dépôt des candidatures jusqu'au 18/09/2026 à 16h30. Candidature en ligne.",
+    "org": "Ministère de l'Enseignement supérieur — Agence Marocaine de Coopération Internationale",
+    "org_type": "service_etat",
+    "ref": "BE-2026-07",
+    "grade": "",
+    "echelle": "",
+    "specialites": [
+      "Toutes filières"
+    ],
+    "postes": 150,
+    "regions": [
+      "Tout le Royaume"
+    ],
+    "deadline": "2026-09-18T16:30:00+01:00",
+    "jours": 40,
+    "exam": null,
+    "publie": "2026-08-07T10:00:00+01:00",
+    "mode": "en_ligne",
+    "url": "https://www.enssup.gov.ma",
+    "diplomes": [
+      "Licence mention Très Bien"
+    ],
+    "age": 26,
+    "docs": [
+      {
+        "label": "Avis officiel d'ouverture",
+        "url": "https://www.emploi-public.ma/fr/concours/download/demo-027.pdf",
+        "mime": "application/pdf",
+        "mirrored": false
+      }
+    ],
+    "source": {
+      "nom": "Portail de l'emploi public (MMSP)",
+      "url": "https://www.emploi-public.ma/fr/concours/details/demo-027",
+      "fetched": "2026-08-08T10:00:00+01:00",
+      "officiel": true
+    },
+    "naja7i": {
+      "filiere": "postbac",
+      "prep_slug": "medecine",
+      "has_prep": false,
+      "match_reason": "Concours médecine / pharmacie — motif « internat »",
+      "confidence": 0.67
+    },
+    "revision": 1
+  }
+]

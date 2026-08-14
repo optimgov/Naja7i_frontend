@@ -83,7 +83,11 @@
     "aller_au_contenu": "Aller au contenu",
     "principale": "Navigation principale",
     "connexion": "Se connecter",
-    "mentions": "© {annee} Naja7i — préparation aux concours de la fonction publique marocaine."
+    "mentions": "© {annee} Naja7i — préparation aux concours de la fonction publique marocaine.",
+    "barre_accueil": "Accueil",
+    "barre_concours": "Concours",
+    "barre_opportunites": "Opportunités",
+    "barre_compte": "Compte"
   },
   "accueil": {
     "oeil": "Concours de la fonction publique marocaine",
@@ -402,5 +406,30 @@
     "vers_entrainement": "M’entraîner sur mes points faibles",
     "vers_correction": "Revoir les questions une à une",
     "duree_h": "{h} h"
+  },
+  "opportunites": {
+    "titre": "Opportunités",
+    "compteur_aria": "{n} opportunités ouvertes",
+    "bandeau_titre": "Échéances proches",
+    "bandeau_imminentes": "{n} clôtures dans les 7 jours",
+    "bandeau_postes": "{n} postes ouverts au Maroc",
+    "bandeau_voir": "Voir lesquelles",
+    "echeance_close": "Dépôt clos",
+    "echeance_aujourdhui": "Clôture aujourd’hui",
+    "echeance_demain": "Clôture demain",
+    "echeance_jours": "Clôture dans {n} jours",
+    "echeance_le": "le {date}",
+    "rattachement_prepare": "naja7i prépare ce concours",
+    "rattachement_attente": "Préparation pas encore disponible",
+    "n_postes": "{n} postes",
+    "echelle_n": "Échelle {n}",
+    "type_concours": "Concours",
+    "type_poste_responsabilite": "Poste de responsabilité",
+    "type_stage": "Stage",
+    "type_concours_etablissement": "Concours d’établissement",
+    "type_eap": "Emploi par contrat",
+    "type_concours_ecole": "Concours d’école",
+    "type_emploi_superieur": "Emploi supérieur",
+    "type_bourse": "Bourse"
   }
 }
