@@ -79,6 +79,43 @@ function lancer(commande, args, options = {}) {
   return r.status ?? 1
 }
 
+/**
+ * Une préparation par `php artisan tinker`, DONT ON LIT LA SORTIE.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LE CODE DE SORTIE NE VAUT RIEN ICI, ET ÇA S'EST PAYÉ
+ *
+ * `tinker` rend 0 même quand le script qu'on lui donne lève une exception. Une
+ * préparation cassée passait donc pour réussie : `remettre-quota.php` appelait
+ * une relation inexistante (`Response::attemptItem`), l'exception s'affichait
+ * au milieu du journal, et l'orchestrateur enchaînait.
+ *
+ * Ce qui en découlait est exactement le défaut que ce dépôt traque : le
+ * compteur ÉTAIT effacé — la ligne précède le point de rupture — mais les
+ * réponses déjà payées gardaient `cause_revealed = true`. FRONT-3 mesurait
+ * donc un mur à demi ouvert, et restait vert.
+ *
+ * On lit ce que le script a ÉCRIT. Les scripts de recette disent « ÉCHEC »
+ * quand ils échouent ; une exception, elle, se reconnaît à son nom.
+ */
+function preparer(fichier, envSupp = {}) {
+  const r = spawnSync('php', ['artisan', 'tinker', `${ICI}/${fichier}`], {
+    cwd: BACKEND,
+    encoding: 'utf8',
+    env: { ...env, ...envSupp },
+  })
+
+  const sortie = ((r.stdout ?? '') + (r.stderr ?? '')).trim()
+  if (sortie) console.log(sortie)
+
+  /* Un script muet n'a rien fait : tous annoncent ce qu'ils ont posé, et c'est
+   * la seule preuve qu'ils sont allés au bout. `Crashing` couvre l'abandon
+   * d'ObjC sur macOS, qui ne lève aucune exception PHP. */
+  const casse = sortie === '' || /Exception|Fatal|ÉCHEC|Crashing|\bError\b/i.test(sortie)
+
+  return (r.status ?? 1) === 0 && !casse ? 0 : 1
+}
+
 function lancerEnFond(commande, args, options = {}) {
   const p = spawn(commande, args, { stdio: 'ignore', detached: true, ...options })
   p.unref()
@@ -300,10 +337,7 @@ const RECETTES = [
     'FRONT-3 — les cas qui doivent échouer',
     'scripts/recette-front3.mjs',
     [A.email, A.motDePasse],
-    { avant: ['php', ['artisan', 'tinker', `${ICI}/remettre-quota.php`], {
-      cwd: BACKEND,
-      env: { ...env, COMPTE_EMAIL: A.email },
-    }] },
+    { avant: () => preparer('remettre-quota.php', { COMPTE_EMAIL: A.email }) },
   ],
   /*
    * FRONT-4 EXIGE UN CALENDRIER ÉCHU, et il faut le lui donner.
@@ -319,10 +353,10 @@ const RECETTES = [
     'FRONT-4 — la boucle quotidienne',
     'scripts/recette-front4.mjs',
     [A.email, A.motDePasse],
-    { avant: ['php', ['artisan', 'tinker', `${ICI}/echoir-revisions.php`], {
-      cwd: BACKEND,
-      env: { ...env, COMPTE_EMAIL: A.email, CODE_EPREUVE: 'CRMEF-FR-SPEC-2025' },
-    }] },
+    { avant: () => preparer('echoir-revisions.php', {
+      COMPTE_EMAIL: A.email,
+      CODE_EPREUVE: 'CRMEF-FR-SPEC-2025',
+    }) },
   ],
   /*
    * L'EXAMEN BLANC AVANT LA FILE D'ENVOI, et l'ordre n'est pas indifférent.
@@ -338,6 +372,16 @@ const RECETTES = [
     'scripts/recette-file-envoi.mjs',
     [A.email, A.motDePasse, B.email, B.motDePasse],
   ],
+  /*
+   * L'ABONNEMENT EN DERNIER, et l'ordre est une contrainte.
+   *
+   * Cette recette OUVRE un abonnement au compte A : à partir de là, son quota
+   * de causes est illimité. Toute recette jouée après verrait donc un mur
+   * payant ouvert et mesurerait autre chose que ce qu'elle croit. Elle a aussi
+   * besoin que le quota soit ÉPUISÉ pour éprouver la fermeture — ce que
+   * FRONT-3 vient de faire.
+   */
+  ['abonnement — le chemin de revenu', 'scripts/recette-abonnement.mjs', [A.email, A.motDePasse]],
 ]
 
 /*
@@ -390,7 +434,7 @@ for (const [i, [nom, script, args, options = {}]] of RECETTES.entries()) {
 
   /* Une préparation qui échoue arrête tout : jouer la recette sur un état
    * qu'on n'a pas su poser rendrait son verdict ininterprétable. */
-  if (options.avant && lancer(...options.avant) !== 0) {
+  if (options.avant && options.avant() !== 0) {
     echouer(`la préparation de « ${nom} » a échoué`)
   }
 
