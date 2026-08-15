@@ -104,23 +104,22 @@ async function lire(): Promise<AnnonceCollecteur[]> {
   return cache
 }
 
-/**
- * Jours restants jusqu'à l'échéance, à la DATE DU JOUR.
+/*
+ * `joursRestants` VIT DANS `server/utils/echeance.ts` — audit t4, BLOC-ZP1-1.
  *
- * On compte en jours de calendrier dans le fuseau du candidat, pas en tranches
- * de 24 heures : « clôture demain » doit vouloir dire demain, pas dans 24 h.
- * Une échéance à 16h30 aujourd'hui reste « aujourd'hui » à 9 h du matin.
+ * Il était ici, et il comptait en dates civiles UTC : à 16h31 à Casablanca une
+ * annonce close à 16h30 restait ouverte jusqu'à 01h00, et à 00h30 « demain »
+ * s'affichait « dans 2 jours ». Le commentaire prétendait pourtant compter
+ * « dans le fuseau du candidat » — aucun fuseau n'était déclaré nulle part.
+ *
+ * Déplacé pour une raison de fond : un décompte ne se prouve qu'aux FRONTIÈRES
+ * de journée, donc avec une horloge injectable. Tant que la fonction vivait
+ * dans un gestionnaire de route, elle n'était atteignable qu'à l'heure qu'il
+ * est — et vingt-trois heures sur vingt-quatre, tout allait bien.
+ *
+ * Nitro l'auto-importe depuis `server/utils/`. `scripts/verifier-echeances.mjs`
+ * l'éprouve aux deux minutes qui comptent, et sous deux fuseaux d'hôte.
  */
-function joursRestants(deadline: string | null): number | null {
-  if (!deadline) return null
-
-  const echeance = new Date(deadline)
-  if (Number.isNaN(echeance.getTime())) return null
-
-  const jour = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
-
-  return Math.round((jour(echeance) - jour(new Date())) / 86_400_000)
-}
 
 export default defineEventHandler(async (event) => {
   const annonces = (await lire()).map(a => ({ ...a, jours: joursRestants(a.deadline) }))
@@ -138,6 +137,11 @@ export default defineEventHandler(async (event) => {
        * disparaît de l'écran — elle ne se replie pas sur une valeur en dur.
        * C'est la règle « aucun repli en dur sur un marqueur contractuel ». */
       fixture: true,
+      /* LE FUSEAU EST DIT, parce que `jours` n'a de sens que rapporté à une
+       * horloge. Un client — ou une recette — qui recalculerait sans le savoir
+       * poserait une seconde vérité, et c'est exactement ce qui a laissé passer
+       * le BLOC-ZP1-1 : les deux côtés se trompaient ensemble. */
+      timezone_candidat: TIMEZONE_CANDIDAT,
       collecte: '2026-08-08T10:00:00+01:00',
       source: 'Portail de l’emploi public (MMSP) — capture du 8 août 2026',
       total: annonces.length,

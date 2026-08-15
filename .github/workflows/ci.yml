@@ -44,6 +44,13 @@ jobs:
 
       # Une clé traduite d'un seul côté affiche sa clé brute au lecteur de
       # l'autre langue, et la compilation ne le voit pas.
+      # Les frontières de journée ne se prouvent qu'avec une horloge injectable :
+      # à l'heure qu'il est, le défaut du BLOC-ZP1-1 était invisible
+      # vingt-trois heures sur vingt-quatre. Ce contrôle rejoue les deux minutes
+      # qui comptent, et sous deux fuseaux d'hôte opposés.
+      - name: Vérifier les échéances (fuseau du candidat)
+        run: npm run echeances
+
       - name: Vérifier les locales et les propriétés logiques
         run: node scripts/verifier-locales.mjs
 

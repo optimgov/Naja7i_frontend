@@ -25,6 +25,8 @@ import { writeFileSync } from 'node:fs'
 
 import { chromium } from 'playwright'
 
+import { joursRestants } from '../server/utils/echeance.ts'
+
 const BASE = process.argv[2] || process.env.BASE_URL || 'http://localhost:3000'
 const SORTIE = process.env.SORTIE || '/tmp/recette-zone-publique'
 
@@ -182,9 +184,48 @@ const page = await contexte.newPage()
 // ══════════════════════════════ 4. La pastille est vivante (A1) ═══
 {
   const donnees = await fetch(`${BASE}/_donnees/opportunites`).then(r => r.json())
+
+  /*
+   * ON RECALCULE DEPUIS `deadline`, PAS DEPUIS `jours` — audit t4, BLOC-ZP1-1.
+   *
+   * Ce contrôle lisait `a.jours`, c'est-à-dire le champ que le serveur venait
+   * de calculer. Les deux côtés de la comparaison sortaient donc de la même
+   * source : quand ce calcul s'est révélé faux — dates civiles UTC, une annonce
+   * close à 16h30 encore ouverte à 16h31 — la recette est restée VERTE. Elle ne
+   * mesurait pas l'ouverture des annonces, elle mesurait l'égalité d'un champ
+   * avec lui-même.
+   *
+   * `joursRestants` est la fonction du produit, éprouvée aux frontières de
+   * journée par `scripts/verifier-echeances.mjs` avec une horloge injectable.
+   * L'utiliser ici n'est pas une seconde vérité : c'est la même, appliquée à
+   * `deadline` — la donnée qui ne périme pas — au lieu de son résultat servi.
+   */
+  const fuseau = donnees.meta.timezone_candidat
   const ouvertes = donnees.data.filter(
-    a => a.stage === 'annonce' && a.jours !== null && a.jours >= 0,
+    a => a.stage === 'annonce' && (joursRestants(a.deadline, new Date(), fuseau) ?? -1) >= 0,
   ).length
+
+  note(
+    'le serveur DIT quelle horloge il a employée',
+    typeof fuseau === 'string' && fuseau.length > 0,
+    `meta.timezone_candidat = ${fuseau ?? 'absent'}`,
+  )
+
+  /* Et le champ servi doit coïncider avec le recalcul, annonce par annonce :
+   * sans ce contrôle, la route pourrait cesser d'appliquer la fonction sans que
+   * rien ne le dise. */
+  const divergentes = donnees.data.filter(
+    a => a.jours !== joursRestants(a.deadline, new Date(), fuseau),
+  )
+
+  note(
+    'le champ `jours` servi est bien le recalcul, annonce par annonce',
+    divergentes.length === 0,
+    divergentes.length === 0
+      ? `${donnees.data.length} annonce(s) vérifiée(s)`
+      : `${divergentes.length} divergence(s), dont « ${divergentes[0].slug} » : `
+        + `servi ${divergentes[0].jours}, recalculé ${joursRestants(divergentes[0].deadline, new Date(), fuseau)}`,
+  )
 
   await page.goto(`${BASE}/fr`, { waitUntil: 'networkidle' })
   const pastille = Number((await page.locator('.nav__compteur').first().innerText()).trim())
@@ -192,7 +233,8 @@ const page = await contexte.newPage()
   note(
     'A1 — la pastille compte les annonces réellement ouvertes aujourd’hui',
     pastille === ouvertes,
-    `pastille ${pastille} · ouvertes recalculées ${ouvertes} (le champ figé du 8 août en annonçait 26)`,
+    `pastille ${pastille} · ouvertes recalculées depuis deadline ${ouvertes} `
+    + `(le champ figé du 8 août en annonçait 26)`,
   )
 
   const marqueur = await page.locator('.fil-actu__fixture').count()

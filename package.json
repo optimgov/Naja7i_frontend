@@ -10,6 +10,7 @@
     "jetons": "node docs/design/ui-v3/valider-jetons.mjs && node docs/design/ui-v3/valider-jetons.mjs jetons.commun.config.json",
     "icones": "node scripts/generer-icones.mjs",
     "locales": "node scripts/verifier-locales.mjs",
+    "echeances": "node scripts/verifier-echeances.mjs",
     "audit": "node scripts/auditer-ecrans.mjs --sombre \"[data-bascule-theme]\"",
     "audit:ci": "node scripts/auditer-ecrans.mjs --ci --sombre \"[data-bascule-theme]\"",
     "recette": "node scripts/recette/orchestrer.mjs",
