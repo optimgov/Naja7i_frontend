@@ -6,6 +6,7 @@ definePageMeta({ layout: 'auth', middleware: 'guest' })
 const { t } = useI18n()
 const { login } = useAuth()
 const localePath = useLocalePath()
+const route = useRoute()
 
 const form = reactive({ email: '', password: '', remember: false })
 const erreur = ref<{ message: string; requestId: string } | null>(null)
@@ -17,7 +18,28 @@ async function soumettre() {
 
   try {
     await login(form.email, form.password, form.remember)
-    await navigateTo(localePath('/app'))
+
+    /*
+     * ON REVIENT OÙ L'ON ALLAIT — `?suite=`.
+     *
+     * Un visiteur qui choisit une offre depuis `/tarifs` sans compte passe par
+     * ici. Le renvoyer sur `/app` lui demanderait de retrouver son offre seul,
+     * et c'est le moment exact où l'on perd un achat.
+     *
+     * SEULS LES CHEMINS INTERNES SONT SUIVIS. `//evil.example` et
+     * `https://evil.example` sont des URL absolues qu'un navigateur suivrait
+     * hors du site : accepter la valeur telle quelle ferait de cette page une
+     * redirection ouverte, offerte à qui envoie un lien de connexion piégé.
+     *
+     * La contre-barre est refusée avec le reste : les navigateurs la
+     * normalisent en barre oblique au moment de résoudre l'URL, si bien que
+     * `/\evil.example` se relit `//evil.example`. Le contrôle porterait alors
+     * sur une chaîne que personne ne suit.
+     */
+    const suite = String(route.query.suite ?? '')
+    const interne = /^\/(?![/\\])/.test(suite)
+
+    await navigateTo(interne ? suite : localePath('/app'))
   } catch (e) {
     if (e instanceof ApiRequestError) {
       erreur.value = { message: e.error.message, requestId: e.error.request_id }

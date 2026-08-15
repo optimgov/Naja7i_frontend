@@ -510,7 +510,8 @@
     "toutes_annonces": "Toutes les annonces",
     "echeances_proches": "Échéances proches",
     "mention_agregation": "naja7i.ma agrège des avis administratifs publics. Seul l’avis officiel publié par l’administration fait foi.",
-    "robot": "Le robot de collecte"
+    "robot": "Le robot de collecte",
+    "tarifs": "Tarifs"
   },
   "robot": {
     "oeil": "Transparence",
@@ -535,5 +536,49 @@
     "usage_titre": "Ce qui est fait des données",
     "usage_texte": "Les avis collectés sont republiés sous forme de fiches courtes, rédigées à partir des champs de l’avis — jamais en reproduisant son texte. Chaque fiche cite sa source et renvoie vers l’avis d’origine.",
     "usage_officiel": "Seul l’avis officiel publié par l’administration fait foi. naja7i.ma n’est pas un organe officiel et ne recrute pas."
+  },
+  "tarifs": {
+    "oeil": "Tarifs",
+    "titre": "Comprendre ses erreurs, sans limite",
+    "chapeau": "La correction expliquée et le diagnostic restent gratuits. L’abonnement ouvre ce qui demande du travail éditorial : la cause de chaque erreur, l’entraînement ciblé et les examens blancs.",
+    "seo_titre": "Tarifs — préparation aux concours de la fonction publique",
+    "seo_description": "Les offres de naja7i.ma : causes d’erreur sans limite, entraînement ciblé et examens blancs. Paiement par code cadeau.",
+    "illisible": "Les offres n’ont pas pu être chargées. Réessayez dans un instant.",
+    "sans_terme": "sans limite de durée",
+    "n_jours": "pour {n} jour | pour {n} jours",
+    "choisir": "Choisir cette offre",
+    "gain_cause": "Les causes de vos erreurs, sans limite",
+    "gain_entrainement": "L’entraînement ciblé sur vos points faibles",
+    "gain_simulateur": "Les examens blancs, chronométrés et notés",
+    "gain_attestation": "L’attestation de niveau",
+    "moyen_titre": "Comment payer",
+    "moyen_texte": "Le paiement en ligne par carte n’est pas encore ouvert. En attendant, l’abonnement s’active par un code cadeau : contactez-nous, réglez par virement, et vous recevez un code à saisir dans votre espace.",
+    "moyen_note": "Un code saisi est validé par notre équipe sous 48 heures ouvrées. Votre abonnement démarre à la validation, jamais avant : vous ne payez pas notre délai."
+  },
+  "abonnement": {
+    "oeil": "Mon compte",
+    "titre": "Mon abonnement",
+    "actif": "Abonnement actif",
+    "gratuit": "Compte gratuit",
+    "gratuit_texte": "La correction expliquée et le diagnostic sont ouverts. Les causes d’erreur, elles, sont comptées.",
+    "sans_terme": "Sans limite de durée.",
+    "jusqu_au": "Jusqu’au {date}.",
+    "attente_titre": "Votre code est en cours de validation",
+    "attente_texte": "Notre équipe le vérifie sous 48 heures ouvrées. Votre abonnement démarrera à ce moment-là, pour la durée entière.",
+    "code_titre": "J’ai un code cadeau",
+    "code_texte": "Saisissez le code reçu. Il est vérifié par notre équipe avant d’ouvrir votre abonnement.",
+    "code_libelle": "Code cadeau",
+    "code_valider": "Envoyer le code",
+    "code_envoi": "Envoi…",
+    "code_recu": "Code reçu. Il est en cours de validation par notre équipe.",
+    "simulation_titre": "Paiement simulé — développement",
+    "simulation_texte": "Ce bloc n’existe pas en production : il sert à la recette et à la démonstration. Aucun paiement réel n’est effectué.",
+    "simulation_payer": "Payer « {plan} » (simulation)",
+    "historique_titre": "Mes commandes",
+    "statut_en_attente": "en attente de validation",
+    "statut_honoree": "honorée",
+    "statut_annulee": "non aboutie",
+    "statut_expiree": "expirée",
+    "voir_offres": "Voir toutes les offres"
   }
 }

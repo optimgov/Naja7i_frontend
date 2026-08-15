@@ -1,4 +1,3 @@
-import type { Certitude } from './useTentative'
 
 /**
  * Index des tentatives du candidat — `GET me/attempts`.
@@ -74,7 +73,18 @@ export function useParcours() {
   return { parcours, enCours, dernierePassee, estEntrainement }
 }
 
-export type { Certitude }
+/*
+ * `Certitude` N'EST PAS RÉEXPORTÉ D'ICI — audit tournée 4, non bloquant.
+ *
+ * Ce fichier le tenait de `useTentative` et le réexportait, ce qui donnait DEUX
+ * propriétaires au même nom pour l'auto-import de Nuxt : chaque compilation
+ * avertissait, et le vainqueur dépendait de l'ordre de résolution. Un type dont
+ * l'origine se décide à la compilation est un type qu'on ne sait pas suivre.
+ *
+ * Un seul propriétaire : `useTentative`, où il est défini. Les appelants le
+ * prennent là, ou le laissent venir par l'auto-import — qui n'a plus de choix
+ * à faire.
+ */
 
 /**
  * LES GENRES DE TENTATIVE, ÉNUMÉRÉS — audit tournée 3, BLOC-5.

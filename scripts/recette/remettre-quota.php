@@ -32,8 +32,10 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+use App\Models\AccessGrantRecord;
 use App\Models\CauseAcquisition;
 use App\Models\CauseRevealCounter;
+use App\Models\Order;
 use App\Models\Response;
 use App\Models\Tenant;
 use App\Models\User;
@@ -51,7 +53,7 @@ if ($user === null) {
 }
 
 $compteur = CauseRevealCounter::where('user_id', $user->id)->first();
-$avant = $compteur?->revealed ?? 0;
+$avant = $compteur?->revealed_total ?? 0;
 
 CauseRevealCounter::where('user_id', $user->id)->delete();
 $acquisitions = CauseAcquisition::where('user_id', $user->id)->delete();
@@ -59,10 +61,36 @@ $acquisitions = CauseAcquisition::where('user_id', $user->id)->delete();
 /* `cause_revealed` marque les réponses dont la cause a déjà été payée : la
  * laisser vraie rendrait la cause visible sans consommer d'unité, et le test
  * du mur ne mesurerait plus rien. */
+/* La relation s'appelle `item`, pas `attemptItem` — et l'écrire à tort est
+ * resté invisible plusieurs tournées : `php artisan tinker <fichier>` rend 0
+ * même quand le script lève. Les deux effacements ci-dessus avaient lieu, pas
+ * celui-ci, et le mur payant de FRONT-3 restait à demi ouvert sans que rien ne
+ * rougisse. L'orchestrateur lit désormais la SORTIE de ces scripts. */
 $reponses = Response::whereHas(
-    'attemptItem.attempt',
+    'item.attempt',
     fn ($q) => $q->where('user_id', $user->id)
 )->where('cause_revealed', true)->update(['cause_revealed' => false]);
 
+/*
+ * UN COMPTE ABONNÉ N'A PAS DE QUOTA — et c'est ce qui a cassé la deuxième
+ * exécution sur un poste.
+ *
+ * La recette de l'abonnement, jouée en dernier, laisse derrière elle un OCTROI
+ * bien réel : c'est tout son objet. La tournée suivante retrouvait donc le
+ * compte A abonné, et FRONT-3 mesurait « 3 causes affichées, 0 ligne fermée »
+ * — un mur qui n'existait plus. En intégration continue la base est neuve et
+ * rien ne se voyait ; sur un poste, la deuxième tournée rougissait.
+ *
+ * Remettre le compte à neuf, c'est donc aussi lui retirer ce qu'il a acheté.
+ * SEUL L'ACHAT EST DÉFAIT : un octroi d'une autre origine — une campagne, un
+ * partenariat — n'appartient pas à ce script.
+ */
+$octrois = AccessGrantRecord::where('user_id', $user->id)
+    ->where('origin', 'purchase')
+    ->delete();
+
+$commandes = Order::where('user_id', $user->id)->delete();
+
 echo "  quota F03 remis à neuf pour {$email} : {$avant} unité(s) rendue(s), "
     ."{$acquisitions} acquisition(s) et {$reponses} révélation(s) effacées\n";
+echo "  abonnement défait : {$octrois} octroi(s) d'achat et {$commandes} commande(s) supprimé(s)\n";
