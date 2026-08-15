@@ -158,6 +158,16 @@ useHead({ title: t('correction.titre') })
       <p class="mur__texte">
         {{ t('correction.cause_fermee_texte', { revealed: quota.revealed, quota: quota.quota }) }}
       </p>
+
+      <!-- L'INVITATION EST UN LIEN, PAS UN BOUTON GRISÉ.
+           `cause_fermee_action` existait depuis le FRONT-3 et n'avait aucune
+           destination : le mur disait ce qu'il fermait sans dire comment
+           l'ouvrir. Il mène maintenant aux offres.
+           La règle du dépôt tient : soit l'action est proposée, soit elle
+           n'existe pas dans le rendu. Rien n'est désactivé. -->
+      <NuxtLink class="lien-second" :to="localePath('/tarifs')">
+        {{ t('correction.cause_fermee_action') }}
+      </NuxtLink>
     </div>
 
     <ol class="lignes">

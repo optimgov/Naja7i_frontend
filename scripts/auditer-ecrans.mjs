@@ -60,6 +60,11 @@ const ECRANS = [
   ['opportunités', '/opportunites'],
   ['opportunités · par filière', '/opportunites?vue=filiere'],
   ['fiche d’annonce', '/opportunites/administrateur-3eme-grade-session-juin-2026-b9b519'],
+
+  /* Les offres (lot ABO). Publique et indexable, mais ses prix viennent de
+   * Laravel : hors CI, comme les écrans de catalogue. `/app/abonnement`, lui,
+   * demande une session — il est audité par `scripts/recette-abonnement.mjs`. */
+  ['tarifs', '/tarifs'],
 ]
 
 /**
@@ -72,6 +77,9 @@ const ECRANS = [
 const ECRANS_SOUS_SESSION = [
   'E1 tableau de bord', 'E2 diagnostic', 'E3 passation',
   'E4 correction', 'E5 maîtrise', 'E6 ordonnance',
+  /* Lot ABO — audité par `scripts/recette-abonnement.mjs`, avec ses offres et
+   * son état d'abonnement réels. */
+  'mon abonnement',
 ]
 
 /**

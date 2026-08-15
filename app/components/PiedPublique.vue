@@ -67,6 +67,7 @@ const annee = new Date().getFullYear()
           <p class="pied__titre">{{ t('pied.plateforme') }}</p>
           <ul class="pied__liste">
             <li><NuxtLink :to="localePath('/concours')">{{ t('catalogue.concours') }}</NuxtLink></li>
+            <li><NuxtLink :to="localePath('/tarifs')">{{ t('pied.tarifs') }}</NuxtLink></li>
             <li><NuxtLink :to="localePath('/connexion')">{{ t('navigation.connexion') }}</NuxtLink></li>
             <li><NuxtLink :to="localePath('/inscription')">{{ t('inscription.titre') }}</NuxtLink></li>
             <!-- La page du robot est liée depuis le pied : c'est de là qu'un
