@@ -37,19 +37,25 @@ const nature = computed(() => libelle('type', props.annonce.type))
  * Les faits saillants, dans l'ordre de ce qu'un candidat cherche d'abord.
  * Un fait absent DISPARAÎT — il ne vaut pas zéro, et « 0 poste » serait faux.
  */
-const faits = computed(() => {
+/*
+ * LE NOMBRE DE POSTES EST EN GRAISSE, PAR UN CRÉNEAU — pas par du HTML en
+ * message.
+ *
+ * La source écrit `<b>${nb(a.postes)}</b> poste(s)`, et c'est le bon effet : le
+ * nombre est ce qu'on cherche des yeux sur une carte d'annonce. Mais la règle
+ * du dépôt interdit le HTML dans les messages i18n — le compilateur le refuse,
+ * et c'est une surface d'injection. « L'emphase passe par des créneaux de
+ * composant. »
+ *
+ * `<i18n-t>` est exactement ce créneau : le message reste du TEXTE, avec son
+ * `{n}` et son pluriel, et le gabarit décide de la graisse. La règle tient, la
+ * graisse revient.
+ *
+ * Ce fait est donc rendu à part des autres, qui n'ont pas d'emphase.
+ */
+const autresFaits = computed(() => {
   const out: { cle: string, valeur: string }[] = []
 
-  if (props.annonce.postes !== null) {
-    /* PLURALISATION RÉELLE : « 1 poste », pas « 1 postes ». La source le fait,
-     * et un pluriel faux sur la première carte d'un accueil se remarque.
-     * `nombre()` pose la fine insécable de milliers — sans elle, « 4 200 » se
-     * lit « 200 4 » en arabe. */
-    out.push({
-      cle: 'postes',
-      valeur: t('opportunites.n_postes', props.annonce.postes, { named: { n: nombre(props.annonce.postes) } }),
-    })
-  }
   if (props.annonce.regions.length) {
     out.push({ cle: 'regions', valeur: props.annonce.regions.join(' · ') })
   }
@@ -59,6 +65,8 @@ const faits = computed(() => {
 
   return out
 })
+
+const aDesFaits = computed(() => props.annonce.postes !== null || autresFaits.value.length > 0)
 </script>
 
 <template>
@@ -84,8 +92,20 @@ const faits = computed(() => {
     <!-- `<p>` + `<span>` comme la source, PAS une liste : un `<ul>` apporte ses
          puces et son retrait, que la maquette n'a jamais eus. Vu à la capture,
          pas au typage. -->
-    <p v-if="faits.length" class="annonce__faits">
-      <span v-for="fait in faits" :key="fait.cle" dir="auto">{{ fait.valeur }}</span>
+    <p v-if="aDesFaits" class="annonce__faits">
+      <!-- `<i18n-t>` : le message reste du texte, le gabarit pose la graisse.
+           `:plural` conserve « 1 poste » contre « 40 postes ». -->
+      <i18n-t
+        v-if="annonce.postes !== null"
+        keypath="opportunites.n_postes"
+        tag="span"
+        :plural="annonce.postes"
+        scope="global"
+      >
+        <template #n><b>{{ nombre(annonce.postes) }}</b></template>
+      </i18n-t>
+
+      <span v-for="fait in autresFaits" :key="fait.cle" dir="auto">{{ fait.valeur }}</span>
     </p>
 
     <BlocEcheance :annonce="annonce" />

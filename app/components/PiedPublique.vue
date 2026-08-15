@@ -69,6 +69,10 @@ const annee = new Date().getFullYear()
             <li><NuxtLink :to="localePath('/concours')">{{ t('catalogue.concours') }}</NuxtLink></li>
             <li><NuxtLink :to="localePath('/connexion')">{{ t('navigation.connexion') }}</NuxtLink></li>
             <li><NuxtLink :to="localePath('/inscription')">{{ t('inscription.titre') }}</NuxtLink></li>
+            <!-- La page du robot est liée depuis le pied : c'est de là qu'un
+                 administrateur système la trouvera s'il ne cherche pas notre
+                 User-Agent. Prérequis D-O7 du collecteur. -->
+            <li><NuxtLink :to="localePath('/robot')">{{ t('pied.robot') }}</NuxtLink></li>
           </ul>
         </div>
       </div>

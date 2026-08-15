@@ -1267,3 +1267,92 @@ tient : il peut être vert POUR LA MAUVAISE RAISON. Ici, deux défauts se
 masquaient l'un l'autre — la dépendance à l'état accumulé (D-F49, jamais vue sur
 ce quota) et la fuite du BLOC-1. Il a fallu corriger le second pour voir le
 premier.
+
+## D-F67 — A2 requalifié : le chiffre était le mauvais énoncé de la bonne règle
+
+**Ceci remplace le D-F60**, qui portait la question sans la trancher.
+
+**Le constat qui force la requalification.** A2 exigeait « moins de 22 % de la
+surface. Pas plus » ET « une section « Le fil » en bas (6 cartes) ». Mesuré aux
+deux largeurs, **la maquette de référence viole elle-même le chiffre** :
+
+| | référence (maquette) | notre accueil |
+|---|---|---|
+| 1440 px | 996 / 3063 = **32,5 %** | 885 / 1948 = **40,4 %** |
+| 390 px | 2439 / 6244 = **39,1 %** | 2145 / 4011 = **48,9 %** |
+
+Une règle que la source qui l'illustre ne tient pas n'est pas une règle : c'est
+une mesure prise sur une maquette antérieure, promue en seuil. Notre numérateur
+était d'ailleurs PLUS PETIT que celui de la référence (885 contre 996) — le
+bloc d'annonces était fidèle, et même plus serré. L'écart venait du
+dénominateur : notre accueil est plus court, parce qu'il porte moins de contenu
+hors annonces.
+
+Deux implémentations conformes à l'intention peuvent donc afficher des
+pourcentages très différents. Le chiffre ne mesurait pas ce qu'A2 voulait
+protéger.
+
+**A2 (requalifié).** Les annonces sur l'accueil occupent EXACTEMENT deux
+surfaces : le bandeau d'échéance d'une ligne sous l'en-tête, et la section
+« Le fil » en dernière position avant le pied. Le héros, la preuve, les portes
+et la méthode restent intacts et au-dessus. Le contrôle chiffré devient un
+garde de DÉRIVE (60 %), pas une cible.
+
+**Pourquoi cette formulation tient là où le chiffre échouait.** Elle énonce ce
+qu'A2 protégeait réellement — *les annonces ne prennent pas l'accueil* — en
+termes de PLACE et d'ORDRE, qui ne dépendent ni de la longueur de la page ni de
+la richesse des autres sections. Elle est vérifiable par lecture du gabarit,
+elle survit à l'ajout d'une section, et elle ne se met pas à mentir le jour où
+le pied s'étoffe.
+
+**L'implémentation actuelle la satisfait sans changement de code** : le bandeau
+est bien au-dessus du héros, le fil bien en dernière position avant le pied, et
+les quatre blocs de l'ADN sont intacts. L'écart se ferme par requalification
+motivée, pas par un déplacement de pixels destiné à faire tomber un nombre.
+
+**Le garde de dérive reste, et il garde son utilité** : il attrape une
+régression qui doublerait la place des annonces, sans transformer une mesure
+d'aujourd'hui en loi. `recette-zone-publique.mjs` le rapporte avec ses trois
+nombres — visé, atteint, référence — plutôt que de rougir sur un seuil que la
+source ne tient pas. Une recette toujours rouge ne se lit plus.
+
+## D-F68 — `/robot` : la page que le User-Agent promet
+
+**Prérequis de production du collecteur (D-O7).** Le robot s'annonce
+`Naja7iBot/1.0 (+https://naja7i.ma/robot)`. Le `robots.txt` du portail ne nous
+autorise pas nommément — il autorise tout robot à lire les fiches — et la
+contrepartie de cette autorisation implicite est d'être JOIGNABLE. Un
+User-Agent qui pointe vers une 404 vaut à peine mieux qu'un User-Agent anonyme,
+et se fait bannir aussi vite.
+
+**Tout ce qui y est écrit est vérifiable dans le code du collecteur** : le
+délai de deux secondes par hôte, `Retry-After` respecté, le recul exponentiel
+et les requêtes conditionnelles viennent de `naja7i_opp/reseau.py` ; la cadence
+de deux heures et la double lecture FR/AR de D-O8. Annoncer une politesse qu'on
+ne tient pas serait pire que de ne rien annoncer — un administrateur qui mesure
+l'écart ne nous écrit pas, il nous bloque.
+
+**Une adresse, pas un formulaire.** `robot@naja7i.ma`. Celui qui écrit veut que
+ça cesse, pas remplir un champ — mettre une friction là est un contresens.
+L'adresse n'est pas traduite : une adresse qui diverge entre deux langues est
+une adresse morte dans l'une des deux.
+
+**Indexable, et c'est le but** : c'est par une recherche sur notre User-Agent
+qu'un administrateur arrivera ici. Aucun `noindex`. Liée depuis le pied, pour
+qui ne cherche pas le User-Agent.
+
+**Le User-Agent est rendu en `dir="ltr"`** : sur une page arabe, l'algorithme
+bidirectionnel déplacerait ses parenthèses et son `+`. Il doit se lire tel
+qu'il part sur le réseau, sans quoi il n'est pas cherchable.
+
+## D-F69 — Le `<b>` des faits revient, par un créneau de composant
+
+La source écrit `<b>${nb(a.postes)}</b> poste(s)`, et l'effet est juste : le
+nombre est ce qu'on cherche des yeux sur une carte. Mais la règle du dépôt
+interdit le HTML dans les messages i18n — le compilateur le refuse, et c'est
+une surface d'injection.
+
+`<i18n-t>` est exactement le créneau que la règle prévoit : le message reste du
+TEXTE, avec son `{n}` et son pluriel, et le gabarit décide de la graisse. La
+règle tient, la graisse revient. Vérifié à la sortie serveur :
+`<b>1</b> poste`, `<b>95</b> postes` — pluriel conservé, aucun HTML en message.

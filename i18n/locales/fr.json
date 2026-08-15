@@ -509,6 +509,31 @@
     "plateforme": "La plateforme",
     "toutes_annonces": "Toutes les annonces",
     "echeances_proches": "Échéances proches",
-    "mention_agregation": "naja7i.ma agrège des avis administratifs publics. Seul l’avis officiel publié par l’administration fait foi."
+    "mention_agregation": "naja7i.ma agrège des avis administratifs publics. Seul l’avis officiel publié par l’administration fait foi.",
+    "robot": "Le robot de collecte"
+  },
+  "robot": {
+    "oeil": "Transparence",
+    "titre": "Le robot de naja7i.ma",
+    "chapeau": "naja7i.ma lit automatiquement les avis de concours publiés sur les portails officiels, pour les rassembler et les rattacher à une préparation. Cette page dit qui collecte, à quelle cadence, et comment demander l’arrêt.",
+    "seo_titre": "Le robot de naja7i.ma — qui collecte, à quelle cadence",
+    "seo_description": "Identification, cadence et contact du robot de collecte de naja7i.ma. Demande d’arrêt par simple e-mail.",
+    "qui_titre": "Qui collecte",
+    "qui_texte": "La collecte est faite par naja7i.ma, plateforme de préparation aux concours de la fonction publique marocaine. Elle porte sur des avis PUBLICS, déjà publiés par les administrations sur leurs portails.",
+    "fait_agent": "User-Agent",
+    "fait_source": "Sources lues",
+    "fait_source_valeur": "Portail de l’emploi public (emploi-public.ma) et portails d’établissements publics.",
+    "cadence_titre": "À quelle cadence",
+    "cadence_passage": "Un passage toutes les deux heures, au plus.",
+    "cadence_delai": "Deux secondes au minimum entre deux requêtes vers un même serveur.",
+    "cadence_retry": "L’en-tête Retry-After est respecté à la lettre, et un recul exponentiel s’applique sur les réponses 429 et 5xx.",
+    "cadence_conditionnel": "Les requêtes sont conditionnelles (ETag, If-Modified-Since) dès qu’un validateur est servi : une fiche inchangée ne se retélécharge pas.",
+    "cadence_note": "Chaque fiche est lue en français et en arabe, les deux versions faisant autorité côté administration. Aucune traduction automatique n’est produite.",
+    "arret_titre": "Demander l’arrêt",
+    "arret_texte": "Si vous administrez un serveur que ce robot visite et souhaitez qu’il cesse — en totalité ou sur certains chemins —, écrivez à cette adresse. Aucun formulaire, aucune justification à fournir.",
+    "arret_delai": "La demande est appliquée sous 48 heures ouvrées, et confirmée par retour d’e-mail. Une règle ajoutée à votre robots.txt est également respectée dès le passage suivant.",
+    "usage_titre": "Ce qui est fait des données",
+    "usage_texte": "Les avis collectés sont republiés sous forme de fiches courtes, rédigées à partir des champs de l’avis — jamais en reproduisant son texte. Chaque fiche cite sa source et renvoie vers l’avis d’origine.",
+    "usage_officiel": "Seul l’avis officiel publié par l’administration fait foi. naja7i.ma n’est pas un organe officiel et ne recrute pas."
   }
 }
