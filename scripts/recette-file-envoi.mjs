@@ -469,6 +469,316 @@ const lireFile = (page) =>
   await contexte.close()
 }
 
+// ═══ BLOC-FRONT-1 (audit t4) — une entrée SANS REPÈRE bloque quand même
+/*
+ * LA POPULATION QUE LE CORRECTIF PRÉCÉDENT NE COUVRAIT PAS.
+ *
+ * `resteAAcquitter` ne reconnaissait une entrée que par `e.repere?.attemptUuid`.
+ * Or la migration v1→v2 ne reconstruit pas de repère — la v1 était un tableau nu
+ * de `{chemin, corps}` — et cette version a elle-même écrit des enveloppes v2
+ * sans repère quand `poser()` était appelé sans troisième argument.
+ *
+ * Une telle entrée est INVISIBLE au verrou : le PUT échoue, `resteAAcquitter`
+ * rend `[]`, la soumission part, et le rejeu suivant reçoit `ATTEMPT_CLOSED`.
+ * La réponse est perdue et la question comptée SAUTÉE — exactement le dommage
+ * que D-F36 promet d'empêcher, sur exactement la population qu'il vise : le
+ * candidat déjà en passation au moment du déploiement.
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * L'ENTRÉE INJECTÉE DOIT ÊTRE LA SEULE EN FILE. Deux écritures s'y sont
+ * cassées, et toutes deux étaient VERTES AVANT CORRECTION :
+ *
+ *   — répondre dans l'interface avec les PUT coupés posait une entrée par
+ *     réponse, AVEC repère : la soumission était bien bloquée, mais par elles ;
+ *   — naviguer sans toucher aux options ne suffit pas non plus, parce que
+ *     « suivante » ENREGISTRE avant d'avancer — chaque clic est un PUT.
+ *
+ * On coupe donc le réseau au dernier moment possible : la série est répondue,
+ * la navigation faite, le voile de confirmation ouvert. On injecte alors, et le
+ * seul contenu de la file est ce qu'on y a mis.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+/** Répond à toute la série par l'API, réseau intact : la file reste vide. */
+async function repondreToutParApi(page, attemptUuid) {
+  const detail = JSON.parse((await api(page, `/me/attempts/${attemptUuid}`)).corps).data
+
+  for (const it of detail.items) {
+    await api(page, `/me/attempts/${attemptUuid}/items/${it.item_uuid}`, {
+      method: 'PUT',
+      body: {
+        option_uuid: it.question?.options?.[0]?.uuid ?? null,
+        confidence: 'guess',
+        elapsed_ms: 1200,
+        client_reported_at: new Date().toISOString(),
+      },
+    })
+  }
+
+  return detail
+}
+
+/** Va jusqu'au voile de confirmation, réseau intact. */
+async function allerAuVoile(page, attemptUuid) {
+  await page.goto(`${BASE}/fr/app/tentative/${attemptUuid}`, { waitUntil: 'networkidle' })
+  await page.waitForSelector('.option', { timeout: 15000 })
+
+  for (let i = 0; i < 12; i++) {
+    if (await page.locator('.voile').isVisible().catch(() => false)) break
+
+    const principal = page.locator('.passation__actes .btn:not(.btn--fantome)')
+    await principal.click().catch(() => {})
+    await page.waitForTimeout(400)
+  }
+
+  return await page.locator('.voile').isVisible().catch(() => false)
+}
+
+const CHEMIN_AILLEURS = '/me/attempts/01a00000-0000-7000-8000-000000000000/items/'
+  + '01a00000-0000-7000-8000-000000000001'
+
+for (const forme of ['tableau v1', 'enveloppe v2 sans repère']) {
+  const contexte = await navigateur.newContext({ viewport: { width: 1280, height: 900 } })
+  const page = await contexte.newPage()
+  await connecter(page, emailA, mdpA)
+
+  const ouvert = await api(page, `/me/diagnostics/${codeEpreuve}`, {
+    method: 'POST',
+    headers: { 'Idempotency-Key': `frontt4-${forme.replace(/\W/g, '')}-${Date.now()}` },
+    body: { total: 5 },
+  })
+  const attempt = JSON.parse(ouvert.corps).data
+
+  if (!attempt) {
+    note(`BLOC-FRONT-1 — ${forme}`, false, `série indisponible : ${ouvert.corps.slice(0, 120)}`)
+    await contexte.close()
+    continue
+  }
+
+  const detail = await repondreToutParApi(page, attempt.uuid)
+  const moi = JSON.parse((await api(page, '/me')).corps).data
+
+  /* Le chemin canonique d'une réponse : il porte les DEUX identifiants, et il
+   * est déjà l'identité stable de l'entrée. C'est de lui que le repère doit
+   * être reconstruit. */
+  const chemin = `/me/attempts/${attempt.uuid}/items/${detail.items[0].item_uuid}`
+
+  const voileOuvert = await allerAuVoile(page, attempt.uuid)
+  const fileAvant = ((await lireFile(page))?.entries ?? []).length
+
+  /* MAINTENANT SEULEMENT : on injecte, et on coupe. */
+  await page.evaluate(
+    ([cle, f, c, ailleurs, uuid]) => {
+      const corps = { option_uuid: null, confidence: 'guess', elapsed_ms: 1000 }
+      const nu = chemin => ({ chemin, corps, pose: Date.now() })
+      const v2 = chemin => ({
+        id: chemin, chemin, corps, pose: Date.now(), etat: 'a_reessayer', tentatives: 0,
+      })
+
+      localStorage.setItem(
+        cle,
+        f === 'tableau v1'
+          ? JSON.stringify([nu(c), nu(ailleurs)])
+          : JSON.stringify({ ownerUserUuid: uuid, version: 2, entries: [v2(c), v2(ailleurs)] }),
+      )
+    },
+    [CLE, forme, chemin, CHEMIN_AILLEURS, moi.uuid],
+  )
+
+  let putsBloques = 0
+  await page.route('**/api/v1/me/attempts/*/items/*', (route) => {
+    putsBloques += 1
+    return route.abort('connectionfailed')
+  })
+
+  const submits = []
+  page.on('request', (r) => {
+    if (r.method() === 'POST' && r.url().includes('/submit')) submits.push(r.url())
+  })
+
+  await page.locator('.voile__actes .btn').first().click().catch(() => {})
+  await page.waitForTimeout(3000)
+
+  const entrees = (await lireFile(page))?.entries ?? []
+  const texte = (await page.locator('main').innerText().catch(() => '')) ?? ''
+
+  note(
+    `BLOC-FRONT-1 — une entrée sans repère bloque la soumission (${forme})`,
+    voileOuvert && fileAvant === 0 && submits.length === 0
+      && entrees.length >= 1 && /envoi en cours/i.test(texte),
+    `voile ouvert : ${voileOuvert} · file avant injection : ${fileAvant} (doit être 0, `
+      + `sans quoi on mesure autre chose) · ${submits.length} POST /submit émis · `
+      + `${entrees.length} entrée(s) en file · ${putsBloques} PUT coupé(s) · `
+      + `message « envoi en cours » : ${/envoi en cours/i.test(texte) ? 'oui' : 'NON'}`,
+  )
+
+  await page.screenshot({
+    path: `${SORTIE}-06-sans-repere-${forme.replace(/\W/g, '-')}.png`,
+    fullPage: true,
+  })
+  await contexte.close()
+}
+
+/*
+ * ET SEULE UNE ENTRÉE D'UNE AUTRE SÉRIE : LA SOUMISSION DOIT PARTIR.
+ *
+ * Sans ce contrôle, la correction la plus simple passerait : bloquer sur TOUTE
+ * la file. Elle rendrait les cas précédents verts et casserait le produit — un
+ * candidat ne pourrait plus rendre sa série parce qu'une réponse d'une AUTRE
+ * série attend le réseau. Le repère reconstruit doit être EXACT, pas présent.
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * LES DEUX FORMES ICI AUSSI, et c'est la mutation qui l'a exigé.
+ *
+ * Retirer la reconstruction de la MIGRATION v1 ne rendait aucun cas rouge : une
+ * entrée sans repère bloque de toute façon, par prudence. La reconstruction n'y
+ * sert donc pas à bloquer — elle sert à NE PAS TROP BLOQUER. Sans elle, la
+ * réponse v1 d'une autre série empêche de rendre celle-ci, et seul un cas « en
+ * forme v1 » le voit.
+ *
+ * Une ligne qu'aucun test ne distingue est une ligne qu'on croit utile.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+for (const forme of ['tableau v1', 'enveloppe v2 sans repère']) {
+  const contexte = await navigateur.newContext({ viewport: { width: 1280, height: 900 } })
+  const page = await contexte.newPage()
+  await connecter(page, emailA, mdpA)
+
+  const ouvert = await api(page, `/me/diagnostics/${codeEpreuve}`, {
+    method: 'POST',
+    headers: { 'Idempotency-Key': `frontt4-ailleurs-${forme.replace(/\W/g, '')}-${Date.now()}` },
+    body: { total: 5 },
+  })
+  const attempt = JSON.parse(ouvert.corps).data
+
+  if (!attempt) {
+    note(`BLOC-FRONT-1 — une entrée d’une AUTRE série ne bloque pas (${forme})`, false, 'série indisponible')
+  }
+  else {
+    await repondreToutParApi(page, attempt.uuid)
+    const moi = JSON.parse((await api(page, '/me')).corps).data
+
+    const voileOuvert = await allerAuVoile(page, attempt.uuid)
+
+    await page.evaluate(
+      ([cle, f, chemin, uuid]) => {
+        const corps = { option_uuid: null, confidence: 'guess', elapsed_ms: 1000 }
+
+        localStorage.setItem(
+          cle,
+          f === 'tableau v1'
+            ? JSON.stringify([{ chemin, corps, pose: Date.now() }])
+            : JSON.stringify({
+                ownerUserUuid: uuid,
+                version: 2,
+                entries: [{
+                  id: chemin, chemin, corps, pose: Date.now(), etat: 'a_reessayer', tentatives: 0,
+                }],
+              }),
+        )
+      },
+      [CLE, forme, CHEMIN_AILLEURS, moi.uuid],
+    )
+
+    /* Seul le PUT de l'entrée ÉTRANGÈRE est coupé : elle reste en file. */
+    await page.route(`**${CHEMIN_AILLEURS}`, route => route.abort('connectionfailed'))
+
+    const submits = []
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && r.url().includes('/submit')) submits.push(r.url())
+    })
+
+    await page.locator('.voile__actes .btn').first().click().catch(() => {})
+    await page.waitForTimeout(3000)
+
+    const restantes = (await lireFile(page))?.entries ?? []
+
+    note(
+      `BLOC-FRONT-1 — une entrée d’une AUTRE série ne bloque pas la soumission (${forme})`,
+      voileOuvert && submits.length === 1 && restantes.length === 1,
+      `voile ouvert : ${voileOuvert} · ${submits.length} POST /submit émis (attendu 1) · `
+        + `${restantes.length} entrée(s) étrangère(s) conservée(s) — ni envoyée, ni perdue`,
+    )
+  }
+
+  await contexte.close()
+}
+
+/*
+ * UNE ENTRÉE IMPOSSIBLE À RATTACHER BLOQUE — la règle de prudence.
+ *
+ * Le repère se reconstruit depuis le chemin ; il ne reste donc introuvable que
+ * si le chemin n'a pas la forme canonique — stockage corrompu, écriture d'une
+ * version future, main humaine. Sans ce cas, la règle « dans le doute, bloque »
+ * n'était éprouvée par rien : la reconstruction rendait toute entrée
+ * rattachable, et la ligne pouvait disparaître sans qu'un test rougisse.
+ *
+ * L'asymétrie décide : bloquer demande de patienter, laisser passer PERD la
+ * réponse et la fait compter comme sautée.
+ */
+{
+  const contexte = await navigateur.newContext({ viewport: { width: 1280, height: 900 } })
+  const page = await contexte.newPage()
+  await connecter(page, emailA, mdpA)
+
+  const ouvert = await api(page, `/me/diagnostics/${codeEpreuve}`, {
+    method: 'POST',
+    headers: { 'Idempotency-Key': `frontt4-opaque-${Date.now()}` },
+    body: { total: 5 },
+  })
+  const attempt = JSON.parse(ouvert.corps).data
+
+  if (!attempt) {
+    note('BLOC-FRONT-1 — une entrée irrattachable bloque par prudence', false, 'série indisponible')
+  }
+  else {
+    await repondreToutParApi(page, attempt.uuid)
+    const moi = JSON.parse((await api(page, '/me')).corps).data
+    const voileOuvert = await allerAuVoile(page, attempt.uuid)
+
+    /* Un chemin qui ne dit NI la tentative NI l'item. Rien ne permet de le
+     * rattacher — et c'est précisément le cas où l'on ne parie pas. */
+    const opaque = '/me/attempts/quelque-chose-dautre'
+
+    await page.evaluate(
+      ([cle, chemin, uuid]) => localStorage.setItem(cle, JSON.stringify({
+        ownerUserUuid: uuid,
+        version: 2,
+        entries: [{
+          id: chemin,
+          chemin,
+          corps: { option_uuid: null, confidence: 'guess', elapsed_ms: 1000 },
+          pose: Date.now(),
+          etat: 'a_reessayer',
+          tentatives: 0,
+        }],
+      })),
+      [CLE, opaque, moi.uuid],
+    )
+
+    await page.route(`**${opaque}`, route => route.abort('connectionfailed'))
+
+    const submits = []
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && r.url().includes('/submit')) submits.push(r.url())
+    })
+
+    await page.locator('.voile__actes .btn').first().click().catch(() => {})
+    await page.waitForTimeout(3000)
+
+    const restantes = (await lireFile(page))?.entries ?? []
+
+    note(
+      'BLOC-FRONT-1 — une entrée irrattachable bloque par prudence',
+      voileOuvert && submits.length === 0 && restantes.length === 1,
+      `voile ouvert : ${voileOuvert} · ${submits.length} POST /submit émis (attendu 0) · `
+        + `${restantes.length} entrée(s) conservée(s) — jamais invisible`,
+    )
+  }
+
+  await contexte.close()
+}
+
 // ══════════════════════════ SSR — aucune fuite dans le HTML authentifié
 {
   const contexte = await navigateur.newContext({ viewport: { width: 1280, height: 900 } })

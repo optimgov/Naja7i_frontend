@@ -86,6 +86,50 @@ const VERROU = 'naja7i.file-envoi.verrou'
 
 const ENVELOPPE_VIDE: Enveloppe = { ownerUserUuid: null, version: VERSION, entries: [] }
 
+/**
+ * LE CHEMIN CANONIQUE D'UNE RÉPONSE PORTE DÉJÀ LE REPÈRE — audit t4, BLOC-FRONT-1.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CE QUE LE CORRECTIF DU BLOC-4 NE COUVRAIT PAS
+ *
+ * Le verrou de soumission reconnaît une entrée par `repere.attemptUuid`. Or la
+ * v1 de cette file était un TABLEAU NU de `{chemin, corps}` : sa migration ne
+ * pouvait pas inventer de repère, et n'en posait donc aucun. Cette version en
+ * a elle-même écrit sans, chaque fois que `poser()` était appelé à deux
+ * arguments.
+ *
+ * Une entrée sans repère était INVISIBLE au verrou. Mesuré avant correction :
+ * le PUT échoue, `resteAAcquitter` rend `[]`, le POST de soumission part quand
+ * même, et le rejeu suivant reçoit `ATTEMPT_CLOSED`. La réponse est perdue et
+ * le serveur compte la question comme SAUTÉE — le dommage exact que D-F36
+ * promet d'empêcher, sur exactement la population qu'il vise : le candidat déjà
+ * en passation au moment du déploiement.
+ *
+ * ON NE DEVINE RIEN : `/me/attempts/{attemptUuid}/items/{itemUuid}` contient
+ * les deux identifiants. Le repère n'était pas absent de l'entrée, il était
+ * absent du CHAMP — il a toujours été dans le chemin, qui est aussi son
+ * identité stable.
+ *
+ * Reconstruit À LA LECTURE, donc pour les files déjà écrites sur les postes :
+ * un correctif qui n'agirait qu'à l'écriture laisserait sans protection
+ * précisément ceux qui en ont besoin aujourd'hui.
+ */
+const CHEMIN_REPONSE = /^\/me\/attempts\/([^/]+)\/items\/([^/]+)$/
+
+function repereDepuisChemin(chemin: unknown): EnvoiEnAttente['repere'] | undefined {
+  if (typeof chemin !== 'string') return undefined
+
+  const trouve = CHEMIN_REPONSE.exec(chemin)
+  if (!trouve) return undefined
+
+  return { attemptUuid: trouve[1]!, itemUuid: trouve[2]! }
+}
+
+/** Complète une entrée lue : le repère du champ, sinon celui du chemin. */
+function avecRepere(e: EnvoiEnAttente): EnvoiEnAttente {
+  return e.repere?.attemptUuid ? e : { ...e, repere: repereDepuisChemin(e.chemin) }
+}
+
 function lireEnveloppe(): Enveloppe {
   if (import.meta.server) return { ...ENVELOPPE_VIDE }
   try {
@@ -108,6 +152,9 @@ function lireEnveloppe(): Enveloppe {
           pose: e.pose ?? Date.now(),
           etat: 'a_reessayer' as const,
           tentatives: 0,
+          /* Le repère vient du chemin — voir `repereDepuisChemin`. Sans lui,
+           * ces entrées migrées ne bloquaient aucune soumission. */
+          repere: repereDepuisChemin(e.chemin),
         })),
       }
     }
@@ -116,7 +163,10 @@ function lireEnveloppe(): Enveloppe {
     return {
       ownerUserUuid: env.ownerUserUuid ?? null,
       version: VERSION,
-      entries: Array.isArray(env.entries) ? env.entries : [],
+      /* MÊME TRAITEMENT POUR LES ENVELOPPES v2 DÉJÀ ÉCRITES. Le défaut ne vient
+       * pas seulement de la v1 : cette version a posé des entrées sans repère
+       * chaque fois que `poser()` a été appelé sans son troisième argument. */
+      entries: Array.isArray(env.entries) ? env.entries.map(avecRepere) : [],
     }
   } catch {
     // Stockage illisible ou refusé (navigation privée stricte) : la file
@@ -209,7 +259,25 @@ export function useFileEnvoi() {
      * état « envoyé ». Le filtre porte donc sur la seule tentative — et c'est
      * aussi ce qui rend la règle simple à énoncer : file vide pour cette série,
      * ou soumission refusée. */
-    return file.value.filter((e) => e.repere?.attemptUuid === attemptUuid)
+    return file.value.filter((e) => {
+      const rattachee = e.repere?.attemptUuid
+
+      /*
+       * UNE ENTRÉE IMPOSSIBLE À RATTACHER BLOQUE — audit t4, BLOC-FRONT-1.
+       *
+       * Le repère est reconstruit depuis le chemin à la lecture ; il ne reste
+       * donc `undefined` que pour une entrée dont le chemin n'a pas la forme
+       * canonique — stockage corrompu, écriture d'une version future, main
+       * humaine. Le doute doit se résoudre du côté du candidat : bloquer
+       * demande de patienter, laisser passer PERD sa réponse et la fait
+       * compter comme sautée.
+       *
+       * L'asymétrie des conséquences décide, pas la vraisemblance du cas.
+       */
+      if (rattachee === undefined) return true
+
+      return rattachee === attemptUuid
+    })
   }
 
   function rafraichir(): void {
@@ -251,7 +319,10 @@ export function useFileEnvoi() {
         pose: Date.now(),
         etat: 'a_reessayer',
         tentatives: 0,
-        repere,
+        /* L'appelant donne le repère RICHE — il connaît la position, utile pour
+         * montrer au candidat CE qui a échoué. À défaut, le chemin le porte
+         * déjà : une entrée écrite ici n'est jamais sans repère. */
+        repere: repere ?? repereDepuisChemin(chemin),
       }
 
       const enveloppe: Enveloppe = {
