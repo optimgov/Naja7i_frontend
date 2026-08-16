@@ -10,3 +10,6 @@ dist
 
 # Permissions Claude Code, personnelles à la machine
 .claude/settings.local.json
+
+# Sauvegardes produites par installer.sh
+_a_supprimer/

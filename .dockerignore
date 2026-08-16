@@ -1,0 +1,32 @@
+# Ce qui n'entre pas dans l'image du frontend.
+#
+# `node_modules` en tête : le dossier du poste de développement contient les
+# binaires compilés pour macOS arm64. Copié dans une image Linux, il produit
+# une erreur d'exécution que la construction ne voit pas — elle survient au
+# premier démarrage du conteneur, en production.
+#
+# `.output` ensuite : une compilation locale périmée écraserait celle que le
+# Dockerfile vient de produire.
+
+node_modules
+.output
+.nuxt
+dist
+
+.git
+.github
+.gitignore
+.DS_Store
+
+.env
+.env.*
+!.env.example
+
+# Les scripts de vérification (jetons, locales, audit de rendu) tournent en CI,
+# jamais dans l'image d'exécution. Playwright et Chromium n'y entrent pas.
+docs
+*.md
+*.zip
+.claude
+.idea
+.vscode

@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
 
+  # AJOUT CI/CD — ce workflow devient appelable par `deploiement.yml`, qui
+  # l'invoque au lieu de recopier ses étapes. Recopier une suite de contrôles,
+  # c'est accepter qu'un jour la copie du déploiement soit la plus permissive
+  # des deux.
+  workflow_call:
+
 # REVUE FRONT-1 : le dépôt frontend n'avait aucune CI applicative — seule la
 # publication GitHub Pages était configurée. `npm run typecheck` était rouge
 # depuis la livraison, et rien ne le signalait.
@@ -84,7 +90,12 @@ jobs:
           done
           echo "Le serveur n'a pas répondu en 60 s"; exit 1
         env:
-          API_BASE_URL: http://localhost:8000
+          # NUXT_API_BASE_URL et non API_BASE_URL : à l'EXÉCUTION, Nitro ne lit
+          # que le préfixe NUXT_ (nuxt.config.ts ne consulte process.env qu'à la
+          # compilation). Sans conséquence ici — les écrans audités n'appellent
+          # pas l'API — mais poser la variable inopérante ferait croire qu'elle
+          # agit, et c'est le piège nº 1 du déploiement de ce dépôt.
+          NUXT_API_BASE_URL: http://localhost:8000
           NITRO_PORT: 3000
 
       - name: Revue de rendu (contraste, débordement, cibles, bidi)
