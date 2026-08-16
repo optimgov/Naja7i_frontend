@@ -954,6 +954,19 @@ html[dir='rtl'] .annonce__titre { letter-spacing: normal; line-height: 1.45; }
   color: var(--texte-doux); background: var(--neutre-fond);
   border-color: var(--bordure); font-weight: 600;
 }
+/* Le dépôt est clos : la préparation reste vraie, donc la ligne garde son
+   vert — mais elle cesse d'être une invitation à candidater. Le fond neutre et
+   la graisse moindre disent la nuance sans retirer le chemin.
+
+   PAS DE ROUGE : rien n'a échoué, et le candidat n'a rien manqué qu'il puisse
+   encore rattraper. Un signal d'alerte ici serait un reproche. */
+.rattachement--clos {
+  color: var(--texte-doux); background: var(--neutre-fond);
+  border-color: var(--bordure); font-weight: 600;
+}
+[data-theme='sombre'] .rattachement--clos { color: var(--texte-doux); }
+.rattachement--clos .rattachement__icone { color: var(--peda-juste-texte); }
+
 .rattachement__icone { flex: none; inline-size: 1rem; block-size: 1rem; }
 
 /* ---------------------------------------------------- 7. L'échéance */

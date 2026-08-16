@@ -245,6 +245,93 @@ const page = await contexte.newPage()
   )
 }
 
+// ═══ 4 bis. Aucune promesse de candidature sur un dépôt clos ═══
+{
+  /*
+   * LE DÉFAUT, TROUVÉ EN RECETTE LOCALE : `rattachementDe()` ne lisait que
+   * `has_prep` et `prep_slug`. `estOuverte()` était quatre lignes plus bas dans
+   * le même fichier, jamais consultée. Une annonce dont le dépôt est CLOS
+   * affichait « ✓ naja7i prépare ce concours » avec un lien actif — comme si
+   * l'on pouvait encore candidater.
+   *
+   * LA CORRECTION N'EST PAS DE MASQUER LE LIEN. Se préparer reste légitime
+   * quand le dépôt de cette session est clos ; c'est la PHRASE qui mentait, pas
+   * le chemin. Un quatrième état le dit.
+   *
+   * ON NE FABRIQUE RIEN : la fixture du 8 août porte les deux cas, et c'est
+   * elle qui décide. Si elle change et n'en porte plus, ce contrôle le DIT au
+   * lieu de passer sur un ensemble vide.
+   */
+  const donnees = await fetch(`${BASE}/_donnees/opportunites`).then(r => r.json())
+  const fuseau = donnees.meta.timezone_candidat
+
+  const ouverte = a => a.stage === 'annonce'
+    && (joursRestants(a.deadline, new Date(), fuseau) ?? -1) >= 0
+
+  const closesAvecPrep = donnees.data.filter(
+    a => a.naja7i?.has_prep && a.naja7i?.prep_slug && !ouverte(a),
+  )
+
+  note(
+    'la fixture porte bien des annonces PRÉPARÉES dont le dépôt est clos',
+    closesAvecPrep.length > 0,
+    closesAvecPrep.length
+      ? `${closesAvecPrep.length} cas : ${closesAvecPrep.map(a => `${a.titre.slice(0, 34)} (${a.stage})`).join(' · ')}`
+      : 'AUCUN — ce contrôle ne mesure plus rien, la fixture a changé',
+  )
+
+  const anomalies = []
+  const liensGardes = []
+
+  for (const annonce of closesAvecPrep) {
+    await page.goto(`${BASE}/fr/opportunites/${annonce.slug}`, { waitUntil: 'networkidle' })
+
+    const texte = (await page.locator('main').innerText()) ?? ''
+
+    /* La phrase qui promet une candidature ne doit PAS être là… */
+    const promet = /naja7i prépare ce concours(?!\s*·)/.test(texte)
+      || texte.includes('Une préparation existe pour ce concours')
+        && !texte.includes('dépôt de cette session est clos')
+
+    /* …et le chemin vers la préparation doit RESTER. */
+    const lien = await page.locator(`a[href*="/concours/famille/${annonce.naja7i.prep_slug}"]`).count()
+
+    if (promet) anomalies.push(`${annonce.slug} promet une candidature`)
+    liensGardes.push(`${annonce.slug} : ${lien} lien(s)`)
+  }
+
+  note(
+    'aucune annonce close ne promet de candidature — et son lien de préparation RESTE',
+    anomalies.length === 0 && liensGardes.every(l => !l.endsWith(': 0 lien(s)')),
+    anomalies.length
+      ? `ANOMALIES : ${anomalies.join(' · ')}`
+      : `${closesAvecPrep.length} fiche(s) close(s) vérifiée(s) · ${liensGardes.join(' · ')}`,
+  )
+
+  /* ET LE CAS OUVERT CONTINUE D'INVITER : sans ce contrôle, tout masquer
+   * passerait pour une correction. */
+  const ouvertesAvecPrep = donnees.data.filter(
+    a => a.naja7i?.has_prep && a.naja7i?.prep_slug && ouverte(a),
+  )
+
+  let inviteEncore = 0
+
+  for (const annonce of ouvertesAvecPrep.slice(0, 2)) {
+    await page.goto(`${BASE}/fr/opportunites/${annonce.slug}`, { waitUntil: 'networkidle' })
+    const texte = (await page.locator('main').innerText()) ?? ''
+    if (texte.includes('Une préparation existe') && !texte.includes('dépôt de cette session est clos')) {
+      inviteEncore += 1
+    }
+  }
+
+  note(
+    'une annonce OUVERTE invite toujours, sans mention de clôture',
+    ouvertesAvecPrep.length > 0 && inviteEncore === Math.min(2, ouvertesAvecPrep.length),
+    `${ouvertesAvecPrep.length} annonce(s) ouverte(s) avec préparation · `
+    + `${inviteEncore} invite(nt) sans mention de clôture`,
+  )
+}
+
 // ═════════════════════════ 5. Le budget de surface A2, mesuré ═══
 {
   const mesures = {}

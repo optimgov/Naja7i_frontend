@@ -123,10 +123,20 @@ const actifs = computed(() =>
 
 /** Les paliers d'échéance. L'urgence est un palier NOMMÉ, pas une teinte. */
 const PALIERS: { cle: string, garde: (a: Annonce) => boolean }[] = [
-  { cle: 'palier_7j', garde: a => (a.jours ?? -1) >= 0 && (a.jours ?? -1) <= 7 && a.stage === 'annonce' },
-  { cle: 'palier_30j', garde: a => (a.jours ?? -1) > 7 && (a.jours ?? -1) <= 30 && a.stage === 'annonce' },
-  { cle: 'palier_plus', garde: a => (a.jours ?? -1) > 30 && a.stage === 'annonce' },
-  { cle: 'palier_suite', garde: a => a.stage !== 'annonce' && (a.jours ?? -1) >= 0 },
+  /*
+   * `estOuverte()` PLUTÔT QUE DE REDIRE LA RÈGLE. Ces gardes portaient
+   * `jours >= 0 && stage === 'annonce'` en toutes lettres — une seconde
+   * écriture de ce que `echeanceDe()` décide déjà. Elles disaient juste
+   * aujourd'hui, et rien ne garantissait qu'elles suivent la première le jour
+   * où elle changerait.
+   *
+   * C'est la faute qui a produit le défaut du rattachement : deux endroits
+   * décidant si une annonce est ouverte, dont un qui ne consultait pas l'autre.
+   */
+  { cle: 'palier_7j', garde: a => estOuverte(a) && (a.jours ?? -1) <= 7 },
+  { cle: 'palier_30j', garde: a => estOuverte(a) && (a.jours ?? -1) > 7 && (a.jours ?? -1) <= 30 },
+  { cle: 'palier_plus', garde: a => estOuverte(a) && (a.jours ?? -1) > 30 },
+  { cle: 'palier_suite', garde: a => !estOuverte(a) && (a.jours ?? -1) >= 0 },
   { cle: 'palier_clos', garde: a => a.jours === null || a.jours < 0 },
 ]
 

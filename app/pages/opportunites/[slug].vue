@@ -242,6 +242,18 @@ useSeoCatalogue({
           </NuxtLink>
         </template>
 
+        <!-- Le dépôt de cette session est clos, la préparation ne l'est pas.
+             LE BOUTON RESTE : se préparer quand le dépôt vient de fermer est
+             même le meilleur moment pour s'y mettre. C'est la NOTE qui porte la
+             nuance, pas la présence du chemin. -->
+        <template v-else-if="rattachement === 'prepare_clos' && versPreparation">
+          <h2 class="action__titre">{{ t('opportunites.action_prepare_clos_titre') }}</h2>
+          <p class="action__note">{{ t('opportunites.action_prepare_clos_note') }}</p>
+          <NuxtLink class="btn btn--bloc" :to="versPreparation">
+            {{ t('opportunites.action_prepare_bouton') }}
+          </NuxtLink>
+        </template>
+
         <!-- Pas de préparation : on le DIT, et on ne propose pas de liste
              d'attente — cette route n'existe pas, et un bouton qui mène à un
              404 est pire que pas de bouton. -->

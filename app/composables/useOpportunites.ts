@@ -104,9 +104,18 @@ const SEUIL_IMMINENT = 7
 export function echeanceDe(annonce: Annonce): Echeance {
   const j = annonce.jours
 
-  const close = j === null || j < 0
-    || annonce.stage === 'cloture' || annonce.stage === 'annule'
-    || annonce.stage !== 'annonce'
+  /*
+   * `stage !== 'annonce'` SUFFIT, et les deux tests qui le précédaient étaient
+   * morts : `cloture` et `annule` ne sont pas `annonce`. Ils énuméraient deux
+   * des six valeurs du contrat en laissant croire que les autres passaient.
+   *
+   * Le contrat du collecteur (`docs/CONTRAT-EXPORT.md`) donne les six :
+   * `annonce`, `convocation_ecrit`, `convocation_oral`, `resultats`, `cloture`,
+   * `annule`. UNE SEULE est un moment de candidature. Nommer la seule qui
+   * ouvre est plus sûr qu'énumérer celles qui ferment — une septième valeur
+   * ajoutée demain serait traitée comme fermée, ce qui est le bon défaut.
+   */
+  const close = j === null || j < 0 || annonce.stage !== 'annonce'
 
   if (close) {
     return { palier: 'close', cle: 'opportunites.echeance_close', jours: j, part: 0, icone: false }
@@ -135,27 +144,60 @@ export function echeanceDe(annonce: Annonce): Echeance {
   }
 }
 
-export type EtatRattachement = 'prepare' | 'rattache' | 'aucun'
+export type EtatRattachement = 'prepare' | 'prepare_clos' | 'rattache' | 'aucun'
 
 /**
- * LE RATTACHEMENT A TROIS ÉTATS, et on ne promet une préparation QUE si elle
- * existe.
+ * LE RATTACHEMENT A QUATRE ÉTATS, et on ne promet une préparation QUE si elle
+ * existe — ni plus, ni moins que ce qui est vrai aujourd'hui.
  *
- *   `prepare`  — la filière est identifiée ET naja7i prépare ce concours.
- *                C'est le seul état qui autorise un lien vers une préparation.
- *   `rattache` — la filière est identifiée, mais rien n'est encore préparé.
- *                On le DIT. Taire la différence ferait passer une intention
- *                pour une offre.
- *   `aucun`    — le collecteur n'a pas su rattacher. L'annonce reste servie :
- *                elle est utile même sans préparation, et la masquer
- *                reviendrait à cacher au candidat un concours qui existe.
+ *   `prepare`      — la filière est identifiée, naja7i prépare ce concours, ET
+ *                    le dépôt de cette session accepte encore une candidature.
+ *   `prepare_clos` — la préparation existe, mais le dépôt de CETTE session est
+ *                    clos. Voir ci-dessous : c'est l'état qui manquait.
+ *   `rattache`     — la filière est identifiée, rien n'est encore préparé. On
+ *                    le DIT : taire la différence ferait passer une intention
+ *                    pour une offre.
+ *   `aucun`        — le collecteur n'a pas su rattacher. L'annonce reste
+ *                    servie : elle est utile même sans préparation, et la
+ *                    masquer cacherait au candidat un concours qui existe.
  *
- * Les deux derniers états ne sont PAS un échec à dissimuler. Ce produit agrège
- * plus large que ce qu'il prépare, et le dire est ce qui le rend crédible sur
- * ce qu'il prépare vraiment.
+ * ─────────────────────────────────────────────────────────────────────────
+ * POURQUOI UN QUATRIÈME ÉTAT PLUTÔT QU'UN LIEN MASQUÉ
+ *
+ * Cette fonction ne lisait que `has_prep` et `prep_slug`. `estOuverte()` est
+ * quatre lignes plus bas et n'était pas consultée : une annonce dont le dépôt
+ * était clos affichait « naja7i prépare ce concours » avec un lien actif, comme
+ * si l'on pouvait encore candidater. Deux cas dans la fixture du 8 août.
+ *
+ * MASQUER LE LIEN AURAIT ÉTÉ LA MAUVAISE CORRECTION. Se préparer au concours de
+ * professeur des écoles reste parfaitement légitime quand le dépôt de cette
+ * session-ci est clos : la session suivante arrive, et c'est même le meilleur
+ * moment pour commencer. Retirer le lien ferait perdre un chemin VRAI pour
+ * corriger une phrase FAUSSE.
+ *
+ * Ce n'est donc pas la préparation qui est close, c'est le DÉPÔT DE CETTE
+ * SESSION. Le lien reste, le libellé le dit.
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * `estOuverte()` COUVRE AUSSI LE STADE, et c'est contractuel
+ *
+ * `echeanceDe()` traite comme close toute annonce dont le `stage` n'est pas
+ * `annonce`. Vérifié sur le contrat du collecteur plutôt que supposé
+ * (`docs/CONTRAT-EXPORT.md`) : `Stage` compte six valeurs — `annonce`,
+ * `convocation_ecrit`, `convocation_oral`, `resultats`, `cloture`, `annule` —
+ * et une seule est un moment de candidature. `cloture` est même CALCULÉ par le
+ * balayage du collecteur depuis l'échéance.
+ *
+ * Aux stades de convocation et de résultats, l'annonce n'est donc plus un
+ * moment de candidature même si une échéance future traîne dans la fiche. La
+ * fixture en porte un cas : « Cadres d'appui pédagogique — CRMEF », stade
+ * `convocation_ecrit`.
  */
 export function rattachementDe(annonce: Annonce): EtatRattachement {
-  if (annonce.naja7i.has_prep && annonce.naja7i.prep_slug) return 'prepare'
+  if (annonce.naja7i.has_prep && annonce.naja7i.prep_slug) {
+    return estOuverte(annonce) ? 'prepare' : 'prepare_clos'
+  }
+
   if (annonce.naja7i.filiere) return 'rattache'
   return 'aucun'
 }
