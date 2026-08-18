@@ -188,13 +188,65 @@ const minutes = computed(() => {
 })
 
 /**
- * Enregistre. `confidence` est REQUIS par l'API — ce n'est pas une option
- * d'interface mais le champ qui rend possibles « erreur avec certitude » et
- * « réussite au hasard » dans l'ordonnance (fiche F02). On ne l'invente donc
- * pas par défaut : sans choix du candidat, rien ne part.
+ * VRAI quand le candidat a choisi une option sur la question courante.
+ *
+ * C'est ce qui sépare une RÉPONSE d'une question SAUTÉE, et la distinction est
+ * structurante côté serveur — voir `enregistrer()`.
+ */
+const aChoisi = computed(() => optionChoisie.value !== null)
+
+/**
+ * Enregistre — S'IL Y A QUELQUE CHOSE À ENREGISTRER.
+ *
+ * ══════════════════════════════════════════════════════════════════════════
+ * D-09 — CE QUI A ÉTÉ MESURÉ, ET POURQUOI CE N'EST PAS UN DÉFAUT D'INTERFACE
+ *
+ * Cet écran envoyait `option_uuid: null` dès qu'une certitude était choisie,
+ * sur une question sans réponse. Le contrat l'accepte (`nullable`). Ce qu'il
+ * en advient, mesuré sur la pile locale et non déduit :
+ *
+ *   - `AttemptService::submit()` pose `is_correct = false` sur toute réponse
+ *     dont l'option est nulle — `selectedOption?->is_correct === true` ;
+ *   - `MasteryCalculator::sautees()` ne compte que les items SANS ligne de
+ *     réponse : une réponse vide n'y entre donc pas ;
+ *   - la ligne entre en revanche au dénominateur de la maîtrise, avec un poids
+ *     de 0, et elle grossit `answered_count`, c'est-à-dire LE VOLUME
+ *     D'ÉVIDENCE ;
+ *   - déclarée « sûr », elle grossit `confident_error_count` — le signal le
+ *     plus fort de l'ordonnance.
+ *
+ * Autrement dit : traverser une série sans répondre fabriquait des erreurs
+ * démontrées, avec certitude, sur des questions jamais lues. Le calcul de la
+ * maîtrise le dit lui-même, en toutes lettres, à l'endroit où il exclut les
+ * sautées du dénominateur : « les y mettre donnerait au sauteur exactement le
+ * score de celui qui s'est trompé ». L'écran fabriquait précisément l'état que
+ * le calcul refuse de produire.
+ *
+ * D'OÙ LE CORRECTIF. Ni « interdire de passer » ni « avertir » : ne rien
+ * fabriquer. Sans option choisie, RIEN NE PART — l'item reste sans réponse, et
+ * la soumission le compte comme sauté, ce qu'il est. Passer reste possible,
+ * parce que le produit modélise l'évitement (`skipped_count`, motif
+ * `questions_sautees`) et qu'il faut bien pouvoir le produire.
+ *
+ * La certitude reste REQUISE dès qu'une option est choisie : c'est le champ qui
+ * rend possibles « erreur avec certitude » et « réussite au hasard » (fiche
+ * F02). On ne l'invente jamais par défaut. Mais une certitude sur une absence
+ * de réponse ne mesure rien, et ne bloque donc plus rien.
+ *
+ * Le second verrou est côté serveur — `MasteryCalculator` ne lit plus une
+ * réponse sans option comme une erreur, quel que soit le client. Celui-ci
+ * empêche l'état ; celui-là le rend inoffensif s'il survient.
+ * ══════════════════════════════════════════════════════════════════════════
  */
 async function enregistrer(): Promise<boolean> {
   if (!item.value) return false
+
+  /* Rien de choisi : la question est sautée. On avance sans écrire. */
+  if (!aChoisi.value) {
+    manqueCertitude.value = false
+    return true
+  }
+
   if (!certitude.value) {
     manqueCertitude.value = true
     return false
@@ -405,6 +457,12 @@ useHead({ title: () => t('passation.question_sur', { n: position.value + 1, tota
           {{ t('passation.certitude_obligatoire') }}
         </p>
       </fieldset>
+
+      <!-- D-09 — DIT AVANT DE PASSER, PAS DÉCOUVERT APRÈS.
+           Rien n'est interdit : le produit modélise l'évitement, et il faut
+           pouvoir le produire. Ce qui change, c'est que la phrase est vraie —
+           l'item sera compté comme sauté, plus comme une erreur. -->
+      <p v-if="!aChoisi" class="sautee" role="status">{{ t('passation.sera_sautee') }}</p>
 
       <div class="passation__actes">
         <button type="button" class="btn btn--fantome" :disabled="position === 0" @click="precedente">
@@ -687,6 +745,15 @@ useHead({ title: () => t('passation.question_sur', { n: position.value + 1, tota
 .certitude__aide {
   grid-column: 2;
   font-size: var(--t-xs);
+  color: var(--texte-doux);
+}
+
+/* Le sens est porté par les MOTS. Aucune couleur d'alerte : sauter une question
+   n'est pas une faute, c'est un état que la mesure sait nommer. */
+.sautee {
+  max-inline-size: 60ch;
+  margin-block: 0 var(--e-3);
+  font-size: var(--t-sm);
   color: var(--texte-doux);
 }
 

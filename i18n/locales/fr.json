@@ -141,7 +141,8 @@
     "duree_minutes": "{n} min",
     "statut": "Statut : {etat}",
     "ouverts_titre": "Concours ouverts en ce moment",
-    "ouverts_tout_voir": "Toutes les opportunités"
+    "ouverts_tout_voir": "Toutes les opportunités",
+    "commencer_diagnostic": "Commencer le diagnostic"
   },
   "causes": {
     "confusion_notions": "Confusion entre deux notions voisines",
@@ -165,7 +166,11 @@
     "panne_titre": "Le service ne répond pas",
     "panne_texte": "Ce n'est pas de votre fait. Réessayez dans un instant : votre progression est enregistrée.",
     "retour_accueil": "Retour à l'accueil",
-    "voir_concours": "Parcourir les concours"
+    "voir_concours": "Parcourir les concours",
+    "refuse_oeil": "Permission refusée",
+    "refuse_titre": "Cette surface vous est fermée",
+    "refuse_texte": "Elle existe, et votre compte n’a pas la permission qui l’ouvre. Demandez-la à l’administrateur de votre organisme en lui citant l’adresse ci-dessous.",
+    "refuse_surface": "Adresse refusée"
   },
   "reseau": {
     "coupe_titre": "Connexion perdue.",
@@ -194,7 +199,11 @@
     "revisions_echues": "À réviser : {n}",
     "revisions_rien": "Rien à réviser aujourd’hui.",
     "voir_revisions": "Voir les révisions",
-    "entrainement": "S’entraîner sur un point faible"
+    "entrainement": "S’entraîner sur un point faible",
+    "commencer_titre": "Commencer votre préparation",
+    "commencer_texte": "Choisissez l’épreuve que vous préparez. L’écran suivant dit ce que le diagnostic mesure — et ce qu’il ne mesure pas — avant qu’aucune question ne soit tirée.",
+    "commencer_aucune": "Aucune épreuve n’est ouverte au diagnostic pour l’instant. Le catalogue dit lesquelles le seront.",
+    "voir_catalogue": "Parcourir le catalogue des concours"
   },
   "diagnostic": {
     "oeil": "Diagnostic",
@@ -239,7 +248,8 @@
     "confirmer_manquantes": "Il reste des questions sans réponse. Elles seront comptées comme sautées.",
     "confirmer_oui": "Terminer",
     "confirmer_non": "Continuer la série",
-    "enregistree": "Réponse enregistrée"
+    "enregistree": "Réponse enregistrée",
+    "sera_sautee": "Aucune option choisie : cette question sera comptée comme non répondue, et non comme une erreur."
   },
   "ordonnance": {
     "motif_erreurs_avec_certitude": "Des erreurs commises avec certitude — la notion semble acquise mais ne l’est pas.",
@@ -258,7 +268,10 @@
     "manquantes": "Manquantes",
     "sautees": "Sautées",
     "poids": "Poids officiel",
-    "urgence": "Priorité"
+    "urgence": "Priorité",
+    "travailler": "S’entraîner sur ce domaine",
+    "decouvrir": "Découvrir ce domaine",
+    "vide": "Rien à ordonner pour l’instant : l’ordonnance se fonde sur vos réponses."
   },
   "correction": {
     "titre": "Correction",

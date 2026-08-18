@@ -102,7 +102,55 @@ export function useCatalogue() {
       () => api.get<ReferentielEpreuve>(`/catalogue/epreuves/${encodeURIComponent(code)}/competences`),
     )
 
-  return { filieres, filiere, famille, specialite, calendrier, referentielEpreuve }
+  /**
+   * LES ÉPREUVES SUR LESQUELLES ON PEUT COMMENCER — la porte du D-01.
+   *
+   * Un compte neuf n'a aucune tentative, donc aucune épreuve « suivie », et le
+   * tableau de bord n'avait rien à proposer. Il lui faut la liste de ce qui est
+   * ouvert, et elle n'existait nulle part : l'index du catalogue ne sert pas
+   * `exams`, seule la fiche de famille le fait.
+   *
+   * ON NE DEMANDE QUE LES FAMILLES OUVERTES. Une famille en liste d'attente ne
+   * propose aucun diagnostic (critère NAJA7I-ZP-001 §9) : demander sa matrice
+   * ferait un appel pour une porte qu'on n'ouvrira pas.
+   *
+   * Une famille dont la fiche est illisible DISPARAÎT de la liste — elle ne
+   * vaut pas zéro épreuve. C'est la même règle que les compteurs de l'accueil :
+   * l'absence ne dit rien, elle n'affirme pas.
+   */
+  const epreuvesOuvertes = () =>
+    useAsyncData('catalogue:epreuves-ouvertes', async () => {
+      const index = await api.get<{ data: Filiere[] }>('/catalogue')
+
+      const ouvertes = index.data
+        .flatMap((f) => f.families ?? [])
+        .filter((f) => f.availability === 'open')
+
+      const fiches = await Promise.all(
+        ouvertes.map((f) =>
+          api
+            .get<{ data: Famille }>(`/catalogue/familles/${f.slug}`)
+            .then((r) => r.data)
+            .catch(() => null),
+        ),
+      )
+
+      return fiches
+        .filter((f): f is Famille => f !== null)
+        .flatMap((f) =>
+          (f.exams ?? []).map((e) => ({ ...e, famille: { slug: f.slug, name: f.name } })),
+        )
+    })
+
+  return { filieres, filiere, famille, specialite, calendrier, referentielEpreuve, epreuvesOuvertes }
+}
+
+/** Une épreuve ouverte, avec la famille qui la porte — pour l'annoncer. */
+export interface EpreuveOuverte {
+  code: string
+  name: string
+  coefficient: number | null
+  famille: { slug: string; name: string }
 }
 
 /** Un domaine du référentiel. `weight_percent` est nul quand le descriptif ne le donne pas. */

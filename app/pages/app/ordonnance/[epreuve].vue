@@ -13,10 +13,25 @@
  * Un domaine jamais évalué est un ANGLE MORT à découvrir, pas une lacune
  * démontrée. La distinction est portée par le motif servi par le serveur —
  * l'interface la lit, elle ne la devine pas.
+ *
+ * ─────────────────────────── D-06 — LA PORTE MANQUANTE ──────────────────────
+ *
+ * Cet écran est resté DIX-SEPT JOURS sans un seul élément cliquable dans son
+ * corps. Le commit `dcac779` du 11 août s'intitulait pourtant « l'entraînement
+ * ciblé, l'ordonnance devient cliquable » : le configurateur E7 a bien été
+ * écrit, le tableau de bord y mène — et l'ordonnance, jamais. La promesse était
+ * dans le titre du commit, pas dans le gabarit.
+ *
+ * Chaque ligne mène maintenant au configurateur AVEC SON DOMAINE PRÉSÉLECTIONNÉ.
+ * Pas un `POST` direct depuis ici : le serveur refuse un périmètre vide ou trop
+ * mince (`TRAINING_SCOPE_EMPTY`, `TRAINING_SCOPE_TOO_NARROW`), et E7 sait déjà
+ * dire ces deux refus avec les chiffres du serveur. Lancer d'ici rendrait ces
+ * refus muets ou les ferait ressembler à une panne.
  */
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const route = useRoute()
+const localePath = useLocalePath()
 const { t } = useI18n()
 const { ordonnance, estAngleMort } = useOrdonnance()
 const { sansConclusion } = useMaitrise()
@@ -38,7 +53,16 @@ useHead({ title: t('ordonnance.titre') })
     <!-- Servi par le serveur, affiché sans retouche. Aucun repli en dur. -->
     <p v-if="disclaimer" class="disclaimer" dir="auto">{{ disclaimer }}</p>
 
-    <ol class="plan">
+    <!-- Aucune ligne : l'ordonnance se nourrit des réponses, et il n'y en a pas
+         encore. On le dit, et on offre le geste qui la remplit. -->
+    <div v-if="!lignes.length" class="alerte alerte--info vide" role="status">
+      <span>{{ t('ordonnance.vide') }}</span>
+      <NuxtLink class="lien-second" :to="localePath(`/app/diagnostic/${code}`)">
+        {{ t('diagnostic.lancer') }}
+      </NuxtLink>
+    </div>
+
+    <ol v-else class="plan">
       <li
         v-for="(ligne, rang) in lignes"
         :key="ligne.node_uuid"
@@ -90,6 +114,19 @@ useHead({ title: t('ordonnance.titre') })
               {{ t('correction.minutes', { n: ligne.remediation.estimated_minutes }) }}
             </span>
           </p>
+
+          <!-- LA PORTE DE LA LIGNE. Un vrai lien, dans le corps de la page :
+               c'est exactement ce que le DOM ne contenait pas. Le domaine
+               voyage dans l'URL — le configurateur est atteignable par son
+               adresse, et un état partagé ne survivrait pas au rechargement. -->
+          <p class="plan__actes">
+            <NuxtLink
+              class="lien-second plan__travailler"
+              :to="localePath(`/app/entrainement/${code}?domaine=${ligne.node_uuid}`)"
+            >
+              {{ estAngleMort(ligne) ? t('ordonnance.decouvrir') : t('ordonnance.travailler') }}
+            </NuxtLink>
+          </p>
         </div>
       </li>
     </ol>
@@ -107,6 +144,8 @@ useHead({ title: t('ordonnance.titre') })
   border-inline-start: 3px solid var(--bordure-forte);
   border-radius: var(--r);
 }
+
+.vide { display: flex; flex-wrap: wrap; gap: var(--e-2) var(--e-4); align-items: baseline; }
 
 .plan { display: grid; gap: var(--e-3); margin: 0; padding: 0; list-style: none; }
 
@@ -175,4 +214,15 @@ useHead({ title: t('ordonnance.titre') })
 
 .plan__remede-libelle { font-weight: 700; }
 .plan__duree { font-size: var(--t-xs); color: var(--texte-doux); }
+
+.plan__actes { margin: var(--e-3) 0 0; }
+
+/* 44 px de cible tactile — une porte se prend au doigt. La couleur vient de
+   `.lien-second`, donc de `--lien` : ici, l'apparence de lien EST tenue. */
+.plan__travailler {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  font-size: var(--t-sm);
+}
 </style>

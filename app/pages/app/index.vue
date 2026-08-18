@@ -15,6 +15,7 @@ const localePath = useLocalePath()
 const { parcours, enCours, dernierePassee, estEntrainement } = useParcours()
 const { ordonnance } = useOrdonnance()
 const { echeances } = useMemoire()
+const { epreuvesOuvertes } = useCatalogue()
 
 const { data: liste } = await parcours()
 
@@ -59,6 +60,37 @@ const { data: echus } = await useAsyncData(
 
 const nombreEchus = computed(() => echus.value?.meta?.due_total ?? 0)
 
+/*
+ * ─────────────────────────── D-01 — LA PREMIÈRE PORTE ───────────────────────
+ *
+ * Un compte neuf n'a aucune tentative : `epreuve` vaut `null`, et cet écran se
+ * réduisait à « Vous n'avez pas encore passé de diagnostic. » — un encart gris,
+ * sans un lien ni un bouton. Le candidat s'inscrivait et repartait.
+ *
+ * LE DÉFAUT N'ÉTAIT PAS SEULEMENT ICI. Il n'existait, dans TOUT le produit,
+ * aucun chemin d'interface d'un compte connecté vers l'écran de seuil du
+ * diagnostic : ni la fiche de famille, ni la fiche de spécialité n'y menaient.
+ * La recette du 17 août n'y est arrivée qu'en tapant l'adresse. Poser un lien
+ * vers le catalogue aurait donc mené à un second cul-de-sac ; c'est pourquoi
+ * les épreuves sont proposées ICI, chacune vers son seuil, et que
+ * `CarteEpreuve` a reçu la même porte côté public.
+ *
+ * ON NE DEMANDE LE CATALOGUE QUE DANS L'ÉTAT VIDE. Un tableau de bord rempli
+ * n'a rien à faire de la liste des épreuves ouvertes, et deux appels de plus à
+ * chaque ouverture seraient payés par tous pour servir le premier jour.
+ */
+const { data: ouvertes } = await useAsyncData(
+  () => `portes-${code.value || 'aucune'}`,
+  async () => {
+    if (code.value) return null
+    const { data } = await epreuvesOuvertes()
+    return data.value
+  },
+  { watch: [code] },
+)
+
+const portes = computed(() => ouvertes.value ?? [])
+
 useHead({ title: t('app.titre') })
 </script>
 
@@ -66,9 +98,37 @@ useHead({ title: t('app.titre') })
   <div class="enveloppe">
     <h1 class="titre-page">{{ t('app.titre') }}</h1>
 
-    <div v-if="!epreuve" class="alerte alerte--info" role="status">
-      <span>{{ t('app.aucun_diagnostic') }}</span>
-    </div>
+    <!-- ÉTAT VIDE — et il porte sa porte. Règle des portes, clauses 1 et 2 :
+         un écran qui mesure offre le geste qui le remplit, et aucun état vide
+         ne se termine sans un chemin cliquable. -->
+    <section v-if="!epreuve" class="debut">
+      <p class="debut__constat" role="status">{{ t('app.aucun_diagnostic') }}</p>
+      <h2 class="debut__titre">{{ t('app.commencer_titre') }}</h2>
+      <p class="debut__texte">{{ t('app.commencer_texte') }}</p>
+
+      <!-- Chaque épreuve ouverte est un lien vers SON seuil : le candidat lit
+           ce qui est mesuré avant de lancer quoi que ce soit. -->
+      <ul v-if="portes.length" class="debut__liste">
+        <li v-for="porte in portes" :key="porte.code">
+          <NuxtLink class="debut__porte" :to="localePath(`/app/diagnostic/${porte.code}`)">
+            <span class="debut__nom" dir="auto">{{ porte.name }}</span>
+            <span class="debut__famille" dir="auto">{{ porte.famille.name }}</span>
+            <span v-if="porte.coefficient !== null" class="debut__coef">
+              {{ t('app.coefficient') }} {{ porte.coefficient }}
+            </span>
+          </NuxtLink>
+        </li>
+      </ul>
+
+      <!-- Catalogue illisible ou aucune famille ouverte : on n'invente aucune
+           épreuve, et la sortie vers le catalogue reste — c'est le seul endroit
+           qui dise la vérité sur ce qui ouvrira. -->
+      <p v-else class="debut__aucune">{{ t('app.commencer_aucune') }}</p>
+
+      <NuxtLink class="lien-second" :to="localePath('/concours')">
+        {{ t('app.voir_catalogue') }}
+      </NuxtLink>
+    </section>
 
     <template v-else>
       <section class="carte-epreuve">
@@ -143,7 +203,14 @@ useHead({ title: t('app.titre') })
       <section class="mission">
         <h2 class="mission__titre">{{ t('app.mission_titre') }}</h2>
 
-        <p v-if="!mission.length" class="mission__vide">{{ t('app.mission_vide') }}</p>
+        <!-- Vide, la mission porte quand même sa porte : ce qui la remplit est
+             un diagnostic, et il est à un clic. -->
+        <p v-if="!mission.length" class="mission__vide">
+          <span>{{ t('app.mission_vide') }}</span>
+          <NuxtLink class="lien-second" :to="localePath(`/app/diagnostic/${epreuve.code}`)">
+            {{ t('diagnostic.lancer') }}
+          </NuxtLink>
+        </p>
 
         <!-- Trois actions, jamais quatre. La borne est posée deux fois : le
              `slice(0, 3)` au-dessus, et la règle CSS ci-dessous. La seconde
@@ -163,6 +230,44 @@ useHead({ title: t('app.titre') })
 </template>
 
 <style scoped>
+/* --- L'état vide et sa porte (D-01) --- */
+
+.debut {
+  margin-block-end: var(--e-6);
+  padding: var(--e-5);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-inline-start: 3px solid var(--accent);
+  border-radius: var(--r);
+}
+
+.debut__constat { margin-block: 0 var(--e-4); font-size: var(--t-sm); color: var(--texte-doux); }
+.debut__titre { margin-block: 0 var(--e-2); font-size: var(--t-lg); font-weight: 800; }
+.debut__texte { max-inline-size: 60ch; margin-block: 0 var(--e-4); font-size: var(--t-sm); color: var(--texte-doux); }
+
+.debut__liste { display: grid; gap: var(--e-2); margin: 0 0 var(--e-4); padding: 0; list-style: none; }
+
+.debut__porte {
+  display: grid;
+  gap: 2px;
+  /* 44 px de cible tactile : la porte se prend au doigt comme au curseur. */
+  min-block-size: 44px;
+  padding: var(--e-3) var(--e-4);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r);
+  text-decoration: none;
+  color: var(--texte);
+}
+
+.debut__porte:hover { border-color: var(--accent); background: var(--accent-doux); }
+
+.debut__nom { font-weight: 700; color: var(--lien); }
+.debut__famille { font-size: var(--t-sm); color: var(--texte-doux); }
+.debut__coef { font-size: var(--t-xs); color: var(--texte-doux); }
+
+.debut__aucune { max-inline-size: 60ch; margin-block: 0 var(--e-4); font-size: var(--t-sm); color: var(--texte-doux); }
+
 .carte-epreuve {
   margin-block-end: var(--e-6);
   padding: var(--e-5);
@@ -208,7 +313,15 @@ useHead({ title: t('app.titre') })
 
 .mission__titre { margin-block: 0 var(--e-3); font-size: var(--t-lg); font-weight: 800; }
 
-.mission__vide { max-inline-size: 60ch; font-size: var(--t-sm); color: var(--texte-doux); }
+.mission__vide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-3);
+  align-items: baseline;
+  max-inline-size: 60ch;
+  font-size: var(--t-sm);
+  color: var(--texte-doux);
+}
 
 .mission__liste { display: grid; gap: var(--e-3); margin: 0; padding: 0; list-style: none; }
 

@@ -6,6 +6,17 @@
  * d'un même examen mais trois ÉPREUVES distinctes, de coefficients 8, 12 et
  * 20. La maquette v1 laissait croire l'inverse, et un candidat aurait organisé
  * ses révisions sur de mauvaises proportions.
+ *
+ * D-01 — ET ELLE PORTE LA PORTE. Aucune fiche du catalogue ne menait au seuil
+ * du diagnostic : ni la famille, ni la spécialité. La recette humaine du
+ * 17 août n'y est arrivée qu'en tapant l'adresse. Une carte qui décrit une
+ * épreuve en détail sans dire par où on la commence est un écran qui mesure
+ * sans offrir la porte qui le remplit.
+ *
+ * Le lien mène au SEUIL, pas au lancement : l'écran E2 dit ce qui est mesuré et
+ * ce qui ne l'est pas avant qu'une seule question soit tirée. Il est sous
+ * `middleware: 'auth'` — un visiteur non connecté est conduit à la connexion,
+ * ce qui est la vérité de ce chemin, pas un cul-de-sac.
  */
 defineProps<{
   code: string
@@ -17,6 +28,7 @@ defineProps<{
 }>()
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 </script>
 
 <template>
@@ -40,6 +52,12 @@ const { t } = useI18n()
         <span :style="{ inlineSize: `${domaine.weight_percent ?? 0}%` }" />
       </span>
     </div>
+
+    <p class="epreuve__acte">
+      <NuxtLink class="lien-second epreuve__porte" :to="localePath(`/app/diagnostic/${code}`)">
+        {{ t('catalogue.commencer_diagnostic') }}
+      </NuxtLink>
+    </p>
   </article>
 </template>
 
@@ -65,4 +83,9 @@ const { t } = useI18n()
    3:1 applicable aux objets graphiques porteurs d'information. */
 .jauge { block-size: 6px; background: var(--bordure); border-radius: 99px; overflow: hidden; }
 .jauge span { display: block; block-size: 100%; background: var(--vert-700); border-radius: 99px; }
+
+.epreuve__acte { margin-block-start: var(--e-3); }
+
+/* 44 px de cible tactile, comme toutes les portes de ce lot. */
+.epreuve__porte { display: inline-flex; align-items: center; min-block-size: 44px; font-size: var(--t-sm); }
 </style>

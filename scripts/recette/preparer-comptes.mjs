@@ -19,7 +19,7 @@
 
 import { writeFileSync } from 'node:fs'
 
-import { client } from './client-api.mjs'
+import { client, jetonDeVerification } from './client-api.mjs'
 
 const API = process.env.API_BASE_URL || 'http://localhost:8000'
 const MAILPIT = process.env.MAILPIT_URL || 'http://localhost:8025'
@@ -29,24 +29,6 @@ export const COMPTES = [
   { cle: 'A', email: 'recette.a@naja7i.test', motDePasse: 'Recette-FRONT3-2026!' },
   { cle: 'B', email: 'recette.b@naja7i.test', motDePasse: 'Recette-FRONT3-2026!' },
 ]
-
-/** Le jeton de vérification, lu dans la boîte de réception. */
-async function jetonDeVerification(email) {
-  for (let essai = 0; essai < 20; essai++) {
-    const liste = await fetch(`${MAILPIT}/api/v1/messages?limit=30`).then((r) => r.json())
-    const message = liste.messages?.find((m) => m.To?.some((t) => t.Address === email))
-
-    if (message) {
-      const detail = await fetch(`${MAILPIT}/api/v1/message/${message.ID}`).then((r) => r.json())
-      const corps = (detail.Text ?? '') + (detail.HTML ?? '')
-      const trouve = corps.match(/token=([A-Za-z0-9]+)/)
-      if (trouve) return trouve[1]
-    }
-
-    await new Promise((r) => setTimeout(r, 500))
-  }
-  return null
-}
 
 async function preparer({ cle, email, motDePasse }) {
   const sac = client(API)
@@ -86,7 +68,7 @@ async function preparer({ cle, email, motDePasse }) {
     throw new Error(`compte ${cle} : création refusée — ${creation.statut} ${creation.texte.slice(0, 200)}`)
   }
 
-  const jeton = await jetonDeVerification(email)
+  const jeton = await jetonDeVerification(email, MAILPIT)
   if (!jeton) throw new Error(`compte ${cle} : aucun jeton de vérification reçu pour ${email}`)
 
   const verif = await neuf.appel('/api/v1/auth/email/verify', {

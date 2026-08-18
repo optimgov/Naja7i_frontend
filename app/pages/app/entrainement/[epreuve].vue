@@ -33,8 +33,29 @@ const codeEpreuve = computed(() => String(route.params.epreuve ?? ''))
 const { data: plan } = await ordonnance(codeEpreuve, 20)
 const domaines = computed(() => plan.value?.data ?? [])
 
-/** `null` = laisser le serveur choisir. C'est la valeur par défaut. */
-const domaineChoisi = ref<string | null>(null)
+/**
+ * `null` = laisser le serveur choisir. C'est la valeur par défaut.
+ *
+ * D-06 — LE DOMAINE PEUT VENIR DE L'ORDONNANCE, par `?domaine=`. Une ligne
+ * d'ordonnance désigne un domaine et son motif ; arriver ici avec la case
+ * « laisser Naja7i choisir » cochée ferait perdre le choix que le candidat
+ * vient de faire, et le serveur pourrait proposer un autre domaine que celui
+ * qu'il a cliqué.
+ *
+ * IL EST VÉRIFIÉ CONTRE L'ORDONNANCE, pas cru sur parole. Un `node_uuid`
+ * inconnu de ce plan retombe sur `null` : l'écran n'affiche jamais un choix
+ * coché qui ne correspond à aucune case, et le serveur ne reçoit pas un
+ * périmètre que l'écran n'a pas montré.
+ */
+const domaineDemande = computed(() => {
+  const brut = route.query.domaine
+  return typeof brut === 'string' && brut !== '' ? brut : null
+})
+
+const domaineChoisi = ref<string | null>(
+  domaines.value.some((l) => l.node_uuid === domaineDemande.value) ? domaineDemande.value : null,
+)
+
 const total = ref(15)
 
 const lancement = ref(false)

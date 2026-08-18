@@ -321,6 +321,20 @@ const RECETTES = [
    * candidat A, et l'ordre le dit.
    */
   ['zone publique — ZP-1', 'scripts/recette-zone-publique.mjs', []],
+  /*
+   * LES PORTES AVANT TOUT LE RESTE, et l'ordre est une contrainte.
+   *
+   * Elle part d'un compte qui n'existe pas encore et le mène de l'inscription
+   * à la question miroir. Elle N'UTILISE NI A NI B, précisément parce que son
+   * premier contrôle exige un compte à ZÉRO tentative : un compte que les
+   * recettes suivantes ont travaillé ne pourrait plus le produire.
+   *
+   * Elle est jouée tôt pour une autre raison : si la première porte est
+   * fermée, aucune des recettes suivantes ne décrit ce que vit un candidat
+   * réel — elles atteignent leurs écrans par leur adresse, et c'est
+   * exactement ce que la recette humaine du 17 août reprochait au produit.
+   */
+  ['les portes — PORTE-1 à PORTE-5', 'scripts/recette-portes.mjs', []],
   ['passation d’un diagnostic', 'scripts/recette-passation.mjs', [A.email, A.motDePasse]],
   /*
    * LE QUOTA F03 EST REMIS À NEUF AVANT FRONT-3.
@@ -441,7 +455,17 @@ for (const [i, [nom, script, args, options = {}]] of RECETTES.entries()) {
   const t0 = Date.now()
   const code = lancer('node', [script, ...args], {
     cwd: FRONT,
-    env: { ...process.env, BASE_URL: WEB, API_BASE_URL: API, SORTIE: `${SORTIE}-${script.split('/').pop()}` },
+    /* `MAILPIT_URL` voyage avec les autres : la recette des portes s'inscrit
+     * par le formulaire public et lit son jeton de vérification dans la boîte,
+     * comme `preparer-comptes.mjs`. Le laisser au défaut du script ferait
+     * diverger deux adresses de Mailpit dans la même exécution. */
+    env: {
+      ...process.env,
+      BASE_URL: WEB,
+      API_BASE_URL: API,
+      MAILPIT_URL: MAILPIT,
+      SORTIE: `${SORTIE}-${script.split('/').pop()}`,
+    },
   })
   const duree = Math.round((Date.now() - t0) / 1000)
   bilan.push({ nom, code, duree })

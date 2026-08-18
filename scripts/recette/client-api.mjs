@@ -98,6 +98,37 @@ export function client(base) {
   }
 }
 
+/**
+ * Le jeton de vérification d'e-mail, LU DANS LA BOÎTE DE RÉCEPTION.
+ *
+ * Il vivait dans `preparer-comptes.mjs`, qui exécute du code au chargement :
+ * l'importer pour cette seule fonction aurait créé les deux comptes A et B au
+ * passage. Il descend donc ici, dans le module que les scripts partagent déjà
+ * et qui, lui, ne fait rien à l'import.
+ *
+ * Lire le jeton dans Mailpit plutôt qu'en base éprouve au passage l'envoi réel.
+ *
+ * @param {string} email    l'adresse destinataire
+ * @param {string} mailpit  racine de Mailpit, sans barre finale
+ */
+export async function jetonDeVerification(email, mailpit) {
+  for (let essai = 0; essai < 20; essai++) {
+    const liste = await fetch(`${mailpit}/api/v1/messages?limit=30`).then((r) => r.json())
+    const message = liste.messages?.find((m) => m.To?.some((t) => t.Address === email))
+
+    if (message) {
+      const detail = await fetch(`${mailpit}/api/v1/message/${message.ID}`).then((r) => r.json())
+      const corps = (detail.Text ?? '') + (detail.HTML ?? '')
+      const trouve = corps.match(/token=([A-Za-z0-9]+)/)
+      if (trouve) return trouve[1]
+    }
+
+    await new Promise((r) => setTimeout(r, 500))
+  }
+
+  return null
+}
+
 /** Le message d'erreur d'une réponse, sans noyer l'appelant sous le HTML. */
 export function motif(reponse) {
   const e = reponse.corps?.error

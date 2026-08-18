@@ -47,11 +47,39 @@ useHead({
 })
 
 /*
- * Tout ce qui n'est pas un 404 est traité comme une panne : un candidat n'a pas
- * à connaître la différence entre un 500, un 502 et un délai dépassé, et
- * énumérer les codes ne l'aiderait en rien.
+ * Tout ce qui n'est ni un 404 ni un 403 est traité comme une panne : un
+ * candidat n'a pas à connaître la différence entre un 500, un 502 et un délai
+ * dépassé, et énumérer les codes ne l'aiderait en rien.
  */
 const introuvable = computed(() => props.error?.statusCode === 404)
+
+/**
+ * D-13 — UN REFUS N'EST PAS UNE PANNE, et le confondre coûte deux fois.
+ *
+ * Cette page rangeait le 403 avec les 500 : « Une panne est survenue de notre
+ * côté », suivi de « Référence 403 ». Les deux phrases sont fausses. Rien n'est
+ * en panne, rien n'est de notre côté, et le lecteur repart en croyant qu'il
+ * suffit de réessayer.
+ *
+ * LA RÈGLE DU DÉPÔT N'EST PAS CONTREDITE. « 404, jamais 403 » vise
+ * l'ÉNUMÉRATION des ressources d'autrui : une tentative, une commande, un
+ * profil qui appartient à quelqu'un d'autre reste INTROUVABLE, et aucun écran
+ * candidat ne produit de 403. Un 403 qui parvient jusqu'ici est donc, par
+ * construction, un refus de PERMISSION — et le refusé sait déjà que la surface
+ * existe, puisqu'il vient d'en demander une qu'il connaît.
+ *
+ * CE QU'ON NE PEUT PAS DIRE ICI, ET POURQUOI ON NE L'INVENTE PAS. La permission
+ * manquante voyage dans `details.required` de la réponse d'API, que cette page
+ * ne reçoit pas : `error.vue` est rendue hors du système de routes, avec le
+ * seul `statusCode`. Nommer la permission demanderait de la faire voyager
+ * jusqu'ici — c'est une dette ouverte (DET-79), pas un repli à fabriquer. On
+ * nomme donc ce qu'on sait : que c'est un refus de permission, sur QUELLE
+ * adresse, et à qui la demander.
+ */
+const refuse = computed(() => props.error?.statusCode === 403)
+
+/** L'adresse refusée, sans les paramètres — c'est la surface, pas la requête. */
+const surface = computed(() => route.fullPath.split(/[?#]/)[0] ?? '')
 
 /* `useError` conserve l'erreur ; `clearError` la vide ET navigue. Sans elle, le
  * lien ramènerait à l'accueil en laissant la page d'erreur montée. */
@@ -59,7 +87,23 @@ function sortir(vers: string): void {
   clearError({ redirect: `/${languePath.value}${vers}` })
 }
 
-const titre = computed(() => (introuvable.value ? t('erreur.introuvable_titre') : t('erreur.panne_titre')))
+const titre = computed(() => {
+  if (introuvable.value) return t('erreur.introuvable_titre')
+  if (refuse.value) return t('erreur.refuse_titre')
+  return t('erreur.panne_titre')
+})
+
+const oeil = computed(() => {
+  if (introuvable.value) return t('erreur.introuvable_oeil')
+  if (refuse.value) return t('erreur.refuse_oeil')
+  return t('erreur.panne_oeil')
+})
+
+const texte = computed(() => {
+  if (introuvable.value) return t('erreur.introuvable_texte')
+  if (refuse.value) return t('erreur.refuse_texte')
+  return t('erreur.panne_texte')
+})
 
 useSeoMeta({ title: () => titre.value, robots: 'noindex' })
 </script>
@@ -71,12 +115,18 @@ useSeoMeta({ title: () => titre.value, robots: 'noindex' })
         <LogoNaja7i />
       </NuxtLink>
 
-      <p class="oeil">{{ introuvable ? t('erreur.introuvable_oeil') : t('erreur.panne_oeil') }}</p>
+      <p class="oeil">{{ oeil }}</p>
 
       <h1 class="erreur__titre">{{ titre }}</h1>
 
-      <p class="erreur__texte">
-        {{ introuvable ? t('erreur.introuvable_texte') : t('erreur.panne_texte') }}
+      <p class="erreur__texte">{{ texte }}</p>
+
+      <!-- LA SURFACE EST NOMMÉE. C'est la moitié du D-13 que cette page peut
+           tenir : le refusé sait quelle adresse lui est fermée, et peut la
+           citer à qui il la demande. -->
+      <p v-if="refuse" class="erreur__surface">
+        <span class="erreur__surface-libelle">{{ t('erreur.refuse_surface') }}</span>
+        <code class="erreur__surface-valeur" dir="ltr">{{ surface }}</code>
       </p>
 
       <div class="erreur__sorties">
@@ -89,8 +139,10 @@ useSeoMeta({ title: () => titre.value, robots: 'noindex' })
       </div>
 
       <!-- L'identifiant de requête sert au support, pas au candidat : il est
-           présent, en retrait, et seulement quand le serveur en a fourni un. -->
-      <p v-if="!introuvable && error?.statusCode" class="erreur__reference">
+           présent, en retrait, et seulement quand le serveur en a fourni un.
+           Pas sur un refus : « Référence 403 » sous un texte qui dit déjà
+           « permission refusée » n'ajoute rien et sonne comme un incident. -->
+      <p v-if="!introuvable && !refuse && error?.statusCode" class="erreur__reference">
         {{ t('errors.reference') }} {{ error.statusCode }}
       </p>
     </main>
@@ -131,6 +183,28 @@ useSeoMeta({ title: () => titre.value, robots: 'noindex' })
   font-size: var(--t-lg);
   line-height: 1.6;
   color: var(--texte-doux);
+}
+
+.erreur__surface {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+  align-items: baseline;
+  justify-content: center;
+  margin-block: 0 var(--e-5);
+  font-size: var(--t-sm);
+  color: var(--texte-doux);
+}
+
+.erreur__surface-libelle { font-weight: 700; }
+
+.erreur__surface-valeur {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  padding: 2px 8px;
+  border-radius: var(--r);
+  background: var(--surface-douce);
+  color: var(--texte);
 }
 
 .erreur__sorties {
