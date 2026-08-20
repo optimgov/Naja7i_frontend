@@ -71,6 +71,12 @@ const ECRANS = [
    * Sans backend, elle rendrait son état « catalogue illisible », et l'audit
    * mesurerait un paragraphe au lieu d'une page. */
   ['se préparer', '/se-preparer'],
+
+  /* La page de résultats complets. Elle est `noindex, follow` — donc hors des
+   * enjeux d'indexation — mais elle reste une surface publique à part entière,
+   * et son rendu se mesure comme les autres. La question est réelle : une page
+   * de résultats visitée sans `?q=` rendrait son invite, pas ses résultats. */
+  ['recherche', '/recherche?q=administrateur'],
 ]
 
 /**

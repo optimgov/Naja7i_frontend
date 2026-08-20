@@ -142,6 +142,26 @@
     "fil_tout_voir": "Toutes les opportunités",
     "fil_fixture": "Données d’exemple — {source}. Le collecteur d’annonces n’est pas encore branché."
   },
+  "recherche": {
+    "ouvrir": "Rechercher",
+    "titre": "Recherche",
+    "h1": "Rechercher dans les concours et les opportunités",
+    "indice": "Filière, concours, spécialité, organisme…",
+    "trop_court": "Tapez au moins {n} caractères.",
+    "en_cours": "Recherche en cours…",
+    "n_resultats": "{n} résultat | {n} résultats",
+    "aucun": "Aucun résultat avec ces critères.",
+    "source_manquante": "Le catalogue des concours n’a pas répondu : la recherche est incomplète. Réessayez dans un instant.",
+    "tout_voir": "Voir les {n} résultats",
+    "groupe_filiere": "Filières",
+    "groupe_famille": "Familles de concours",
+    "groupe_specialite": "Spécialités",
+    "groupe_opportunite": "Opportunités",
+    "etat_ouverte": "Dépôt ouvert",
+    "etat_close": "Dépôt clos",
+    "seo_titre": "Recherche",
+    "seo_description": "Rechercher une filière, une famille de concours, une spécialité ou une opportunité publiée sur naja7i.ma."
+  },
   "demonstration": {
     "indisponible": "La démonstration est momentanément indisponible. Vous pouvez néanmoins consulter les concours et leur programme.",
     "voir_concours": "Voir les concours",

@@ -7,8 +7,8 @@
  * Le module Opportunités se construit dans un autre dépôt. Le CONTRAT DE
  * DONNÉES est déjà celui du collecteur — les 29 annonces du 8 août 2026 en
  * sont une capture réelle, pas un jeu inventé. Il n'y a donc rien à réécrire
- * au branchement : seul le POINT DE LECTURE change, ce `readFile` devenant un
- * appel au collecteur.
+ * au branchement : seul le POINT DE LECTURE change, et il vit désormais dans
+ * `server/utils/opportunites.ts`, partagé avec la recherche globale.
  *
  * Elle n'est pas sous `/api/`, et ce n'est pas un détail : `server/routes/api/
  * [...].ts` relaie TOUT ce préfixe vers Laravel. Une route de fixture posée là
@@ -29,100 +29,21 @@
  * puisse coûter à un candidat sa candidature. On recalcule donc depuis
  * `deadline`, qui est une DATE et ne périme pas.
  *
- * La forme rendue est inchangée — le client lit toujours `jours`. Quand le
- * collecteur branchera, ce recalcul restera utile : il transforme une donnée
- * fraîche à la collecte en donnée fraîche à la LECTURE, et l'écart entre les
- * deux est exactement le temps qu'une annonce passe en cache.
- */
-
-/** Ce que le collecteur sert. Reproduit à la lettre — voir l'en-tête. */
-export interface AnnonceCollecteur {
-  id: string
-  slug: string
-  type: string
-  stage: string
-  titre: string
-  resume: string
-  org: string
-  org_type: string
-  ref: string | null
-  grade: string | null
-  echelle: string | null
-  specialites: string[]
-  postes: number | null
-  regions: string[]
-  deadline: string | null
-  jours: number | null
-  exam: string | null
-  publie: string
-  mode: string
-  url: string
-  diplomes: string[]
-  age: number | null
-  docs: { label: string, url: string, mime: string, mirrored: boolean }[]
-  source: { nom: string, url: string, fetched: string, officiel: boolean }
-  naja7i: {
-    filiere: string | null
-    prep_slug: string | null
-    has_prep: boolean
-    match_reason: string | null
-    confidence: number
-  }
-  revision: number
-}
-
-let cache: AnnonceCollecteur[] | null = null
-
-async function lire(): Promise<AnnonceCollecteur[]> {
-  if (cache) return cache
-
-  /*
-   * `useStorage('assets:server')` ET NON `readFile` SUR UN CHEMIN RELATIF.
-   *
-   * Un chemin construit depuis `import.meta.url` marche en développement et
-   * casse à la compilation : le module se retrouve dans
-   * `.output/server/chunks/routes/…`, et le `../..` ne désigne plus rien.
-   * Mesuré — 500 ENOENT sur la première exécution du bundle, alors que `npm
-   * run dev` passait.
-   *
-   * `server/assets/` est justement l'emplacement que Nitro embarque dans le
-   * bundle et expose par cette clé. Le fichier voyage avec le serveur.
-   *
-   * Lu une fois par processus. Le jour où ce sera un appel au collecteur, ce
-   * cache devra gagner une durée de vie — pas disparaître.
-   */
-  const brut = await useStorage('assets:server').getItem<AnnonceCollecteur[] | string>(
-    'annonces-2026-08-08.json',
-  )
-
-  if (brut === null || brut === undefined) {
-    throw createError({ statusCode: 500, statusMessage: 'Fixture des opportunités introuvable' })
-  }
-
-  cache = typeof brut === 'string' ? JSON.parse(brut) as AnnonceCollecteur[] : brut
-
-  return cache
-}
-
-/*
+ * La forme rendue est inchangée — le client lit toujours `jours`.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
  * `joursRestants` VIT DANS `server/utils/echeance.ts` — audit t4, BLOC-ZP1-1.
  *
  * Il était ici, et il comptait en dates civiles UTC : à 16h31 à Casablanca une
- * annonce close à 16h30 restait ouverte jusqu'à 01h00, et à 00h30 « demain »
- * s'affichait « dans 2 jours ». Le commentaire prétendait pourtant compter
- * « dans le fuseau du candidat » — aucun fuseau n'était déclaré nulle part.
- *
- * Déplacé pour une raison de fond : un décompte ne se prouve qu'aux FRONTIÈRES
- * de journée, donc avec une horloge injectable. Tant que la fonction vivait
- * dans un gestionnaire de route, elle n'était atteignable qu'à l'heure qu'il
- * est — et vingt-trois heures sur vingt-quatre, tout allait bien.
- *
- * Nitro l'auto-importe depuis `server/utils/`. `scripts/verifier-echeances.mjs`
- * l'éprouve aux deux minutes qui comptent, et sous deux fuseaux d'hôte.
+ * annonce close à 16h30 restait ouverte jusqu'à 01h00. Un décompte ne se prouve
+ * qu'aux FRONTIÈRES de journée, donc avec une horloge injectable — tant que la
+ * fonction vivait dans un gestionnaire de route, elle n'était atteignable qu'à
+ * l'heure qu'il est. `scripts/verifier-echeances.mjs` l'éprouve aux deux
+ * minutes qui comptent, et sous deux fuseaux d'hôte.
  */
 
 export default defineEventHandler(async (event) => {
-  const annonces = (await lire()).map(a => ({ ...a, jours: joursRestants(a.deadline) }))
+  const annonces = (await lireAnnonces()).map(a => ({ ...a, jours: joursRestants(a.deadline) }))
 
   /* `no-store` : `jours` est calculé à l'instant de la réponse. Mise en cache,
    * elle rendrait un décompte faux — et d'autant plus faux qu'elle serait

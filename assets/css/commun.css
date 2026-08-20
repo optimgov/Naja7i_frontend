@@ -842,6 +842,142 @@
    nomme ce qu'on vend, l'autre ce qu'on fait. */
 .nav__lien--coeur { color: var(--texte); font-weight: 700; }
 
+/* --------------------------------- 0 bis-2. La palette de recherche */
+
+.recherche-globale { position: relative; }
+
+.recherche-globale__declencheur {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  min-block-size: 34px;
+  padding: 0 var(--e-3);
+  font: inherit;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--texte-doux);
+  background: transparent;
+  border: 1px solid var(--bordure);
+  border-radius: var(--r);
+  cursor: pointer;
+}
+.recherche-globale__declencheur:hover { color: var(--texte); background: var(--surface-douce); }
+.recherche-globale__declencheur:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.recherche-globale__icone { flex: none; font-size: 1.1em; }
+
+/* Sous 30 rem, l'icône suffit : le mot sort du flux SANS sortir de l'arbre
+   d'accessibilité — la commande garde son nom pour un lecteur d'écran. */
+@media (max-width: 30rem) {
+  .recherche-globale__mot {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .recherche-globale__declencheur { padding-inline: var(--e-2); }
+}
+
+/*
+ * SUR GRAND ÉCRAN, un panneau ancré au déclencheur, ouvert vers la FIN de ligne
+ * — à gauche en arabe, à droite en français, sans règle supplémentaire.
+ */
+.palette {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + var(--e-2));
+  z-index: 46;
+  inline-size: min(30rem, calc(100vw - 2 * var(--e-4)));
+}
+
+.palette__cadre {
+  padding: var(--e-3);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r-m);
+  box-shadow: var(--ombre-3);
+}
+
+/*
+ * SUR TÉLÉPHONE, PLEIN ÉCRAN. Un panneau de 30 rem posé sur une fenêtre de
+ * 320 px n'est pas un panneau : c'est la page, en plus étroit. Autant assumer
+ * la surface entière, où la liste respire et où le pouce atteint tout.
+ */
+@media (max-width: 47.99rem) {
+  .palette {
+    position: fixed;
+    inset: 0;
+    inline-size: auto;
+    z-index: 60;
+    padding: var(--e-3);
+    background: var(--fond);
+    overflow-y: auto;
+  }
+  .palette__cadre { border: 0; box-shadow: none; background: none; padding: 0; }
+}
+
+.palette__saisie {
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding-inline: var(--e-3);
+  font: inherit;
+  font-size: var(--t-m);
+  color: var(--texte);
+  background: var(--surface);
+  border: 1px solid var(--bordure-forte);
+  border-radius: var(--r-s);
+}
+.palette__saisie::placeholder { color: var(--texte-tenu); }
+.palette__saisie:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+.palette__compte {
+  margin-block: var(--e-2) var(--e-2);
+  font-size: var(--t-xs);
+  color: var(--texte-doux);
+}
+
+.palette__liste { margin: 0; padding: 0; list-style: none; max-block-size: 60vh; overflow-y: auto; }
+
+.palette__groupe {
+  padding: var(--e-2) var(--e-2) var(--e-1);
+  font-size: var(--t-2xs);
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+}
+
+.palette__resultat a {
+  display: grid;
+  gap: 1px;
+  /* 44 px de cible tactile, comme toutes les portes de ce dépôt. */
+  min-block-size: 44px;
+  padding: var(--e-2) var(--e-3);
+  text-decoration: none;
+  color: var(--texte);
+  border-radius: var(--r-xs);
+}
+
+/*
+ * L'ÉLÉMENT ACTIF EST DÉSIGNÉ PAR `aria-activedescendant`, donc il ne reçoit
+ * pas le focus du navigateur : aucun contour ne le marquerait tout seul. Le
+ * fond et le filet de début de ligne le portent — et l'attribut ARIA le porte
+ * pour qui ne les voit pas. Les deux canaux, jamais un seul.
+ */
+.palette__resultat--actif a { background: var(--accent-doux); }
+.palette__resultat--actif { border-inline-start: 3px solid var(--accent); border-radius: var(--r-xs); }
+.palette__resultat a:hover { background: var(--surface-douce); }
+
+.palette__titre { font-weight: 700; }
+.palette__contexte { font-size: var(--t-xs); color: var(--texte-doux); }
+.palette__etat { font-size: var(--t-2xs); color: var(--texte-doux); }
+
+.palette__vide { padding: var(--e-4) var(--e-2); font-size: var(--t-s); color: var(--texte-doux); }
+.palette__portes { display: flex; flex-wrap: wrap; gap: var(--e-4); margin-block-start: var(--e-3); }
+.palette__tout { margin-block: var(--e-3) 0; padding-block-start: var(--e-2); border-block-start: 1px solid var(--bordure); }
+
 /* ------------------------------------------- 0 ter. Le menu « Plus » */
 
 .plus { position: relative; display: none; }

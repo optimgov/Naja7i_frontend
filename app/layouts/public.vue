@@ -55,6 +55,12 @@ const ouvertes = computed(() => {
         <NavPublique :ouvertes="ouvertes" />
 
         <div class="publique__actions peau__actes">
+          <!-- La recherche ouvre le groupe de service, avant le thème et la
+               langue : elle répond à une intention, les deux autres règlent un
+               confort. Elle existe à toutes les largeurs — sur téléphone c'est
+               souvent le geste le plus court vers une fiche précise. -->
+          <PaletteRecherche />
+
           <!-- La bascule de thème reste dans le rang du haut À TOUTES LES
                LARGEURS, et ce n'est pas une question de place : `npm run audit`
                rejoue chaque écran en sombre en CLIQUANT `[data-bascule-theme]`.

@@ -725,6 +725,180 @@ const page = await contexte.newPage()
   )
 }
 
+// ═══════════════════ 5 quater. La recherche globale ═══════════════════
+{
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * CE QUE CE BLOC ÉPROUVE, ET POURQUOI CHAQUE POINT EST LÀ
+   *
+   * Une palette de recherche se juge au clavier, pas à la capture. Les quatre
+   * gestes qui suivent sont ceux qu'un candidat fait sans y penser, et chacun
+   * casse en silence quand il n'est pas mesuré : la flèche qui ne bouge pas,
+   * l'Échap qui ferme sans rendre le focus — et l'on se retrouve au début du
+   * document —, le compte qui se met à jour sans être annoncé.
+   *
+   * `aria-activedescendant` est le point délicat : le focus DOM reste dans la
+   * saisie pour qu'on puisse continuer à taper, et c'est un ATTRIBUT qui
+   * déplace le curseur virtuel. Rien à l'écran ne le prouve ; il faut le lire.
+   */
+  const REQUETE = 'administrateur'
+
+  // ── R1. La page complète, et son `noindex, follow` DANS LE HTML SERVI ──
+  const html = await fetch(`${BASE}/fr/recherche?q=${REQUETE}`).then(r => r.text())
+  const robots = html.match(/<meta[^>]+name="robots"[^>]+content="([^"]+)"/)?.[1] ?? ''
+
+  note(
+    '/recherche est marquée noindex,follow dans le HTML servi',
+    /noindex/.test(robots) && /follow/.test(robots) && !/nofollow/.test(robots),
+    `meta robots = « ${robots || 'ABSENTE'} »`,
+  )
+
+  /* Déclarer une canonique sur une page qu'on demande à ne pas indexer envoie
+     deux instructions contradictoires. Elle ne doit pas y être. */
+  note(
+    'elle ne déclare pas de canonique — on n’indexe pas ET on ne canonise pas',
+    !/<link[^>]+rel="canonical"/.test(html),
+    /<link[^>]+rel="canonical"/.test(html)
+      ? 'une balise canonique est posée sur une page noindex'
+      : 'aucune canonique, comme attendu',
+  )
+
+  // ── R2. La question vient de l'URL, et l'écran la rend ──
+  await page.goto(`${BASE}/fr/recherche?q=${REQUETE}`, { waitUntil: 'networkidle' })
+
+  const surPage = await page.evaluate(() => ({
+    champ: document.querySelector('.resultats__champ input')?.value ?? '',
+    liens: document.querySelectorAll('.resultats__lien').length,
+    groupes: document.querySelectorAll('.resultats__titre').length,
+    compte: (document.querySelector('.resultats__compte')?.textContent || '').trim(),
+    live: document.querySelector('.resultats__compte')?.getAttribute('aria-live') ?? '',
+  }))
+
+  note(
+    'la question vit dans l’URL et l’écran la restitue',
+    surPage.champ === REQUETE && surPage.liens > 0 && surPage.groupes > 0,
+    `champ « ${surPage.champ} » · ${surPage.liens} résultat(s) en ${surPage.groupes} groupe(s)`,
+  )
+
+  note(
+    'le nombre de résultats est annoncé, pas seulement affiché',
+    surPage.live === 'polite' && surPage.compte.length > 0,
+    `aria-live=${surPage.live || '—'} · « ${surPage.compte} »`,
+  )
+
+  // ── R3. L'état vide donne DEUX portes, pas une phrase seule ──
+  await page.goto(`${BASE}/fr/recherche?q=zzzzqqqqxxxx`, { waitUntil: 'networkidle' })
+  const portes = await page.locator('.resultats__portes a').count()
+  const phraseVide = (await page.locator('.resultats__vide p').innerText().catch(() => '')).trim()
+
+  note(
+    'l’état vide est actionnable — il porte ses sorties',
+    portes >= 2 && phraseVide.length > 0,
+    `« ${phraseVide} » · ${portes} porte(s) de sortie`,
+  )
+
+  // ── R4. La palette : ouverture, flèches, Entrée, Échap, retour du focus ──
+  await page.goto(`${BASE}/fr/opportunites`, { waitUntil: 'networkidle' })
+
+  const declencheur = page.locator('.recherche-globale__declencheur')
+  await declencheur.click()
+  await page.waitForTimeout(200)
+
+  const focusOuverture = await page.evaluate(
+    () => document.activeElement?.className ?? '',
+  )
+
+  note(
+    'la palette s’ouvre et donne le focus à sa saisie',
+    focusOuverture.includes('palette__saisie'),
+    `focus sur « ${focusOuverture || 'rien'} »`,
+  )
+
+  await page.keyboard.type(REQUETE)
+  await page.waitForTimeout(500)
+
+  const avantFleche = await page.locator('.palette__saisie').getAttribute('aria-activedescendant')
+  await page.keyboard.press('ArrowDown')
+  await page.waitForTimeout(120)
+  const apresFleche = await page.locator('.palette__saisie').getAttribute('aria-activedescendant')
+
+  const resteDansSaisie = await page.evaluate(
+    () => (document.activeElement?.className ?? '').includes('palette__saisie'),
+  )
+
+  note(
+    'les flèches déplacent le curseur virtuel SANS quitter la saisie',
+    Boolean(avantFleche) && avantFleche !== apresFleche && resteDansSaisie,
+    `aria-activedescendant : ${avantFleche ?? '—'} → ${apresFleche ?? '—'} · `
+    + `focus DOM resté dans la saisie : ${resteDansSaisie}`,
+  )
+
+  const compteLive = await page.locator('.palette__compte').getAttribute('aria-live')
+  const compteTexte = (await page.locator('.palette__compte').innerText()).trim()
+
+  note(
+    'le compte de la palette est annoncé',
+    compteLive === 'polite' && compteTexte.length > 0,
+    `aria-live=${compteLive || '—'} · « ${compteTexte} »`,
+  )
+
+  /* ÉCHAP FERME ET REND LE FOCUS. Sans ce retour, on ferme la palette et l'on
+     repart du début du document — c'est le détail qu'on oublie en recopiant un
+     comportement de panneau, et c'est pour cela qu'il vit dans `usePanneau`. */
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(250)
+
+  const fermee = await page.locator('#palette-recherche').count()
+  const focusRendu = await page.evaluate(
+    () => (document.activeElement?.className ?? '').includes('recherche-globale__declencheur'),
+  )
+
+  note(
+    'Échap ferme la palette et rend le focus au déclencheur',
+    fermee === 0 && focusRendu,
+    `panneau dans le DOM : ${fermee} · focus rendu au déclencheur : ${focusRendu}`,
+  )
+
+  /* Fermée, elle n'est pas seulement invisible : elle n'est plus dans l'arbre.
+     `v-show` aurait laissé une liste que la tabulation traverse à l'aveugle. */
+  note(
+    'fermée, la palette n’est plus dans l’arbre du document',
+    fermee === 0,
+    `#palette-recherche : ${fermee} nœud(s)`,
+  )
+
+  // ── R5. Entrée ouvre le résultat actif ──
+  /*
+   * `fill` ET NON `type`, ET C'EST LA RECETTE QUI AVAIT TORT.
+   *
+   * La palette CONSERVE sa question d'une ouverture à l'autre — c'est le bon
+   * comportement : rouvrir la recherche juste après l'avoir fermée par
+   * mégarde ne doit pas effacer ce qu'on venait de taper. Mais `type` AJOUTE au
+   * contenu existant : la seconde ouverture cherchait donc
+   * « administrateuradministrateur », ne trouvait rien, et Entrée n'avait aucun
+   * résultat actif à ouvrir. Le cas rougissait sur un défaut du test.
+   *
+   * `fill` remplace la valeur, ce qui est aussi le geste réel d'un candidat qui
+   * sélectionne tout et retape.
+   */
+  await declencheur.click()
+  await page.waitForTimeout(200)
+  await page.locator('.palette__saisie').fill(REQUETE)
+  await page.waitForTimeout(500)
+  await page.keyboard.press('Enter')
+  await page.waitForTimeout(600)
+
+  const arrivee = new URL(page.url()).pathname
+
+  note(
+    'Entrée ouvre le résultat actif',
+    arrivee !== '/fr/opportunites' && arrivee.startsWith('/fr/'),
+    `arrivée sur ${arrivee}`,
+  )
+
+  await page.screenshot({ path: `${SORTIE}-05-recherche.png`, fullPage: true })
+}
+
 // ══════════════════════════════════ 6. RTL et dir sur le collecteur ═══
 {
   await page.goto(`${BASE}/ar/opportunites`, { waitUntil: 'networkidle' })

@@ -51,7 +51,15 @@ const ECRANS_AUTONOMES = ['/opportunites', '/connexion', '/inscription']
  * Les écrans qui LISENT LE CATALOGUE. Ils exigent Laravel, et `--complet` les
  * ajoute — c'est ce que passe `npm run recette`, qui a démarré l'API.
  */
-const ECRANS_AVEC_CATALOGUE = ['/', '/se-preparer', '/concours', '/tarifs']
+const ECRANS_AVEC_CATALOGUE = [
+  '/',
+  '/se-preparer',
+  '/concours',
+  '/tarifs',
+  /* Avec sa question : sans `?q=`, la page rend son invite et non ses
+     résultats — on mesurerait un champ de saisie vide. */
+  '/recherche?q=administrateur',
+]
 
 const LOCALES = ['fr', 'ar']
 const LARGEURS = [1440, 390]
