@@ -452,6 +452,165 @@ if (combienMiroirs === 0) {
   }
 }
 
+// ═════ PORTE-6 — la destination survit au tunnel d'authentification ═════
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CE QUE CE BLOC ÉPROUVE, ET POURQUOI IL FAUT UN COMPTE NEUF POUR LE FAIRE
+ *
+ * `?suite=` existait, dans `connexion.vue`, et NULLE PART AILLEURS. Un visiteur
+ * qui avait DÉJÀ un compte revenait où il allait ; un visiteur NEUF perdait sa
+ * destination à l'inscription, puis la garde de route l'envoyait sur la
+ * connexion sans dire d'où il venait. Le parcours cassait exactement pour qui
+ * découvrait le produit — c'est-à-dire pour la seule personne que
+ * `/se-preparer` existe pour convaincre.
+ *
+ * LA CHAÎNE COMPTE CINQ MAILLONS, et le quatrième est le plus fragile :
+ *
+ *   1. `/se-preparer`   le visiteur choisit une épreuve
+ *   2. `/connexion`     la garde `auth` l'y conduit AVEC `?suite=`
+ *   3. `/inscription`   le lien « en créer un » reporte la suite
+ *   4. la BOÎTE AUX LETTRES — le lien de vérification est fabriqué par le
+ *      backend et n'emporte QUE son jeton. La suite revient par un cookie de
+ *      trente minutes, posé à l'étape 3 et relu ici.
+ *   5. `/app/diagnostic/{code}` — l'épreuve choisie au premier écran.
+ *
+ * UN CONTEXTE NEUF EST INDISPENSABLE. Les blocs précédents ont laissé une
+ * session ouverte, et `/inscription` porte `middleware: 'guest'` : un candidat
+ * connecté y serait renvoyé vers `/app`, et la chaîne ne serait jamais
+ * exercée. C'est le genre 4 du bestiaire — la garde qu'on prétend éprouver
+ * n'est plus jamais atteinte.
+ */
+console.log('9. la destination traverse-t-elle le tunnel d’authentification ?')
+{
+  const EMAIL_SUITE = `recette.suite.${Date.now()}@naja7i.test`
+
+  const ctxNeuf = await navigateur.newContext({ viewport: { width: 1280, height: 900 } })
+  const neuf = await ctxNeuf.newPage()
+
+  // ── 1 & 2. Depuis `/se-preparer`, la garde conduit à la connexion AVEC la suite
+  await neuf.goto(`${BASE}/fr/se-preparer`, { waitUntil: 'networkidle' })
+
+  const porte = neuf.locator('.preparer__porte').first()
+  const cible = await porte.getAttribute('href').catch(() => null)
+
+  if (!cible) {
+    nonVerifie('PORTE-6', 'la destination choisie survit à la création de compte',
+      '`/se-preparer` n’offre aucune épreuve ouverte — le catalogue de recette a changé')
+  } else {
+    await porte.click()
+    await neuf.waitForURL('**/connexion**', { timeout: 20000 })
+
+    const surConnexion = new URL(neuf.url())
+    const suiteConnexion = surConnexion.searchParams.get('suite') ?? ''
+
+    if (suiteConnexion !== cible) {
+      ko('PORTE-6a', 'la garde de route emporte la destination vers la connexion',
+        `?suite=${suiteConnexion || '(absent)'} · attendu ${cible}`)
+    } else {
+      ok('PORTE-6a', 'la garde de route emporte la destination vers la connexion',
+        `${cible} → /fr/connexion?suite=${suiteConnexion}`)
+    }
+
+    // ── 3. Le lien vers l'inscription REPORTE la suite
+    await neuf.locator('.bascule-compte a').click()
+    await neuf.waitForURL('**/inscription**', { timeout: 20000 })
+
+    const suiteInscription = new URL(neuf.url()).searchParams.get('suite') ?? ''
+
+    if (suiteInscription !== cible) {
+      ko('PORTE-6b', 'le lien vers l’inscription reporte la destination',
+        `?suite=${suiteInscription || '(absent)'} · attendu ${cible}`)
+    } else {
+      ok('PORTE-6b', 'le lien vers l’inscription reporte la destination',
+        `/fr/inscription?suite=${suiteInscription}`)
+    }
+
+    // ── 4. La boîte aux lettres : le lien de vérification n'emporte QUE son jeton
+    await neuf.fill('input[type="email"]', EMAIL_SUITE)
+    const mdp = neuf.locator('input[type="password"]')
+    await mdp.nth(0).fill(MOT_DE_PASSE)
+    await mdp.nth(1).fill(MOT_DE_PASSE)
+
+    const casesNeuf = neuf.locator('.case__coche')
+    await casesNeuf.nth(0).check()
+    await casesNeuf.nth(1).check()
+
+    await neuf.click('button[type="submit"]')
+    await neuf.waitForURL('**/verifier-email**', { timeout: 20000 })
+
+    const jetonSuite = await jetonDeVerification(EMAIL_SUITE, MAILPIT)
+
+    if (!jetonSuite) {
+      nonVerifie('PORTE-6c', 'la destination survit à la boîte aux lettres',
+        `aucun jeton de vérification reçu pour ${EMAIL_SUITE}`)
+    } else {
+      /* LE LIEN RÉEL DU COURRIEL : rien d'autre que le jeton. C'est là que la
+         chaîne cassait, et c'est ce que ce contrôle reproduit exactement. */
+      await neuf.goto(`${BASE}/fr/verifier-email?token=${jetonSuite}`, { waitUntil: 'networkidle' })
+      await neuf.waitForTimeout(600)
+
+      const continuer = neuf.locator('.alerte--succes ~ a.btn').first()
+      const versSuite = await continuer.getAttribute('href').catch(() => null)
+
+      if (versSuite !== cible) {
+        ko('PORTE-6c', 'la destination survit à la boîte aux lettres',
+          `le lien de reprise pointe ${versSuite ?? '(aucun)'} · attendu ${cible}`)
+      } else {
+        ok('PORTE-6c', 'la destination survit à la boîte aux lettres',
+          `lien reçu sans suite, reprise proposée vers ${versSuite} (relais par cookie)`)
+
+        // ── 5. Et elle s'ouvre vraiment.
+        await continuer.click()
+        await neuf.waitForTimeout(1200)
+
+        const arrivee = new URL(neuf.url()).pathname
+
+        if (arrivee !== cible) {
+          ko('PORTE-6d', 'le candidat neuf arrive sur l’épreuve qu’il avait choisie',
+            `arrivée sur ${arrivee} · attendu ${cible}`)
+        } else {
+          ok('PORTE-6d', 'le candidat neuf arrive sur l’épreuve qu’il avait choisie',
+            `${arrivee} — cinq écrans traversés sans perdre le choix initial`)
+        }
+      }
+    }
+
+    /*
+     * ═══ ET LA REDIRECTION OUVERTE RESTE FERMÉE ═══
+     *
+     * `?suite=` est une destination fournie par l'URL : accepter la valeur
+     * telle quelle ferait de la connexion une redirection ouverte, offerte à
+     * qui envoie un lien piégé. Trois formes sont éprouvées — l'URL absolue,
+     * le double slash, et la contre-barre que les navigateurs normalisent en
+     * barre oblique au moment de résoudre l'URL.
+     */
+    const pieges = ['https://evil.example/', '//evil.example/', '/\\evil.example/']
+    const suivis = []
+
+    for (const piege of pieges) {
+      await neuf.goto(
+        `${BASE}/fr/connexion?suite=${encodeURIComponent(piege)}`,
+        { waitUntil: 'networkidle' },
+      )
+      await neuf.waitForTimeout(500)
+
+      /* Le compte est vérifié : la garde `guest` renvoie vers la suite si elle
+         l'accepte. Elle doit atterrir sur `/app`, jamais chez evil.example. */
+      const ou = new URL(neuf.url())
+      if (ou.hostname !== new URL(BASE).hostname) suivis.push(`${piege} → ${ou.href}`)
+    }
+
+    if (suivis.length) {
+      ko('PORTE-6e', 'une suite hors du site n’est jamais suivie', `SUIVIE : ${suivis.join(' · ')}`)
+    } else {
+      ok('PORTE-6e', 'une suite hors du site n’est jamais suivie',
+        `${pieges.length} forme(s) refusée(s) : ${pieges.join(' · ')}`)
+    }
+  }
+
+  await ctxNeuf.close()
+}
+
 await navigateur.close()
 
 // ═════════════════════════════════════════════════════════════════ verdict

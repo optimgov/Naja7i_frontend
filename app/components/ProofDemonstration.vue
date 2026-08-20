@@ -281,10 +281,14 @@ function libelleCause(code: string): string {
 
       <!-- La remédiation SI le contrat la porte. L'action suivante, plus bas,
            n'en dépend jamais. -->
-      <p v-if="demo!.remediation" class="preuve__remede" dir="auto">
-        {{ t('correction.remediation') }} : {{ demo!.remediation.title }}
+      <!-- Même composition que l'écran de correction du candidat : un libellé,
+           le titre, la durée. On ne se donne pas un second vocabulaire pour
+           dire la même chose sur deux surfaces du même produit. -->
+      <p v-if="demo!.remediation" class="preuve__remede">
+        <span class="preuve__remede-libelle">{{ t('correction.remediation') }}</span>
+        <span dir="auto">{{ demo!.remediation.title }}</span>
         <span v-if="demo!.remediation.estimated_minutes !== null">
-          · {{ t('correction.minutes', { n: demo!.remediation.estimated_minutes }) }}
+          {{ t('correction.minutes', { n: demo!.remediation.estimated_minutes }) }}
         </span>
       </p>
 
@@ -488,11 +492,16 @@ function libelleCause(code: string): string {
 /* Pas de --mono : depuis qu'elle est traduite, la cause est de la prose, arabe
    comprise, et les piles monospace couvrent mal l'arabe. */
 .preuve__remede {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem var(--e-2);
   margin: var(--e-3) 0 0;
   font-size: var(--t-xs);
-  font-weight: 600;
   color: var(--peda-remede-texte);
 }
+
+.preuve__remede-libelle { font-weight: 700; }
 
 .preuve__assise {
   margin: var(--e-4) 0 0;

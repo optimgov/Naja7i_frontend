@@ -90,6 +90,21 @@ interface Corpus {
 }
 
 const FENETRE_MS = 10 * 60 * 1000
+
+/**
+ * UN INDEX CONSTRUIT SANS LE CATALOGUE NE SE GARDE PAS DIX MINUTES.
+ *
+ * La fenêtre longue suppose un index COMPLET : un catalogue de concours publics
+ * ne bouge pas à la minute. Mais un index construit pendant une panne d'API est
+ * amputé, et le garder aussi longtemps ferait durer la panne bien après sa fin —
+ * l'API reviendrait, et la recherche continuerait de répondre « nous n'avons pas
+ * pu chercher partout » pendant dix minutes.
+ *
+ * Trente secondes : assez pour ne pas marteler une API en difficulté, assez peu
+ * pour que le rétablissement se voie.
+ */
+const FENETRE_PARTIELLE_MS = 30 * 1000
+
 const corpus = new Map<string, Corpus>()
 
 /**
@@ -221,7 +236,9 @@ async function construire(base: string, langue: string): Promise<Corpus> {
     })
   }
 
-  return { expire: Date.now() + FENETRE_MS, entrees, catalogueLu }
+  const fenetre = catalogueLu ? FENETRE_MS : FENETRE_PARTIELLE_MS
+
+  return { expire: Date.now() + fenetre, entrees, catalogueLu }
 }
 
 export default defineEventHandler(async (event) => {
