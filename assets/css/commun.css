@@ -1068,8 +1068,29 @@
 .bandeau-echeance b { font-variant-numeric: tabular-nums; }
 
 /* Les séparateurs « · » mesuraient 2,29:1. Remplacés par un filet, qui
-   n'est pas du texte et relève du seuil non textuel de 3:1. */
-.bandeau-echeance__rang > span + span {
+   n'est pas du texte et relève du seuil non textuel de 3:1.
+   ─────────────────────────────────────────────────────────────────────────
+   LA RÈGLE NE S'APPLIQUAIT PLUS, ET LE BANDEAU COLLAIT SES DEUX FAITS.
+
+   Elle ne visait que les `span` FRÈRES DIRECTS du rang. Or les deux faits
+   vivent depuis le lot ZP-1 dans un `<p>` : à l'écran, l'accueil affichait
+   « 6 clôtures dans les 7 jours12646 postes ouverts au Maroc ».
+
+   Une règle morte qui a l'air de faire le travail est pire qu'une règle
+   absente — c'est elle qui a rendu le défaut invisible en relecture, et il a
+   fallu une capture pour le voir. Les deux balisages sont donc couverts par
+   une seule règle, et le jour où l'un disparaît, l'autre reste vrai. */
+.bandeau-echeance__rang p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0;
+  margin: 0;
+}
+
+.bandeau-echeance__rang > span + span,
+.bandeau-echeance__rang p > * + * {
+  margin-inline-start: var(--e-4);
   padding-inline-start: var(--e-4);
   border-inline-start: 1px solid var(--safran-600);
 }

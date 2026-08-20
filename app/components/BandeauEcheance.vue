@@ -31,6 +31,21 @@ const postes = computed(() =>
   ouvertes.value.reduce((total, a) => total + (a.postes ?? 0), 0),
 )
 
+/**
+ * LE NOMBRE PASSE PAR `nombre()`, ET CE N'EST PAS DE LA TYPOGRAPHIE.
+ *
+ * Il était interpolé brut : « 12646 postes ouverts au Maroc ». La règle du
+ * dépôt veut l'espace fine insécable sur tout nombre d'interface, et sa raison
+ * est mesurée — une espace ORDINAIRE laisse l'algorithme bidirectionnel
+ * réordonner les groupes de chiffres, si bien que « 12 646 » se lit
+ * « 646 12 » en arabe. La fine insécable (U+202F) les soude.
+ *
+ * Sans espace du tout, l'arabe restait juste et le français restait fautif ; la
+ * sonde bidi d'`auditer.mjs`, qui cherche « chiffre + espace + trois chiffres »,
+ * ne pouvait rien voir. C'est une capture qui l'a montré.
+ */
+const postesEnClair = computed(() => nombre(postes.value))
+
 /* Le bandeau se tait quand rien ne presse. Voir l'en-tête. */
 const visible = computed(() => imminentes.value.length > 0)
 </script>
@@ -44,7 +59,7 @@ const visible = computed(() => imminentes.value.length > 0)
 
       <p>
         <strong>{{ t('opportunites.bandeau_imminentes', { n: imminentes.length }) }}</strong>
-        <span v-if="postes > 0">{{ t('opportunites.bandeau_postes', { n: postes }) }}</span>
+        <span v-if="postes > 0">{{ t('opportunites.bandeau_postes', { n: postesEnClair }) }}</span>
       </p>
 
       <NuxtLink class="bandeau-echeance__lien" :to="localePath('/opportunites?sous=7j')">
