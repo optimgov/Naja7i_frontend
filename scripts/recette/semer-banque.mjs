@@ -257,7 +257,25 @@ for (const [i, noeud] of referentiel.noeuds.entries()) {
 
   for (const k of Array.from({ length: PAR_DOMAINE }, (_, j) => j + 1)) {
     const n = i * PAR_DOMAINE + k
-    const enonce = `Question de recette n° ${n} — ${noeud.nom} : laquelle de ces propositions est exacte ?`
+    /*
+     * L'ÉNONCÉ SE LIT COMME UNE QUESTION, PAS COMME UN NUMÉRO DE RECETTE.
+     *
+     * « Question de recette n° 16 — Théâtre : laquelle de ces propositions est
+     * exacte ? » apparaissait dans les captures de proposition et disqualifiait
+     * l'écran au premier regard. Le contenu reste GÉNÉRIQUE — il ne peut pas
+     * être autre chose, la banque couvre dix domaines qu'aucun humain n'a
+     * rédigés — mais il prend la forme d'un item réel.
+     *
+     * Il n'affirme AUCUN fait administratif : ni programme, ni coefficient, ni
+     * barème. Il porte sur le cadre d'application d'une notion, ce qui est vrai
+     * de n'importe quel domaine sans rien inventer d'aucun.
+     *
+     * Deux formulations par domaine, ce qui suffit à l'unicité : l'énoncé reste
+     * la clé naturelle du semis, comme avant.
+     */
+    const enonce = k === 1
+      ? `Dans le domaine « ${noeud.nom} », quelle formulation décrit correctement la notion évaluée ?`
+      : `Dans le domaine « ${noeud.nom} », quelle situation mobilise correctement la notion évaluée ?`
     const etiquette = `n° ${n} (${noeud.code})`
 
     const existante = parEnonce.get(enonce)
@@ -279,7 +297,7 @@ for (const [i, noeud] of referentiel.noeuds.entries()) {
           competency_node_uuid: noeud.uuid,
           locale: 'fr',
           stem: enonce,
-          explanation: `La proposition A est exacte : elle applique la règle du domaine « ${noeud.nom} » dans son domaine de validité.`,
+          explanation: `La proposition A est exacte : la notion du domaine « ${noeud.nom} » y est mobilisée dans son cadre d'application, et les trois autres l'en font sortir.`,
           kind: 'qcm_single',
           difficulty: 3,
           remediation_uuid: noeud.remediation_uuid,
@@ -288,16 +306,33 @@ for (const [i, noeud] of referentiel.noeuds.entries()) {
           /* Quatre options, une seule exacte, et TOUS les distracteurs
            * étiquetés d'une cause : sans elles, la publication pour diagnostic
            * est refusée (fiche F03 v1.1). */
+          /*
+           * QUATRE POSITIONS DISTINCTES — A, B, C, D.
+           *
+           * `String.fromCharCode(63 + p)` avec `p` partant de 2 rendait 65,
+           * soit `A` : les captures affichaient A, A, B, C. Le décalage est de
+           * un — `64 + p` donne B, C, D — et il se voyait au premier regard sur
+           * un écran destiné à juger le sérieux du produit.
+           *
+           * L'option correcte reste en première position et porte donc `A` :
+           * c'est le rendu qui distribue les lettres, pas les données.
+           */
           options: [
             {
-              content: `Proposition A — la formulation exacte pour ${noeud.nom}.`,
+              content: 'A — Elle s\'applique dans le cadre défini par le programme, et seulement dans ce cadre.',
               is_correct: true,
-              rationale: 'Exacte : la règle est appliquée dans son domaine de validité.',
+              rationale: 'Exacte : la notion est mobilisée à l\'intérieur de son domaine de validité, '
+                + 'ce qui est précisément ce que l\'épreuve évalue.',
             },
             ...[2, 3, 4].map((p) => ({
-              content: `Proposition ${String.fromCharCode(63 + p)} — variante plausible mais fautive.`,
+              content: `${String.fromCharCode(64 + p)} — ` + [
+                'Elle s\'étend à tous les cas voisins, sans distinction de cadre.',
+                'Elle se déduit d\'un exemple isolé, sans vérifier les conditions d\'application.',
+                'Elle se confond avec la notion voisine du même domaine.',
+              ][p - 2],
               is_correct: false,
-              rationale: 'Fausse : la règle invoquée ne couvre pas ce cas de figure.',
+              rationale: 'Fausse : la notion est invoquée hors du cadre qui la rend valide — '
+                + 'l\'erreur porte sur la portée, pas sur la définition.',
               cause: CAUSES[(n + p) % CAUSES.length],
             })),
           ],

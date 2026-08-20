@@ -111,36 +111,6 @@ useSeoCatalogue({
           <h1 class="heros__titre">{{ t('accueil.titre') }}</h1>
           <p class="heros__chapeau">{{ t('accueil.chapeau') }}</p>
 
-          <div class="heros__actes">
-            <!--
-              LE CTA PRINCIPAL A CHANGÉ DE DESTINATION, ET C'ÉTAIT À TRANCHER.
-
-              Il pointait sur `#demonstration`, faute de mieux : `/methode/
-              correction` n'avait jamais existé, et le bouton principal de
-              l'accueil menait à un 404. L'ancre était le correctif honnête du
-              moment — la correction promise était déjà sur la page.
-
-              Depuis que la démonstration est JOUABLE et qu'elle est partagée
-              avec `/se-preparer`, l'ancre n'est plus le bon premier geste : elle
-              déplace le regard vers un bloc déjà visible à 1440 px, et le
-              parcours entier — choisir une épreuve, comprendre la correction,
-              commencer un diagnostic — vit maintenant à une adresse.
-
-              L'ancre RESTE, en second : à 390 px la démonstration est sous le
-              pli, et un lien de fragment vers une cible `tabindex="-1"` y amène
-              le regard ET le focus clavier sans une ligne de JavaScript.
-            -->
-            <!-- V4 §4.2 : le premier geste est de RÉPONDRE, sur place. Un
-                 bouton et non un lien de fragment — l'action déplace le focus
-                 dans la page, elle ne navigue pas. -->
-            <button type="button" class="btn btn--grand" @click="essayerLaQuestion">
-              {{ t('accueil.action_principale') }}
-            </button>
-            <NuxtLink class="lien-second" :to="localePath('/se-preparer')">
-              {{ t('accueil.action_seconde') }}
-            </NuxtLink>
-          </div>
-
           <!-- Micro-preuve : elle lève les deux objections qui arrêtent un
                visiteur avant le premier clic — « faut-il un compte ? » et
                « est-ce que ça compte contre moi ? ». Elle n'est pas un
@@ -160,6 +130,36 @@ useSeoCatalogue({
              l'insérer dans l'ordre de tabulation. -->
         <div id="demonstration" tabindex="-1" class="ancre-demonstration">
           <ProofDemonstration contexte="accueil" />
+        </div>
+
+        <!--
+          LES ACTIONS SUIVENT LA CARTE DANS LE DOM — recette Codex, point 1.
+
+          À 390 px, la grille s'empile : deux boutons entre la micro-preuve et
+          la question repoussaient les options SOUS LA BARRE BASSE. Le premier
+          écran arabe ne montrait aucun choix.
+
+          Quatrième enfant de grille plutôt qu'un `order` CSS : l'ordre du DOM
+          reste l'ordre lu. À 1440 px, `grid-column: 1` les remet en deuxième
+          rangée sous la colonne éditoriale — la composition bureau est
+          identique à celle que la recette a validée.
+
+          « ESSAYER LA QUESTION » DISPARAÎT SOUS 48 rem. Il déplace le focus
+          vers une carte qui, à cette largeur, se trouve déjà juste au-dessus :
+          le bouton demanderait un geste pour arriver là où le doigt est déjà.
+          `display: none` et non un masquage visuel — un bouton lu par un
+          lecteur d'écran mais sans objet est pire qu'absent.
+        -->
+        <div class="heros__actes">
+          <!-- V4 §4.2 : le premier geste est de RÉPONDRE, sur place. Un
+               bouton et non un lien de fragment — l'action déplace le focus
+               dans la page, elle ne navigue pas. -->
+          <button type="button" class="btn btn--grand heros__essayer" @click="essayerLaQuestion">
+            {{ t('accueil.action_principale') }}
+          </button>
+          <NuxtLink class="lien-second" :to="localePath('/se-preparer')">
+            {{ t('accueil.action_seconde') }}
+          </NuxtLink>
         </div>
 
         <!--
@@ -351,9 +351,46 @@ useSeoCatalogue({
     min-block-size: 620px;
   }
 
-  /* Les compteurs reprennent la colonne éditoriale, en deuxième rangée : la
-     composition d'origine est rendue, sans les remettre devant la question. */
+  /* Actions puis compteurs reprennent la colonne éditoriale, en deuxième et
+     troisième rangées : la composition bureau est identique à l'originale,
+     sans les remettre devant la question à 390 px. */
+  .heros__actes,
   .heros__assise { grid-column: 1; }
+
+  /*
+   * LA CARTE COUVRE LES TROIS RANGÉES, ET C'EST CE QUI REFERME LE VIDE.
+   *
+   * Sans cela, la rangée 1 prend la hauteur de la carte — la plus haute des
+   * deux cellules — et les actions, placées en rangée 2, tombaient tout en bas
+   * du héros, séparées de leur texte par un grand blanc. Le §6 interdit
+   * justement « les grands espaces vides qui donnent l'impression que les
+   * données n'ont pas chargé ».
+   *
+   * En couvrant les trois rangées, la carte laisse la colonne éditoriale se
+   * dimensionner sur son propre contenu : texte, actions et compteurs
+   * s'empilent serrés en haut, et la carte occupe la hauteur en regard.
+   *
+   * La COLONNE est épinglée en même temps que la rangée : donner un
+   * `grid-row` explicite sort l'élément du placement automatique, et la carte
+   * repartait en colonne 1 — éditorial et question échangeaient leurs places.
+   */
+  .ancre-demonstration { grid-column: 2; grid-row: 1 / span 3; }
+}
+
+/*
+ * Sous 48 rem, la carte est immédiatement au-dessus : le bouton demanderait un
+ * geste pour arriver là où le doigt est déjà. `display: none` plutôt qu'un
+ * masquage visuel — un bouton annoncé par un lecteur d'écran mais sans objet
+ * est pire qu'absent. « Choisir mon concours » reste, en action secondaire.
+ */
+@media (max-width: 47.99rem) {
+  .heros__essayer { display: none; }
+
+  /* Le chapeau se resserre : c'est lui qui pousse la carte vers le bas, et
+     le H1 porte déjà la promesse. La taille des options et les cibles
+     tactiles ne bougent pas — la recette l'interdit explicitement. */
+  .heros__chapeau { margin-block: var(--e-2) var(--e-3); font-size: var(--t-md); }
+  .heros { padding-block: var(--e-4) var(--e-4); }
 }
 
 /* Marge de séparation à 390 px, où ils suivent la carte au lieu de la

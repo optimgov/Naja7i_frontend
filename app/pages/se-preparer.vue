@@ -80,6 +80,56 @@ const parFamille = computed(() => {
 
 const aucune = computed(() => !illisible.value && parFamille.value.length === 0)
 
+/**
+ * LE RÉFÉRENTIEL DE CHAQUE ÉPREUVE OUVERTE — recette Codex, point 3.
+ *
+ * `epreuvesOuvertes()` sert `code`, `name`, `coefficient` et la famille. Il ne
+ * sert NI la durée NI les domaines : ils vivent sur
+ * `/catalogue/epreuves/{code}/competences`, la route qui alimente déjà la fiche
+ * de famille. Aucun contrat nouveau, donc — un appel de plus par épreuve
+ * ouverte, et il n'y en a que trois.
+ *
+ * CE N'EST PAS LE N+1 QU'ON A REFUSÉ AILLEURS. Le méga-menu se conditionne à
+ * `family.availability` précisément pour ne PAS appeler par famille sur CHAQUE
+ * page publique. Ici, l'appel est fait sur la seule page qui affiche ces
+ * données, pour les seules épreuves déjà retenues comme ouvertes.
+ *
+ * `Promise.allSettled` et non `all` : une fiche illisible ne doit pas emporter
+ * les deux autres. La carte se rend alors avec ce qu'on sait — le coefficient
+ * vient de la liste, pas du référentiel — et sans durée ni domaines. Dégrader
+ * champ par champ, jamais inventer : `duration_minutes` est déjà nul dans le
+ * contrat « tant qu'une source officielle ne l'établit pas ».
+ */
+const { referentielEpreuve } = useCatalogue()
+
+const codes = computed(() => (epreuves.value ?? []).map(e => e.code))
+
+const { data: referentiels } = await useAsyncData(
+  () => `preparer:referentiels:${codes.value.join(',')}`,
+  async () => {
+    const resultats = await Promise.allSettled(
+      codes.value.map(async code => ({ code, fiche: (await referentielEpreuve(code)).data.value })),
+    )
+
+    const parCode: Record<string, ReferentielEpreuve | null> = {}
+    for (const r of resultats) {
+      if (r.status === 'fulfilled') parCode[r.value.code] = r.value.fiche ?? null
+    }
+    return parCode
+  },
+  { watch: [codes] },
+)
+
+/** Les domaines de premier niveau, comme sur la fiche de famille. */
+function domainesDe(code: string) {
+  const noeuds = referentiels.value?.[code]?.data ?? []
+  return noeuds.filter(n => n.depth === 0)
+}
+
+function dureeDe(code: string) {
+  return referentiels.value?.[code]?.meta.exam.duration_minutes ?? null
+}
+
 /** Les trois preuves de méthode. Le contenu est réel, pas un gabarit à remplir. */
 const PREUVES = ['autopsie', 'distracteurs', 'assise'] as const
 
@@ -125,19 +175,28 @@ useSeoCatalogue({
           <div v-for="famille in parFamille" :key="famille.slug" class="preparer__famille">
             <h3 class="preparer__famille-nom" dir="auto">{{ famille.nom }}</h3>
 
-            <ul class="preparer__liste">
-              <li v-for="epreuve in famille.epreuves" :key="epreuve.code">
-                <NuxtLink
-                  class="preparer__porte"
-                  :to="localePath(`/app/diagnostic/${epreuve.code}`)"
-                >
-                  <span class="preparer__nom" dir="auto">{{ epreuve.name }}</span>
-                  <span v-if="epreuve.coefficient !== null" class="preparer__coef">
-                    {{ t('app.coefficient') }} {{ epreuve.coefficient }}
-                  </span>
-                </NuxtLink>
-              </li>
-            </ul>
+            <!--
+              `CarteEpreuve` PLUTÔT QU'UN LIEN NU — recette Codex, point 3.
+
+              La carte entière était un lien, mais aucun libellé ne DISAIT
+              « Commencer le diagnostic » : trois rectangles alignés se lisent
+              comme des informations, pas comme des portes. Le composant existe
+              déjà, il est employé par la fiche de famille, et il porte durée,
+              domaines et action explicite. Le réécrire ici aurait produit une
+              seconde carte d'épreuve qui aurait divergé au premier ajustement.
+            -->
+            <div class="grille grille--3">
+              <CarteEpreuve
+                v-for="epreuve in famille.epreuves"
+                :key="epreuve.code"
+                :code="epreuve.code"
+                :nom="epreuve.name"
+                :coefficient="epreuve.coefficient"
+                :duree="dureeDe(epreuve.code)"
+                :langues="null"
+                :domaines="domainesDe(epreuve.code)"
+              />
+            </div>
 
             <p class="preparer__famille-lien">
               <NuxtLink class="lien-second" :to="localePath(`/concours/famille/${famille.slug}`)">

@@ -1673,3 +1673,19 @@ html[dir='rtl'] .annonce__titre { letter-spacing: normal; line-height: 1.45; }
   font-size: var(--t-xs);
   color: var(--texte-doux);
 }
+
+/*
+ * BANDEAU D'ÉCHÉANCE RESSERRÉ SOUS 48 rem — recette Codex, point 1.
+ *
+ * À 390 px il se replie sur deux lignes et coûte près de quatre-vingts pixels
+ * avant même le héros. Le critère arrêté exige l'énoncé ET deux options
+ * complètes au-dessus de la barre basse : ces pixels-là manquaient à la
+ * deuxième option.
+ *
+ * Seul le rembourrage vertical bouge. La taille de texte reste `--t-s` : la
+ * recette interdit de réduire les cibles tactiles, et le lien « Voir
+ * lesquelles » est une cible.
+ */
+@media (max-width: 47.99rem) {
+  .bandeau-echeance__rang { padding-block: 0.35rem; gap: var(--e-1) var(--e-3); }
+}
