@@ -1588,3 +1588,88 @@ html[dir='rtl'] .annonce__titre { letter-spacing: normal; line-height: 1.45; }
 
 /* État vide d'une liste filtrée. */
 .vide { padding: var(--e-7) var(--e-4); text-align: center; color: var(--texte-doux); }
+
+/* --- Documents légaux provisoires ------------------------------------- *
+ *
+ * `/conditions` et `/confidentialite`. Ces pages existent pour qu'aucun lien
+ * du formulaire d'inscription ne réponde 404, PAS pour tenir lieu de droit :
+ * leur avertissement est donc traité comme une pièce d'interface à part
+ * entière, et non comme un paragraphe parmi d'autres.
+ *
+ * Il porte `--peda-remede` — le rôle de l'attente et du rappel dû — et non
+ * `--sys-err` : un document non encore publié n'est pas une PANNE. Le rouge
+ * système dirait à un testeur que quelque chose est cassé, alors que le
+ * produit fonctionne exactement comme prévu.
+ *
+ * Le texte prend `--texte`, jamais `--peda-remede-texte` : ce jeton est fait
+ * pour un libellé court sur son aplat, pas pour un paragraphe entier.        */
+
+.document-legal {
+  padding-block: var(--e-6) var(--e-8);
+}
+
+.document-legal__avertissement {
+  margin-block-end: var(--e-6);
+  padding: var(--e-4);
+  /* Filet d'appel du côté du début de ligne : il se met tout seul à droite
+     en arabe, sans règle miroir à tenir. */
+  border-inline-start: 4px solid var(--peda-remede);
+  border-radius: var(--r-s);
+  background: var(--peda-remede-fond);
+  color: var(--texte);
+}
+
+.document-legal__avertissement-titre {
+  margin-block: 0 var(--e-2);
+  font-size: var(--t-md);
+  font-weight: 700;
+  color: var(--peda-remede-texte);
+}
+
+.document-legal__avertissement p {
+  margin: 0;
+  max-inline-size: 68ch;
+  line-height: 1.65;
+}
+
+.document-legal__bloc {
+  margin-block-end: var(--e-6);
+}
+
+.document-legal__bloc h2 {
+  margin-block: 0 var(--e-3);
+  font-size: var(--t-lg);
+  font-weight: 700;
+  color: var(--texte);
+}
+
+.document-legal__bloc p {
+  margin-block: 0 var(--e-3);
+  max-inline-size: 68ch;
+  line-height: 1.65;
+  color: var(--texte-doux);
+}
+
+.document-legal__liste {
+  margin: 0;
+  /* `padding-inline-start` et non `padding-left` : les puces restent du bon
+     côté en RTL. */
+  padding-inline-start: var(--e-5);
+  max-inline-size: 68ch;
+}
+
+.document-legal__liste li {
+  margin-block-end: var(--e-2);
+  line-height: 1.65;
+  color: var(--texte-doux);
+}
+
+/* La date de version se lit comme une donnée, pas comme du corps de texte. */
+.document-legal__version {
+  margin-block-start: var(--e-6);
+  padding-block-start: var(--e-4);
+  border-block-start: 1px solid var(--bordure);
+  font-family: var(--f-mono);
+  font-size: var(--t-xs);
+  color: var(--texte-doux);
+}
