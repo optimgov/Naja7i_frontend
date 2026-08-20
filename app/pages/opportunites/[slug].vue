@@ -14,20 +14,35 @@ import type { Annonce } from '~/composables/useOpportunites'
  * le HTML servi — titre, résumé, `validThrough`.
  *
  * `validThrough` EST EXACT, et c'est le champ qui décide de tout : une annonce
- * dont la date est passée sort d'elle-même des résultats. La fausser d'un jour
- * fait apparaître un concours clos, ou disparaître un concours ouvert.
+ * dont la date est passée sort d'elle-même des résultats.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LA CARTE DE CONFIANCE EST REMONTÉE DANS LE DOM, PAS SEULEMENT EN CSS
+ *
+ * Sous 62 rem, l'aside qui porte l'échéance, l'état du dépôt et le lien vers
+ * l'avis officiel venait APRÈS le corps entier : résumé, spécialités, diplômes,
+ * historique. Un candidat sur téléphone défilait plusieurs écrans avant de
+ * savoir si le dépôt était encore ouvert — c'est-à-dire la seule chose pour
+ * laquelle il était venu.
+ *
+ * Réordonner en CSS (`order`) aurait corrigé l'ŒIL et laissé le LECTEUR
+ * D'ÉCRAN dans l'ordre d'origine : la présentation et la lecture auraient dit
+ * deux choses différentes. Le déplacement est donc fait dans le DOM, en trois
+ * régions — tête, carte, corps — et c'est la grille qui les replace côte à côte
+ * sur grand écran.
+ *
+ * LE TITRE RESTE EN PREMIER. Il aurait été plus simple de mettre l'aside tout
+ * en haut ; le `<h1>` serait alors passé sous une carte d'actions, et la page
+ * aurait commencé par des boutons dont on ne sait pas de quoi ils parlent.
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * LE RÉSUMÉ EST RÉDIGÉ, PAS RECOPIÉ
  *
  * Republier la prose de l'avis officiel ferait de cette page un doublon que
  * Google n'afficherait jamais — et priverait le candidat de la seule chose que
- * naja7i ajoute : une lecture. Le résumé vient du collecteur, construit à
- * partir des CHAMPS de l'avis. La page le dit.
+ * naja7i ajoute : une lecture.
  *
  * L'HISTORIQUE DES RÉVISIONS est la pièce qu'aucun autre agrégateur ne garde.
- * Une échéance repoussée ou un nombre de postes corrigé y apparaît DATÉ, au
- * lieu d'être écrasé en silence.
  */
 definePageMeta({ layout: 'public' })
 
@@ -70,12 +85,18 @@ function enClair(iso: string | null): string {
   })
 }
 
-/** Les faits, dans l'ordre de ce qu'un candidat vérifie. Un absent disparaît. */
+/**
+ * Les faits DÉTAILLÉS. Un absent disparaît — il ne vaut pas zéro.
+ *
+ * `postes` n'y est plus : il est remonté dans la carte de confiance, avec les
+ * sept autres informations qu'un candidat vérifie avant de décider. Le laisser
+ * aux deux endroits aurait fait lire deux fois le même nombre sur une page où
+ * l'on cherche à en économiser la hauteur.
+ */
 const faits = computed(() => {
   const out: { cle: string, valeur: string, texte?: boolean }[] = []
   const x = a.value
 
-  if (x.postes !== null) out.push({ cle: 'postes', valeur: nombre(x.postes) })
   if (x.echelle) out.push({ cle: 'echelle', valeur: x.echelle })
   if (x.grade) out.push({ cle: 'grade', valeur: x.grade, texte: true })
   if (x.deadline) out.push({ cle: 'depot', valeur: enClair(x.deadline), texte: true })
@@ -89,6 +110,50 @@ const faits = computed(() => {
 
 const versPreparation = computed(() =>
   a.value.naja7i.prep_slug ? localePath(`/concours/famille/${a.value.naja7i.prep_slug}`) : null,
+)
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LE PARTAGE WHATSAPP — CONSTRUIT DEPUIS L'URL CANONIQUE
+ *
+ * POURQUOI PAS `window.location.href`. Il n'existe pas au rendu serveur, il
+ * porterait les paramètres de suivi de la visite en cours, et sur un poste de
+ * recette il enverrait `localhost:3000` à un contact. La canonique est la seule
+ * adresse dont on sait qu'elle désigne CETTE fiche pour tout le monde, et elle
+ * vient de la même origine que la balise `<link rel="canonical">` — une seconde
+ * lecture aurait pu en diverger.
+ *
+ * LE MESSAGE EST LOCALISÉ, et il porte l'échéance SEULEMENT si elle est connue.
+ * Écrire « clôture : — » ou omettre la ligne sans le dire laisserait croire
+ * qu'il n'y a pas de date limite, sur le canal où l'information circule le plus
+ * vite et se vérifie le moins.
+ *
+ * LE LIBELLÉ EST VISIBLE. Une icône WhatsApp seule se devine ; elle ne se lit
+ * pas, et elle ne se traduit pas.
+ *
+ * L'API WEB SHARE N'EST PAS EMPLOYÉE. Elle aurait offert un meilleur geste
+ * natif, mais elle exige un contexte sécurisé et une gestion de repli ; le lien
+ * `wa.me` fonctionne partout, y compris sur les navigateurs de bureau où le
+ * candidat prépare son dossier. C'est une amélioration progressive possible,
+ * pas un manque — et le cahier la posait comme telle.
+ */
+const canonique = computed(() => urlCanonique(locale.value, `/opportunites/${slug.value}`))
+
+const messageWhatsApp = computed(() => {
+  const lignes = [a.value.titre, a.value.org]
+
+  if (a.value.deadline) {
+    lignes.push(t('opportunites.partage_cloture', { date: enClair(a.value.deadline) }))
+  }
+
+  lignes.push(canonique.value)
+  lignes.push(t('opportunites.partage_signature'))
+
+  return lignes.join('\n')
+})
+
+const lienWhatsApp = computed(
+  () => `https://wa.me/?text=${encodeURIComponent(messageWhatsApp.value)}`,
 )
 
 /**
@@ -152,7 +217,8 @@ useSeoCatalogue({
 
 <template>
   <div class="enveloppe fiche">
-    <div dir="auto">
+    <!-- ═══════════ 1. LA TÊTE — de quoi parle cette page ═══════════ -->
+    <header class="fiche__tete" dir="auto">
       <!-- Le fil d'Ariane du dépôt (`.fil`), pas celui de la maquette : un seul
            système, celui qui existait. -->
       <ol class="fil">
@@ -171,7 +237,91 @@ useSeoCatalogue({
       <p class="fiche__org" dir="auto">{{ a.org }}</p>
 
       <RattachementAnnonce :annonce="a" />
+    </header>
 
+    <!-- ═══ 2. LA CARTE DE CONFIANCE — avant le corps dans le DOM ═══
+         Huit informations, et pas une de plus : l'état du dépôt, la date
+         limite, le nombre de postes s'il est fourni, la préparation quand elle
+         existe, l'avis officiel, le partage, la source et sa fraîcheur.
+         L'administration, elle, est juste au-dessus, dans la tête. -->
+    <aside class="fiche__cote" :aria-label="t('opportunites.confiance')">
+      <div class="action">
+        <BlocEcheance :annonce="a" />
+
+        <!-- Un fait absent DISPARAÎT : « 0 poste » serait faux, et l'absence ne
+             dit rien — ce qui est exact. -->
+        <p v-if="a.postes !== null" class="action__postes">
+          <b>{{ nombre(a.postes) }}</b>
+          <span>{{ t('opportunites.fait_postes') }}</span>
+        </p>
+
+        <template v-if="rattachement === 'prepare' && versPreparation">
+          <h2 class="action__titre">{{ t('opportunites.action_prepare_titre') }}</h2>
+          <p class="action__note">{{ t('opportunites.action_prepare_note') }}</p>
+          <NuxtLink class="btn btn--bloc" :to="versPreparation">
+            {{ t('opportunites.action_prepare_bouton') }}
+          </NuxtLink>
+        </template>
+
+        <!-- Le dépôt de cette session est clos, la préparation ne l'est pas.
+             LE BOUTON RESTE : se préparer quand le dépôt vient de fermer est
+             même le meilleur moment pour s'y mettre. C'est la NOTE qui porte la
+             nuance, pas la présence du chemin. -->
+        <template v-else-if="rattachement === 'prepare_clos' && versPreparation">
+          <h2 class="action__titre">{{ t('opportunites.action_prepare_clos_titre') }}</h2>
+          <p class="action__note">{{ t('opportunites.action_prepare_clos_note') }}</p>
+          <NuxtLink class="btn btn--bloc" :to="versPreparation">
+            {{ t('opportunites.action_prepare_bouton') }}
+          </NuxtLink>
+        </template>
+
+        <!-- Pas de préparation : on le DIT, et on ne propose pas de liste
+             d'attente — cette route n'existe pas, et un bouton qui mène à un
+             404 est pire que pas de bouton. -->
+        <template v-else>
+          <h2 class="action__titre">{{ t('opportunites.action_attente_titre') }}</h2>
+          <p class="action__note">{{ t('opportunites.action_attente_note') }}</p>
+        </template>
+
+        <a class="btn btn--fantome btn--bloc" :href="a.url" rel="noopener nofollow">
+          {{ t('opportunites.action_officiel') }}
+        </a>
+
+        <!-- LE PARTAGE. `rel="noopener noreferrer"` : `noopener` coupe l'accès
+             de la page ouverte à la nôtre, `noreferrer` évite d'annoncer à
+             WhatsApp d'où vient le clic. Libellé écrit, jamais une icône seule. -->
+        <a
+          class="btn btn--fantome btn--bloc action__partage"
+          :href="lienWhatsApp"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ t('opportunites.partager_whatsapp') }}
+        </a>
+
+        <p class="action__note">
+          <a v-if="a.docs.length" :href="a.docs[0]!.url" rel="noopener nofollow" dir="auto">
+            {{ a.docs[0]!.label }}
+          </a>
+          <span v-else>{{ t('opportunites.aucun_document') }}</span>
+        </p>
+
+        <!-- LA SOURCE ET SA FRAÎCHEUR, remontées ici : un agrégateur qui ne dit
+             pas d'où il tient l'information laisse croire qu'il est la source,
+             et le dire au bas de la page revient à ne le dire qu'à ceux qui
+             lisent tout. -->
+        <div class="source">
+          <p class="source__ligne">
+            <span dir="auto">{{ t('opportunites.source_nom', { nom: a.source.nom }) }}</span>
+            <span>{{ t('opportunites.source_collecte', { date: enClair(a.source.fetched) }) }}</span>
+          </p>
+          <p>{{ t('opportunites.source_foi') }}</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ═══════════ 3. LE CORPS — ce qu'on lit une fois décidé ═══════════ -->
+    <div class="fiche__corps" dir="auto">
       <div class="fiche__faits">
         <div v-for="fait in faits" :key="fait.cle" class="fiche__fait">
           <p class="fiche__fait-cle">{{ t(`opportunites.fait_${fait.cle}`) }}</p>
@@ -218,62 +368,7 @@ useSeoCatalogue({
         </p>
       </div>
       <p class="fiche__note">{{ t('opportunites.historique_note') }}</p>
-
-      <!-- LA SOURCE. Seul l'avis officiel fait foi — un agrégateur qui ne le dit
-           pas laisse croire qu'il est la source. -->
-      <div class="source">
-        <p class="source__ligne">
-          <span dir="auto">{{ t('opportunites.source_nom', { nom: a.source.nom }) }}</span>
-          <span>{{ t('opportunites.source_collecte', { date: enClair(a.source.fetched) }) }}</span>
-        </p>
-        <p>{{ t('opportunites.source_foi') }}</p>
-      </div>
     </div>
-
-    <aside class="fiche__cote">
-      <div class="action">
-        <BlocEcheance :annonce="a" />
-
-        <template v-if="rattachement === 'prepare' && versPreparation">
-          <h2 class="action__titre">{{ t('opportunites.action_prepare_titre') }}</h2>
-          <p class="action__note">{{ t('opportunites.action_prepare_note') }}</p>
-          <NuxtLink class="btn btn--bloc" :to="versPreparation">
-            {{ t('opportunites.action_prepare_bouton') }}
-          </NuxtLink>
-        </template>
-
-        <!-- Le dépôt de cette session est clos, la préparation ne l'est pas.
-             LE BOUTON RESTE : se préparer quand le dépôt vient de fermer est
-             même le meilleur moment pour s'y mettre. C'est la NOTE qui porte la
-             nuance, pas la présence du chemin. -->
-        <template v-else-if="rattachement === 'prepare_clos' && versPreparation">
-          <h2 class="action__titre">{{ t('opportunites.action_prepare_clos_titre') }}</h2>
-          <p class="action__note">{{ t('opportunites.action_prepare_clos_note') }}</p>
-          <NuxtLink class="btn btn--bloc" :to="versPreparation">
-            {{ t('opportunites.action_prepare_bouton') }}
-          </NuxtLink>
-        </template>
-
-        <!-- Pas de préparation : on le DIT, et on ne propose pas de liste
-             d'attente — cette route n'existe pas, et un bouton qui mène à un
-             404 est pire que pas de bouton. -->
-        <template v-else>
-          <h2 class="action__titre">{{ t('opportunites.action_attente_titre') }}</h2>
-          <p class="action__note">{{ t('opportunites.action_attente_note') }}</p>
-        </template>
-
-        <a class="btn btn--fantome btn--bloc" :href="a.url" rel="noopener nofollow">
-          {{ t('opportunites.action_officiel') }}
-        </a>
-
-        <p class="action__note">
-          <a v-if="a.docs.length" :href="a.docs[0]!.url" rel="noopener nofollow" dir="auto">
-            {{ a.docs[0]!.label }}
-          </a>
-          <span v-else>{{ t('opportunites.aucun_document') }}</span>
-        </p>
-      </div>
-    </aside>
   </div>
 </template>
 
@@ -292,5 +387,35 @@ useSeoCatalogue({
   background: var(--surface);
   border: 1px solid var(--bordure);
   border-radius: var(--r-m);
+}
+
+/* Le nombre de postes est ce qu'on cherche des yeux sur une carte d'annonce :
+   le chiffre porte la graisse, le mot reste discret. */
+.action__postes {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e-2);
+  margin-block: var(--e-3) 0;
+}
+.action__postes b {
+  font-size: var(--t-2xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.action__postes span { font-size: var(--t-xs); color: var(--texte-doux); }
+
+.action__partage { margin-block-start: var(--e-2); }
+
+/* Dans la carte, le bloc de source perd son fond : il est déjà sur une
+   surface, et deux aplats emboîtés font un empilement de cadres. */
+.action .source {
+  margin-block-start: var(--e-4);
+  padding: var(--e-3) 0 0;
+  background: none;
+  border: 0;
+  border-block-start: 1px solid var(--bordure);
+  border-radius: 0;
+  font-size: var(--t-xs);
 }
 </style>

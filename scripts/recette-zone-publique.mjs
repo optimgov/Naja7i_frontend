@@ -175,6 +175,110 @@ const page = await contexte.newPage()
 
   await page.screenshot({ path: `${SORTIE}-02-fiche.png`, fullPage: true })
 
+  /*
+   * ══════ LA CONFIANCE EST AU-DESSUS DU CORPS, DANS LE DOM ══════
+   *
+   * Le contrôle porte sur l'ORDRE DU DOCUMENT, pas sur les coordonnées à
+   * l'écran : un `order` CSS aurait déplacé le bloc pour l'œil et laissé le
+   * lecteur d'écran dans l'ordre d'origine. `compareDocumentPosition` mesure
+   * exactement ce qui a été corrigé.
+   *
+   * La mesure de défilement vient EN PLUS, à 390 px : elle dit ce que le
+   * candidat vit vraiment, et c'est elle qui avait motivé le déplacement.
+   */
+  const ordre = await page.evaluate(() => {
+    const cote = document.querySelector('.fiche__cote')
+    const corps = document.querySelector('.fiche__corps')
+    if (!cote || !corps) return null
+    // eslint-disable-next-line no-bitwise
+    return Boolean(cote.compareDocumentPosition(corps) & Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  note(
+    'la carte de confiance précède le corps dans l’ordre du document',
+    ordre === true,
+    ordre === null
+      ? 'régions introuvables : .fiche__cote ou .fiche__corps absent'
+      : `.fiche__cote avant .fiche__corps : ${ordre}`,
+  )
+
+  {
+    /* À 390 px, où commence la carte de confiance ? En pixels depuis le haut du
+       document — c'est-à-dire ce qu'il faut faire défiler pour la voir. */
+    const ctx = await navigateur.newContext({ viewport: { width: 390, height: 844 } })
+    const p = await ctx.newPage()
+    await p.goto(`${BASE}${href}`, { waitUntil: 'networkidle' })
+
+    const mesure = await p.evaluate(() => {
+      const cote = document.querySelector('.fiche__cote')
+      if (!cote) return null
+      const haut = cote.getBoundingClientRect().top + window.scrollY
+      return { haut, ecran: window.innerHeight, page: document.documentElement.scrollHeight }
+    })
+    await ctx.close()
+
+    /* UN ÉCRAN ET DEMI : le titre, l'organisme et le rattachement passent
+       d'abord, ce qui est voulu — la carte ne doit pas ouvrir la page sur des
+       boutons dont on ignore le sujet. Au-delà, on est de nouveau en train
+       d'enterrer la seule chose pour laquelle le candidat est venu. */
+    const plafond = mesure ? mesure.ecran * 1.5 : 0
+
+    note(
+      'à 390 px, la confiance est atteinte sans défilement important',
+      Boolean(mesure) && mesure.haut < plafond,
+      mesure
+        ? `carte à ${Math.round(mesure.haut)} px du haut · écran ${mesure.ecran} px `
+          + `· plafond ${Math.round(plafond)} px · page ${mesure.page} px`
+        : 'carte introuvable',
+    )
+  }
+
+  /*
+   * ══════ LE PARTAGE WHATSAPP ══════
+   *
+   * Trois choses, et chacune a sa raison :
+   *   - le message porte l'URL CANONIQUE, pas `window.location` — qui n'existe
+   *     pas au rendu serveur et enverrait `localhost` depuis un poste de recette ;
+   *   - il est LOCALISÉ, donc il diffère entre `/fr` et `/ar` ;
+   *   - le lien porte `noopener noreferrer` et un libellé ÉCRIT.
+   */
+  const partage = await page.locator('.action__partage')
+  const lien = await partage.getAttribute('href') ?? ''
+  const rel = await partage.getAttribute('rel') ?? ''
+  const cible = await partage.getAttribute('target') ?? ''
+  const libellePartage = (await partage.innerText()).trim()
+
+  const message = decodeURIComponent(lien.split('text=')[1] ?? '')
+  const urlDansMessage = message.split('\n').find(l => l.startsWith('http')) ?? ''
+  const slugFiche = decodeURIComponent((href ?? '').split('/').pop() ?? '')
+
+  note(
+    'le message WhatsApp contient l’URL canonique de la fiche',
+    lien.startsWith('https://wa.me/?text=')
+    && /^https?:\/\/[^/]+\/fr\/opportunites\//.test(urlDansMessage)
+    && message.includes(slugFiche),
+    `lien : ${lien.slice(0, 60)}… · URL trouvée dans le message : ${urlDansMessage || 'AUCUNE'}`,
+  )
+
+  note(
+    'le lien de partage s’ouvre à part, sans donner la main sur notre page',
+    cible === '_blank' && rel.includes('noopener') && rel.includes('noreferrer')
+    && libellePartage.length > 3,
+    `target=${cible || '—'} · rel=${rel || '—'} · libellé écrit : « ${libellePartage} »`,
+  )
+
+  /* LOCALISÉ : la même fiche en arabe doit produire un AUTRE message. */
+  await page.goto(`${BASE}${(href ?? '').replace('/fr/', '/ar/')}`, { waitUntil: 'networkidle' })
+  const lienAr = await page.locator('.action__partage').getAttribute('href') ?? ''
+  const messageAr = decodeURIComponent(lienAr.split('text=')[1] ?? '')
+
+  note(
+    'le message de partage est localisé',
+    messageAr.length > 0 && messageAr !== message && messageAr.includes('/ar/opportunites/'),
+    `fr ≠ ar : ${messageAr !== message} · l’URL arabe pointe la version arabe : `
+    + `${messageAr.includes('/ar/opportunites/')}`,
+  )
+
   /* Un slug inconnu répond 404 côté SERVEUR : une page vide en 200 se ferait
    * indexer comme une fiche valide. */
   const inconnu = await fetch(`${BASE}/fr/opportunites/slug-qui-n-existe-pas`)
@@ -343,31 +447,281 @@ const page = await contexte.newPage()
     mesures[largeur] = await p.evaluate(() => {
       const h = sel => document.querySelector(sel)?.getBoundingClientRect().height ?? 0
       const total = document.documentElement.scrollHeight
-      return { total, part: ((h('.bandeau-echeance') + h('.fil-actu')) / total) * 100 }
+      const bandeau = h('.bandeau-echeance')
+      const fil = h('.fil-actu')
+      /* `fil` est rendu SÉPARÉMENT du ratio : une section absente donne 0 %, un
+         chiffre excellent qui ne mesure rien. Voir le contrôle ci-dessous. */
+      return { total, bandeau, fil, part: ((bandeau + fil) / total) * 100 }
     })
     await ctx.close()
   }
 
   /*
-   * A2 EXIGE « MOINS DE 22 % », ET LA MAQUETTE DE RÉFÉRENCE EST À 32,5 %.
+   * ═══════════════ LE SEUIL DE 22 % EST DÉSORMAIS BLOQUANT ═══════════════
    *
-   * Les deux moitiés de l'arbitrage — « 6 cartes » et « moins de 22 % » — sont
-   * arithmétiquement incompatibles sur une page de cette longueur. La mesure
-   * est donc RAPPORTÉE et non érigée en échec : faire rougir la recette sur un
-   * seuil que la source elle-même ne tient pas la rendrait rouge en permanence,
-   * et une recette toujours rouge ne se lit plus.
+   * CE QU'IL ÉTAIT. « A2 exige moins de 22 %, la maquette de référence est à
+   * 32,5 % » : les deux moitiés de l'arbitrage — « six cartes » et « moins de
+   * 22 % » — étaient arithmétiquement incompatibles. La mesure était donc
+   * RAPPORTÉE, avec une garde à 60 % qui n'arrêtait rien, et un commentaire qui
+   * laissait l'arbitrage ouvert. Le fil mesurait 34,4 % à 1440 px et 37,0 % à
+   * 390 px : l'accueil était un tableau d'affichage, et la recette le disait
+   * en vert.
    *
-   * Ce qui EST vérifié : que la proportion ne DÉRIVE pas au-delà de ce que la
-   * référence admet, seuil posé à 60 %. Le jour où A2 est tranché, ce nombre
-   * devient le seuil réel et ce commentaire disparaît.
+   * CE QUI A CHANGÉ, ET DANS QUEL ORDRE. Le seuil ne devient bloquant qu'APRÈS
+   * la réduction, et dans le même lot : l'activer avant aurait rendu la recette
+   * rouge entre deux commits, sur un défaut qu'on était en train de corriger.
+   * Une recette rouge par construction ne se lit plus.
+   *
+   * Les six cartes sont remplacées par TROIS LIGNES d'échéance — un autre
+   * objet, pas une carte comprimée. Le tapis complet reste à un clic.
+   *
+   * CE QUE LE CONTRÔLE MESURE VRAIMENT. `.bandeau-echeance` ne s'affiche que
+   * s'il y a une urgence : sa hauteur peut valoir zéro sans que rien n'aille
+   * mal. `.fil-actu` disparaît si aucune annonce n'est ouverte. On vérifie donc
+   * AUSSI que la section a bien été trouvée — sinon un accueil dont le fil a
+   * disparu rendrait 0 % et passerait pour exemplaire.
    */
+  const PLAFOND = 22
+
   const pire = Math.max(mesures[1440].part, mesures[390].part)
+  const filTrouve = mesures[1440].fil > 0 && mesures[390].fil > 0
 
   note(
-    'A2 — surface des annonces sur l’accueil (mesure rapportée)',
-    pire < 60,
+    'A2 — le fil des annonces reste présent sur l’accueil',
+    filTrouve,
+    `hauteur de .fil-actu — 1440 px : ${Math.round(mesures[1440].fil)} px · `
+    + `390 px : ${Math.round(mesures[390].fil)} px`
+    + (filTrouve ? '' : ' — ABSENT : la mesure de surface ci-dessous ne vaut rien'),
+  )
+
+  note(
+    `A2 — surface des annonces sur l’accueil sous ${PLAFOND} %`,
+    filTrouve && pire < PLAFOND,
     `1440 px : ${mesures[1440].part.toFixed(1)} % · 390 px : ${mesures[390].part.toFixed(1)} % `
-    + `— A2 vise < 22 %, la maquette de référence est à 32,5 % (arbitrage non tranché)`,
+    + `— plafond ${PLAFOND} % (le fil de six cartes mesurait 34,4 % et 37,0 %)`,
+  )
+}
+
+// ══════════════ 5 bis. La barre basse : cinq cibles, 320 et 390 px ═══
+{
+  /*
+   * L'ARBITRAGE EST PASSÉ DE QUATRE À CINQ ENTRÉES, ET IL SE MESURE.
+   *
+   * `BarreBasse.vue` documentait quatre entrées avec ce motif : « une cinquième
+   * aurait ramené chaque cible sous le seuil tactile de 44 px à 320 px de
+   * large ». L'arithmétique disait autre chose — 320 / 5 = 64 px. Le raisonnement
+   * était faux, et il tenait lieu de mesure depuis le lot ZP-1.
+   *
+   * Le risque RÉEL n'est pas la cible mais le LIBELLÉ : « Opportunités » est un
+   * mot de douze caractères sans espace, et il ne se coupe pas tout seul. On
+   * mesure donc les deux, aux deux largeurs et dans les deux langues — l'arabe
+   * n'a ni les mêmes longueurs ni la même police.
+   */
+  const CIBLE_MIN = 48
+  const anomalies = []
+  const releve = []
+
+  for (const largeur of [320, 390]) {
+    for (const langue of ['fr', 'ar']) {
+      const ctx = await navigateur.newContext({ viewport: { width: largeur, height: 800 } })
+      const p = await ctx.newPage()
+      await p.goto(`${BASE}/${langue}`, { waitUntil: 'networkidle' })
+
+      const mesure = await p.evaluate(() => {
+        const liens = [...document.querySelectorAll('.barre-basse__lien')]
+        return liens.map((lien) => {
+          const r = lien.getBoundingClientRect()
+          const mot = lien.querySelector('.barre-basse__mot')
+          return {
+            texte: (mot?.textContent || '').trim(),
+            largeur: r.width,
+            hauteur: r.height,
+            /* Le libellé DÉBORDE-T-IL de sa colonne ? `scrollWidth` dépasse
+               `clientWidth` quand un mot insécable ne tient pas. */
+            deborde: mot ? mot.scrollWidth > mot.clientWidth + 1 : false,
+          }
+        })
+      })
+      await ctx.close()
+
+      const ou = `${largeur} px · ${langue}`
+
+      if (mesure.length !== 5) {
+        anomalies.push(`${ou} : ${mesure.length} entrée(s) au lieu de 5`)
+        continue
+      }
+
+      for (const cible of mesure) {
+        if (cible.largeur < CIBLE_MIN || cible.hauteur < CIBLE_MIN) {
+          anomalies.push(
+            `${ou} : « ${cible.texte} » ${Math.round(cible.largeur)}×${Math.round(cible.hauteur)}`,
+          )
+        }
+        if (cible.deborde) anomalies.push(`${ou} : « ${cible.texte} » déborde de sa colonne`)
+      }
+
+      const plusPetite = mesure.reduce((a, b) => (a.largeur * a.hauteur <= b.largeur * b.hauteur ? a : b))
+      releve.push(
+        `${ou} : ${Math.round(plusPetite.largeur)}×${Math.round(plusPetite.hauteur)} au minimum`,
+      )
+    }
+  }
+
+  note(
+    `la barre basse porte cinq cibles d’au moins ${CIBLE_MIN} px, libellés compris`,
+    anomalies.length === 0,
+    anomalies.length ? `ANOMALIES : ${anomalies.join(' · ')}` : releve.join(' · '),
+  )
+}
+
+// ═══════════════ 5 ter. La démonstration se JOUE, et ne fuit pas ═══
+{
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * CE QUE CE CAS EMPÊCHE DE REVENIR
+   *
+   * La démonstration révélait la bonne réponse d'emblée : un visiteur lisait un
+   * corrigé sans avoir rien tenté, sur le bloc qui porte la promesse
+   * « comprendre ses erreurs ». Comprendre une erreur suppose une erreur, donc
+   * un choix, donc un moment où l'on ne sait pas encore.
+   *
+   * LE CONTRÔLE PORTE SUR L'ARBRE, PAS SUR L'ŒIL. Masquer la correction en CSS
+   * aurait produit la même capture et un tout autre produit : le bloc serait
+   * resté dans l'arbre d'accessibilité, un lecteur d'écran aurait annoncé la
+   * bonne réponse avant le choix, et la tabulation l'aurait traversée. On
+   * vérifie donc l'ABSENCE des nœuds, pas leur invisibilité.
+   *
+   * IL EST JOUÉ EN FRANÇAIS. `semer-banque.mjs` sème une banque française ;
+   * l'arabe est relevé à part, en information, parce qu'une banque sans
+   * question arabe n'est pas un défaut de cette interface — et parce que le
+   * taire laisserait croire que la démonstration arabe fonctionne.
+   */
+  await page.goto(`${BASE}/fr`, { waitUntil: 'networkidle' })
+
+  const vide = await page.locator('.preuve--vide').count()
+
+  if (vide > 0) {
+    note(
+      'la démonstration est servie sur l’accueil',
+      false,
+      'le bloc rend son état de repli : la banque de recette ne porte aucune question '
+      + 'française éligible au diagnostic, et les cas suivants ne mesurent rien',
+    )
+  } else {
+    note('la démonstration est servie sur l’accueil', true, 'bloc de preuve rendu')
+
+    /* ── D1. Rien de la correction n'existe AVANT le choix ── */
+    const fuites = await page.evaluate(() => ({
+      justifications: document.querySelectorAll('.preuve__justification').length,
+      marques: document.querySelectorAll('.preuve__marque').length,
+      verdict: document.querySelectorAll('.preuve__verdict').length,
+      juste: document.querySelectorAll('.preuve__option--juste').length,
+    }))
+
+    const total = Object.values(fuites).reduce((a, b) => a + b, 0)
+
+    note(
+      'avant validation, la correction n’est pas dans l’arbre du document',
+      total === 0,
+      total === 0
+        ? 'aucun nœud de correction rendu — ni justification, ni marque, ni verdict'
+        : `FUITE : ${JSON.stringify(fuites)}`,
+    )
+
+    /* ── D2. Sans choix, la validation est indisponible ET dit pourquoi ── */
+    const bouton = page.locator('.preuve__valider')
+    const avant = await bouton.getAttribute('aria-disabled')
+    const decrit = await bouton.getAttribute('aria-describedby')
+    const raison = decrit ? await page.locator(`#${decrit}`).innerText() : ''
+
+    note(
+      'sans réponse choisie, la validation est annoncée indisponible avec sa raison',
+      avant === 'true' && Boolean(decrit) && raison.trim().length > 0,
+      `aria-disabled=${avant} · aria-describedby=${decrit ?? '—'} · raison : « ${raison.trim()} »`,
+    )
+
+    /* ── D3. Un choix rend la validation disponible ── */
+    await page.locator('.preuve__radio').first().check()
+    await page.waitForTimeout(150)
+    const apres = await bouton.getAttribute('aria-disabled')
+
+    note(
+      'une réponse choisie rend la validation disponible',
+      apres === 'false',
+      `aria-disabled=${apres}`,
+    )
+
+    /* ── D4. La correction paraît, ENTIÈRE ── */
+    await bouton.click()
+    await page.waitForTimeout(300)
+
+    const apresValidation = await page.evaluate(() => {
+      const options = document.querySelectorAll('.preuve__option').length
+      const justifications = document.querySelectorAll('.preuve__justification').length
+      const corps = document.querySelector('.preuve__correction')
+      return {
+        options,
+        justifications,
+        verdict: (document.querySelector('.preuve__verdict')?.textContent || '').trim(),
+        bonne: document.querySelectorAll('.preuve__option--juste').length,
+        choisie: document.querySelectorAll('.preuve__option--choisie').length,
+        assise: (document.querySelector('.preuve__assise')?.textContent || '').trim(),
+        actes: document.querySelectorAll('.preuve__actes a').length,
+        /* Un score se reconnaît à un pourcentage ou à un « n sur m ». */
+        score: /\d+\s*%|\b\d+\s*(sur|\/)\s*\d+\b/.test(corps?.textContent || ''),
+      }
+    })
+
+    note(
+      'après validation, CHAQUE option reçoit sa justification',
+      apresValidation.options > 0
+      && apresValidation.justifications === apresValidation.options,
+      `${apresValidation.justifications} justification(s) pour ${apresValidation.options} option(s)`,
+    )
+
+    note(
+      'la bonne réponse et la réponse choisie sont marquées, et le verdict est ÉCRIT',
+      apresValidation.bonne === 1 && apresValidation.choisie === 1
+      && apresValidation.verdict.length > 0,
+      `bonne : ${apresValidation.bonne} · choisie : ${apresValidation.choisie} · `
+      + `verdict : « ${apresValidation.verdict} »`,
+    )
+
+    note(
+      'aucun score n’est produit, et la phrase le dit',
+      !apresValidation.score && apresValidation.assise.length > 0,
+      apresValidation.score
+        ? 'un nombre ressemblant à un score apparaît dans la correction'
+        : `« ${apresValidation.assise} »`,
+    )
+
+    /*
+     * L'ACTION SUIVANTE NE DÉPEND PAS DE LA REMÉDIATION. Le contrat sert
+     * `remediation: null` sur toute question qui n'en porte pas ; le chemin vers
+     * la suite ne doit pas s'évanouir avec elle.
+     */
+    const remede = await page.locator('.preuve__remede').count()
+
+    note(
+      'l’action suivante existe, que la remédiation soit servie ou non',
+      apresValidation.actes >= 1,
+      `${apresValidation.actes} action(s) après la correction · remédiation servie : ${remede === 1}`,
+    )
+
+    await page.screenshot({ path: `${SORTIE}-04-demonstration.png`, fullPage: true })
+  }
+
+  /* L'ARABE EST RELEVÉ, PAS EXIGÉ. Le contrôleur filtre la banque sur
+   * `where('locale', $locale)` : une banque sans question arabe rend 404
+   * `DEMO_NOT_AVAILABLE`, et l'écran affiche honnêtement son repli. Ce n'est pas
+   * un défaut d'interface — c'est un état du contenu, et il doit se voir. */
+  await page.goto(`${BASE}/ar`, { waitUntil: 'networkidle' })
+  const videAr = await page.locator('.preuve--vide').count()
+
+  console.log(
+    `  info  démonstration arabe : ${videAr > 0
+      ? 'INDISPONIBLE — la banque ne porte aucune question de locale `ar`, le repli est affiché'
+      : 'servie'}`,
   )
 }
 

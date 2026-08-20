@@ -181,40 +181,68 @@ export interface ReferentielEpreuve {
   }
 }
 
+/** Une métrique publique. Elle n'existe dans cette liste que si elle est positive. */
+export interface MesurePublique {
+  cle: 'filieres' | 'familles' | 'ouvertes'
+  valeur: number
+}
+
+export interface ChiffresPublics {
+  /**
+   * Le catalogue a-t-il pu être LU ? Faux ne veut pas dire « vide ».
+   *
+   * La distinction est conservée DANS LE CODE même si l'écran ne rend rien dans
+   * les deux cas : c'est elle qui empêchera la prochaine surface de traiter une
+   * panne d'API comme un catalogue sans filière.
+   */
+  lisible: boolean
+  /** Les métriques STRICTEMENT POSITIVES, dans l'ordre d'affichage. */
+  mesures: MesurePublique[]
+}
+
 /**
  * Compteurs de l'accueil, calculés depuis le catalogue réel.
  *
  * La maquette v1 annonçait « 4 200 questions » sur une banque vide. Une phrase
  * honnête vaut mieux qu'un chiffre gonflé au moment où l'on a trois épreuves
  * et pas trente (NAJA7I-ZP-001 §4).
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * DEUX RÈGLES DISTINCTES, ET ELLES NE SE DÉDUISENT PAS L'UNE DE L'AUTRE
+ *
+ * 1. CATALOGUE ILLISIBLE → RIEN. Rendre 0 lorsque l'API est injoignable, c'est
+ *    afficher une valeur de secours : « 0 filière » est une affirmation FAUSSE
+ *    sur le catalogue, là où l'absence du bloc ne dit rien.
+ *
+ * 2. MÉTRIQUE RÉELLEMENT NULLE → RIEN NON PLUS, sur une surface publique.
+ *    Arbitrage du propriétaire, 20 août. « 0 préparation ouverte » est un fait
+ *    exact — mais sur une page qui existe pour convaincre, un fait exact
+ *    présenté comme preuve commerciale se retourne contre le produit. Le
+ *    diagnostic honnête de l'état vide se fait sur `/se-preparer`, en toutes
+ *    lettres et à sa place ; un chiffre nu dans un bandeau de chiffres ne dit
+ *    pas « la préparation ouvre bientôt », il dit « il n'y a rien ici ».
+ *
+ * Le bloc entier disparaît quand aucune métrique ne subsiste : trois cases dont
+ * deux sont vides se lisent comme un rendu cassé.
  */
 export function useChiffresReels() {
   const { filieres } = useCatalogue()
   const { data, error } = filieres()
 
-  /*
-   * `null` quand le catalogue n'a pas pu être lu — jamais des zéros.
-   *
-   * Rendre 0 lorsque l'API est injoignable, c'est afficher une valeur de
-   * secours : « 0 filière » est une affirmation FAUSSE sur le catalogue, là où
-   * l'absence du bloc ne dit rien. La consigne est que les compteurs
-   * disparaissent, pas qu'ils se rabattent sur un chiffre.
-   *
-   * Un catalogue réellement vide reste distinct d'un catalogue illisible : le
-   * premier rend un tableau, donc des zéros légitimes.
-   */
-  return computed(() => {
+  return computed<ChiffresPublics>(() => {
     if (error.value || data.value == null) {
-      return null
+      return { lisible: false, mesures: [] }
     }
 
     const liste = data.value
     const familles = liste.flatMap((f) => f.families ?? [])
 
-    return {
-      filieres: liste.length,
-      familles: familles.length,
-      ouvertes: familles.filter((f) => f.availability === 'open').length,
-    }
+    const brutes: MesurePublique[] = [
+      { cle: 'filieres', valeur: liste.length },
+      { cle: 'familles', valeur: familles.length },
+      { cle: 'ouvertes', valeur: familles.filter((f) => f.availability === 'open').length },
+    ]
+
+    return { lisible: true, mesures: brutes.filter((m) => m.valeur > 0) }
   })
 }

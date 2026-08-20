@@ -633,15 +633,20 @@
 .barre-basse { display: none; }
 
 @media (max-width: 61.99rem) {
-  .nav { display: none; }
+  .nav,
+  .mega-enveloppe,
+  .bascule--langue { display: none; }
 
+  /* CINQ COLONNES. À 320 px chacune vaut 64 px, pour un seuil tactile de 48 px
+     — et la hauteur, 56 px, le tient une seconde fois. Le point dur n'est pas
+     la cible mais le libellé : voir `.barre-basse__mot`. */
   .barre-basse {
     position: fixed;
     inset-inline: 0;
     inset-block-end: 0;
     z-index: 50;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     background: var(--surface);
     border-block-start: 1px solid var(--bordure);
     padding-block-end: env(safe-area-inset-bottom, 0);
@@ -653,11 +658,30 @@
     justify-content: center;
     gap: 0.15rem;
     min-block-size: 3.5rem;
-    padding: 0.4rem 0.25rem;
+    padding: 0.4rem 0.15rem;
     font-size: var(--t-2xs);
     font-weight: 700;
     color: var(--texte-doux);
     text-decoration: none;
+  }
+
+  /* « Opportunités » : douze caractères, aucune espace, 64 px de colonne. Il ne
+     se coupe pas tout seul — d'où le repli sur deux lignes et la césure. Le mot
+     est conservé entier : l'abréger changerait le vocabulaire du produit selon
+     la largeur de l'écran, et « Offres » ne veut pas dire « Opportunités ». */
+  .barre-basse__mot {
+    display: block;
+    inline-size: 100%;
+    text-align: center;
+    line-height: 1.15;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /* Sous 360 px, un cran de moins. Mesuré par la recette de zone publique aux
+     deux largeurs et dans les deux langues, plutôt que supposé. */
+  @media (max-width: 22.5rem) {
+    .barre-basse__lien { font-size: 0.5625rem; padding-inline: 0.1rem; }
   }
   .barre-basse__lien[aria-current='page'] { color: var(--accent-fort); }
   [data-theme='sombre'] .barre-basse__lien[aria-current='page'] { color: var(--accent); }
@@ -733,6 +757,146 @@
 }
 
 .peau__actes { display: flex; align-items: center; gap: var(--e-2); margin-inline-start: auto; flex: none; }
+
+/* ------------------------------------- 0 bis. Le méga-menu « Concours » */
+/*
+ * IL S'ANCRE SUR L'EN-TÊTE, PAS SUR SON DÉCLENCHEUR. Un panneau accroché au
+ * bouton se déplacerait avec lui en arabe et déborderait de la fenêtre du côté
+ * fermé ; `inset-inline: 0` sur un en-tête `position: relative` le fait tenir
+ * toute la largeur, identiquement dans les deux directions d'écriture.
+ *
+ * `z-index: 45` : au-dessus de la coquille collante (40), sous la barre basse
+ * (50) — qui, elle, ne coexiste jamais avec ce panneau.
+ */
+.mega-enveloppe {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 100%;
+  z-index: 45;
+  background: var(--surface);
+  border-block-end: 1px solid var(--bordure);
+  box-shadow: var(--ombre-2);
+}
+
+.mega { padding-block: var(--e-5) var(--e-4); }
+
+.mega__grille {
+  display: grid;
+  gap: var(--e-5);
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.mega__titre { margin: 0 0 0.15rem; font-size: var(--t-m); font-weight: 800; }
+.mega__titre a { color: var(--texte); text-decoration: none; }
+.mega__titre a:hover { color: var(--accent-fort); text-decoration: underline; }
+
+/* L'état de disponibilité est ÉCRIT. `open`, `waitlist` et `closed` n'ont
+   aucune échelle de couleur qui les distingue accessiblement — même règle que
+   les huit natures d'annonce. */
+.mega__etat {
+  margin: 0 0 var(--e-3);
+  font-size: var(--t-2xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+}
+
+.mega__liste { margin: 0; padding: 0; list-style: none; }
+
+.mega__lien {
+  display: block;
+  padding-block: 0.35rem;
+  font-size: var(--t-s);
+  color: var(--texte-doux);
+  text-decoration: none;
+  border-radius: var(--r-xs);
+}
+.mega__lien:hover { color: var(--texte); text-decoration: underline; }
+
+.mega__acte { margin-block: var(--e-3) 0; }
+
+.mega__pied {
+  margin-block: var(--e-5) 0;
+  padding-block-start: var(--e-3);
+  border-block-start: 1px solid var(--bordure);
+}
+
+/* Catalogue illisible : une phrase, et surtout aucun « 0 filière ». */
+.mega__illisible { margin: 0; font-size: var(--t-s); color: var(--texte-doux); }
+
+/* Le chevron REDOUBLE `aria-expanded`, il ne le remplace pas : il est
+   `aria-hidden`, et l'état réel est porté par l'attribut. */
+.nav__chevron { font-size: 0.7em; transition: transform var(--transition); }
+.nav__chevron--ouvert { transform: rotate(180deg); }
+
+.nav__declencheur {
+  font: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* « Se préparer » est le cœur du produit : le poids typographique EST la
+   hiérarchie, comme pour `--adn`. Deux accents différents, deux rôles — l'un
+   nomme ce qu'on vend, l'autre ce qu'on fait. */
+.nav__lien--coeur { color: var(--texte); font-weight: 700; }
+
+/* ------------------------------------------- 0 ter. Le menu « Plus » */
+
+.plus { position: relative; display: none; }
+@media (max-width: 61.99rem) { .plus { display: block; } }
+
+.plus__declencheur {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  min-block-size: 34px;
+  padding: 0 var(--e-3);
+  font: inherit;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--texte-doux);
+  background: transparent;
+  border: 1px solid var(--bordure);
+  border-radius: var(--r);
+  cursor: pointer;
+}
+.plus__declencheur:hover { color: var(--texte); background: var(--surface-douce); }
+.plus__declencheur:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.plus__icone { flex: none; }
+
+/* Il s'ouvre vers la FIN de ligne : à gauche en arabe, à droite en français,
+   sans règle supplémentaire. */
+.plus__panneau {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + var(--e-2));
+  z-index: 45;
+  min-inline-size: 12rem;
+  padding: var(--e-2);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r-m);
+  box-shadow: var(--ombre-2);
+}
+
+.plus__liste { margin: 0; padding: 0; list-style: none; }
+
+/* 44 px de cible tactile, comme toutes les portes de ce dépôt. */
+.plus__lien {
+  display: flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding-inline: var(--e-3);
+  font-size: var(--t-s);
+  font-weight: 600;
+  color: var(--texte-doux);
+  text-decoration: none;
+  border-radius: var(--r-xs);
+}
+.plus__lien:hover { color: var(--texte); background: var(--surface-douce); }
 
 /* Sur téléphone, le rang du haut ne peut pas porter la navigation ET les
    actions : la barre de langue/thème et le grand appel à l'action passent
@@ -830,6 +994,69 @@ html[dir='rtl'] .bandeau-echeance__lien:hover .fleche { transform: scaleX(-1) tr
   gap: var(--e-3);
   grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
 }
+
+/* ─── La ligne d'échéance — présentation propre à l'accueil ────────────────
+ *
+ * Elle remplace six `CarteAnnonce` qui occupaient 34,4 % de la hauteur de
+ * l'accueil à 1440 px et 37,0 % à 390 px, pour un plafond d'arbitrage de 22 %.
+ * Ce n'est pas une carte comprimée : quatre informations, et la fiche complète
+ * à un clic.
+ *
+ * À 390 px, le bloc de clôture passe SOUS le corps plutôt que de se serrer à
+ * côté — un décompte qui enroule sur trois lignes dans une colonne de 8 rem est
+ * moins lisible qu'un décompte qui a toute la largeur.
+ */
+.echeance-ligne {
+  display: grid;
+  gap: var(--e-2);
+  padding: var(--e-3) var(--e-4);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r-m);
+}
+
+@media (min-width: 48rem) {
+  .echeance-ligne {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--e-4);
+  }
+}
+
+.echeance-ligne__corps { min-inline-size: 0; }
+
+.echeance-ligne__titre {
+  margin: 0 0 2px;
+  font-size: var(--t-m);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* Le TITRE est le lien, pas une flèche en fin de ligne : viser un chevron de
+   16 px au pouce est un geste qu'on rate. */
+.echeance-ligne__lien { color: var(--texte); text-decoration: none; }
+.echeance-ligne__lien:hover { color: var(--accent-fort); text-decoration: underline; }
+
+.echeance-ligne__org { margin: 0; font-size: var(--t-s); color: var(--texte-doux); }
+
+.echeance-ligne__cloture {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem var(--e-2);
+  margin: 0;
+  font-size: var(--t-s);
+  font-weight: 700;
+  color: var(--texte-doux);
+  font-variant-numeric: tabular-nums;
+}
+
+.echeance-ligne__cloture time { font-weight: 500; font-size: var(--t-xs); color: var(--texte-doux); }
+
+/* La couleur ne porte JAMAIS l'information seule : le libellé écrit dit déjà
+   « Clôture dans 3 jours », et l'icône du palier imminent le redouble. Cette
+   règle-ci ne fait que la souligner une troisième fois. */
+.echeance-ligne--imminente .echeance-ligne__cloture { color: var(--sys-err-texte); }
 
 /* ------------------------------------------------------- 5. Le tapis */
 
@@ -1023,10 +1250,28 @@ html[dir='rtl'] .annonce__titre { letter-spacing: normal; line-height: 1.45; }
 
 /* ------------------------------------------------- 8. Fiche d'annonce */
 
-.fiche { display: grid; gap: var(--e-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
+/*
+ * TROIS RÉGIONS, ET LEUR ORDRE DANS LE DOM EST L'ORDRE DE LECTURE : tête,
+ * carte de confiance, corps. Sur téléphone, la grille n'a qu'une colonne et
+ * l'ordre du DOM est donc l'ordre à l'écran — l'échéance, l'état du dépôt et
+ * l'avis officiel arrivent juste sous le titre.
+ *
+ * Sur grand écran, les régions sont PLACÉES explicitement plutôt que laissées
+ * au placement automatique : avec cet ordre de DOM, l'algorithme aurait posé la
+ * carte en colonne 1 et le corps en colonne 2 — la mise en page inversée.
+ *
+ * Aucun `order` : réordonner en CSS aurait corrigé l'œil et laissé le lecteur
+ * d'écran dans l'ordre d'origine, c'est-à-dire fait dire à la présentation et à
+ * la lecture deux choses différentes.
+ */
+.fiche { display: grid; gap: var(--e-5); grid-template-columns: minmax(0, 1fr); align-items: start; }
+.fiche__corps { min-inline-size: 0; }
+
 @media (min-width: 62rem) {
-  .fiche { grid-template-columns: minmax(0, 1fr) 20rem; }
-  .fiche__cote { position: sticky; inset-block-start: 5.5rem; }
+  .fiche { grid-template-columns: minmax(0, 1fr) 20rem; gap: var(--e-6); }
+  .fiche__tete { grid-column: 1 / -1; }
+  .fiche__corps { grid-column: 1; grid-row: 2; }
+  .fiche__cote { grid-column: 2; grid-row: 2; position: sticky; inset-block-start: 5.5rem; }
 }
 
 

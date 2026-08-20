@@ -55,11 +55,18 @@ const ouvertes = computed(() => {
         <NavPublique :ouvertes="ouvertes" />
 
         <div class="publique__actions peau__actes">
+          <!-- La bascule de thème reste dans le rang du haut À TOUTES LES
+               LARGEURS, et ce n'est pas une question de place : `npm run audit`
+               rejoue chaque écran en sombre en CLIQUANT `[data-bascule-theme]`.
+               Rangée dans un panneau fermé, elle ne serait pas cliquable, le
+               clic échouerait en silence, et la passe « sombre » mesurerait le
+               thème clair en le déclarant conforme. Voir MenuPlus. -->
           <BasculeTheme />
 
+          <!-- Sous 62 rem, la langue vit dans le menu « Plus ». -->
           <NuxtLink
             :to="switchLocalePath(autre)"
-            class="bascule"
+            class="bascule bascule--langue"
             data-bascule-langue
             :lang="autre"
           >
@@ -69,6 +76,10 @@ const ouvertes = computed(() => {
           <NuxtLink :to="localePath('/connexion')" class="btn btn--discret">
             {{ t('navigation.connexion') }}
           </NuxtLink>
+
+          <!-- Sous 62 rem seulement : la barre basse porte les cinq entrées,
+               celui-ci porte le reste — et rien qui ne réponde pas. -->
+          <MenuPlus />
         </div>
       </div>
     </header>
@@ -97,7 +108,12 @@ const ouvertes = computed(() => {
    `--texte-inverse` sur `--accent`, la composition qui tombe à 2,11:1 en thème
    sombre. La règle partagée de commun.css est la seule qui subsiste. */
 
+/* `position: relative` fait de l'en-tête le repère du méga-menu : le panneau
+   s'ancre sur TOUTE la largeur de la barre, pas sur son déclencheur. Sans lui,
+   il se positionnerait par rapport à la fenêtre et sortirait du cadre au
+   défilement. */
 .publique__entete {
+  position: relative;
   border-block-end: 1px solid var(--bordure);
   background: var(--surface);
 }

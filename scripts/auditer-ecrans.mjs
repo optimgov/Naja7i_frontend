@@ -65,6 +65,12 @@ const ECRANS = [
    * Laravel : hors CI, comme les écrans de catalogue. `/app/abonnement`, lui,
    * demande une session — il est audité par `scripts/recette-abonnement.mjs`. */
   ['tarifs', '/tarifs'],
+
+  /* `/se-preparer` — la porte publique du lot PARCOURS. Elle lit les épreuves
+   * ouvertes via le catalogue : hors CI, comme les cinq écrans de catalogue.
+   * Sans backend, elle rendrait son état « catalogue illisible », et l'audit
+   * mesurerait un paragraphe au lieu d'une page. */
+  ['se préparer', '/se-preparer'],
 ]
 
 /**
