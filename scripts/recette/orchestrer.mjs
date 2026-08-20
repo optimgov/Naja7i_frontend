@@ -322,6 +322,17 @@ const RECETTES = [
    */
   ['zone publique — ZP-1', 'scripts/recette-zone-publique.mjs', []],
   /*
+   * LE CONTRASTE DES ÉTATS INTERACTIFS, juste après, et pour la même raison :
+   * il ne demande aucune session. `--complet` lui ouvre les écrans de catalogue
+   * — l'API est en marche à ce point de l'orchestration, ce qui n'est pas le
+   * cas en intégration continue, où le script se restreint de lui-même et le
+   * DIT.
+   *
+   * Il complète `npm run audit`, qui mesure les écrans AU REPOS : un survol et
+   * un focus changent des couleurs que cet audit-là ne voit jamais.
+   */
+  ['contraste des états interactifs', 'scripts/recette-contraste-interactif.mjs', ['--complet']],
+  /*
    * LES PORTES AVANT TOUT LE RESTE, et l'ordre est une contrainte.
    *
    * Elle part d'un compte qui n'existe pas encore et le mène de l'inscription

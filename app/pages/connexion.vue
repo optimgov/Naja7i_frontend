@@ -12,6 +12,12 @@ const form = reactive({ email: '', password: '', remember: false })
 const erreur = ref<{ message: string; requestId: string } | null>(null)
 const envoi = ref(false)
 
+/* La destination de retour, vérifiée une fois. Elle sert à DEUX endroits : la
+ * redirection après connexion, et le lien vers l'inscription — un visiteur qui
+ * n'a pas encore de compte ne doit pas perdre son choix en changeant d'écran,
+ * et c'est précisément le cas qui cassait. */
+const suite = computed(() => suiteInterne(route.query.suite))
+
 async function soumettre() {
   envoi.value = true
   erreur.value = null
@@ -22,24 +28,16 @@ async function soumettre() {
     /*
      * ON REVIENT OÙ L'ON ALLAIT — `?suite=`.
      *
-     * Un visiteur qui choisit une offre depuis `/tarifs` sans compte passe par
-     * ici. Le renvoyer sur `/app` lui demanderait de retrouver son offre seul,
-     * et c'est le moment exact où l'on perd un achat.
+     * Un visiteur qui choisit une offre depuis `/tarifs`, ou une épreuve depuis
+     * `/se-preparer`, sans compte, passe par ici. Le renvoyer sur `/app` lui
+     * demanderait de retrouver seul ce qu'il avait choisi, et c'est le moment
+     * exact où l'on perd un achat comme un diagnostic.
      *
-     * SEULS LES CHEMINS INTERNES SONT SUIVIS. `//evil.example` et
-     * `https://evil.example` sont des URL absolues qu'un navigateur suivrait
-     * hors du site : accepter la valeur telle quelle ferait de cette page une
-     * redirection ouverte, offerte à qui envoie un lien de connexion piégé.
-     *
-     * La contre-barre est refusée avec le reste : les navigateurs la
-     * normalisent en barre oblique au moment de résoudre l'URL, si bien que
-     * `/\evil.example` se relit `//evil.example`. Le contrôle porterait alors
-     * sur une chaîne que personne ne suit.
+     * Le contrôle de sûreté vit dans `~/utils/suite` — il est employé par les
+     * quatre écrans du tunnel et les deux gardes de route, et une seule copie
+     * divergente rouvrirait la redirection ouverte.
      */
-    const suite = String(route.query.suite ?? '')
-    const interne = /^\/(?![/\\])/.test(suite)
-
-    await navigateTo(interne ? suite : localePath('/app'))
+    await navigateTo(suite.value ?? localePath('/app'))
   } catch (e) {
     if (e instanceof ApiRequestError) {
       erreur.value = { message: e.error.message, requestId: e.error.request_id }
@@ -95,7 +93,9 @@ useHead({ title: t('connexion.titre') })
     </p>
     <p class="bascule-compte">
       {{ t('connexion.pas_de_compte') }}
-      <NuxtLink :to="localePath('/inscription')">{{ t('connexion.creer') }}</NuxtLink>
+      <!-- La suite VOYAGE avec le lien. Sans cela, un visiteur neuf perdait sa
+           destination au moment précis où il créait son compte pour l'atteindre. -->
+      <NuxtLink :to="avecSuite(localePath('/inscription'), suite)">{{ t('connexion.creer') }}</NuxtLink>
     </p>
   </div>
 </template>

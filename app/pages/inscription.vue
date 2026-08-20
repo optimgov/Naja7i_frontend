@@ -6,6 +6,12 @@ definePageMeta({ layout: 'auth', middleware: 'guest' })
 const { t, locale } = useI18n()
 const { register } = useAuth()
 const localePath = useLocalePath()
+const route = useRoute()
+
+/* La destination choisie AVANT la création du compte. Elle traverse cet écran
+ * sans être suivie ici : l'adresse n'est pas encore vérifiée, et les routes du
+ * diagnostic exigent `verified.api`. Elle est passée à l'écran suivant. */
+const suite = computed(() => suiteInterne(route.query.suite))
 
 const form = reactive({
   email: '',
@@ -27,7 +33,7 @@ async function soumettre() {
 
   try {
     await register({ ...form, locale: locale.value as 'fr' | 'ar' })
-    await navigateTo(localePath('/verifier-email'))
+    await navigateTo(avecSuite(localePath('/verifier-email'), suite.value))
   } catch (e) {
     if (e instanceof ApiRequestError) {
       erreurs.value = e.fieldErrors
@@ -137,7 +143,7 @@ useHead({ title: t('inscription.titre') })
 
     <p class="bascule-compte">
       {{ t('inscription.deja_inscrit') }}
-      <NuxtLink :to="localePath('/connexion')">{{ t('inscription.se_connecter') }}</NuxtLink>
+      <NuxtLink :to="avecSuite(localePath('/connexion'), suite)">{{ t('inscription.se_connecter') }}</NuxtLink>
     </p>
   </div>
 </template>

@@ -13,6 +13,8 @@
     "echeances": "node scripts/verifier-echeances.mjs",
     "audit": "node scripts/auditer-ecrans.mjs --sombre \"[data-bascule-theme]\"",
     "audit:ci": "node scripts/auditer-ecrans.mjs --ci --sombre \"[data-bascule-theme]\"",
+    "contraste": "node scripts/recette-contraste-interactif.mjs --complet",
+    "contraste:ci": "node scripts/recette-contraste-interactif.mjs",
     "recette": "node scripts/recette/orchestrer.mjs",
     "recette:dev": "RECETTE_DEV=1 node scripts/recette/orchestrer.mjs"
   },

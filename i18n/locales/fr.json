@@ -39,6 +39,7 @@
     "en_cours": "Vérification du lien…",
     "reussi": "Votre adresse est confirmée.",
     "continuer": "Continuer",
+    "continuer_suite": "Reprendre où vous en étiez",
     "echec_aide": "Les liens expirent après 24 heures. Demandez-en un nouveau, il arrivera dans la minute.",
     "attente": "Nous avons envoyé un lien à {email}. Ouvrez-le pour activer votre compte.",
     "renvoyer": "Envoyer un nouveau lien",

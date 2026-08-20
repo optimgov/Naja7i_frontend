@@ -851,12 +851,33 @@ html[dir='rtl'] .bandeau-echeance__lien:hover .fleche { transform: scaleX(-1) tr
   min-block-size: 2.25rem; padding-inline: 0.35rem;
   font-size: var(--t-s); color: var(--texte-doux); cursor: pointer; border-radius: var(--r-xs);
 }
-.filtre:hover { background: var(--surface-douce); color: var(--texte); }
+/* `:focus-within` accompagne `:hover` : au clavier, la ligne survolée et la
+   ligne focalisée sont la même affordance, et elles doivent se ressembler. */
+.filtre:hover,
+.filtre:focus-within { background: var(--surface-douce); color: var(--texte); }
 /* 24 px exactement : WCAG 2.2 « Target Size (Minimum) ». Une case à
    1,05 rem tombait à 17 px — c'est le défaut le plus banal d'un rail
    de filtres, et il se paie au pouce sur téléphone. */
 .filtre input { inline-size: 1.5rem; block-size: 1.5rem; margin: 0; accent-color: var(--vert-700); flex: none; }
 .filtre__n { margin-inline-start: auto; font-size: var(--t-2xs); font-variant-numeric: tabular-nums; color: var(--texte-tenu); }
+
+/* ─── LE COMPTEUR CHANGE DE JETON AU SURVOL, ET C'EST UNE MESURE ───────────
+ *
+ * `.filtre:hover` pose `--surface-douce` sous la ligne. Le compteur restait en
+ * `--texte-tenu`, qui rend 4,482:1 sur cette surface en thème clair : sous le
+ * seuil WCAG de 4,5 pour du texte de cette taille — et il est en `--t-2xs`,
+ * donc jamais du « grand texte ».
+ *
+ * L'écart est de 0,018 point. Aucune relecture ne pouvait le voir, et l'audit de
+ * rendu ne le voyait pas non plus : il mesure l'état AU REPOS, où le compteur se
+ * pose sur `--surface` (5,143:1, conforme). Il fallait un contrôle qui déclenche
+ * réellement `:hover` et `:focus-visible` — c'est
+ * `scripts/recette-contraste-interactif.mjs`.
+ *
+ * `--texte-doux` sur `--surface-douce` : 5,625:1 en clair, 6,694:1 en sombre.
+ */
+.filtre:hover .filtre__n,
+.filtre:focus-within .filtre__n { color: var(--texte-doux); }
 
 .barre-tapis {
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3);

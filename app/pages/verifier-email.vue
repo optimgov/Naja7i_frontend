@@ -15,6 +15,50 @@ const message = ref('')
 const renvoiFait = ref(false)
 const renvoiEnCours = ref(false)
 
+/*
+ * ─────────────────────── LA SUITE TRAVERSE LA BOÎTE AUX LETTRES ─────────────
+ *
+ * C'EST ICI QUE LA CHAÎNE CASSAIT, ET IL FALLAIT UN RELAIS.
+ *
+ * `?suite=` voyage très bien de `/se-preparer` à la connexion, de la connexion
+ * à l'inscription, et de l'inscription jusqu'ici : ce sont des navigations du
+ * même onglet. Mais le lien de vérification est fabriqué par le BACKEND et
+ * n'emporte que son jeton — il revient donc SANS destination. Un visiteur neuf
+ * qui voulait un diagnostic d'informatique atterrissait sur un tableau de bord
+ * vide, après avoir traversé quatre écrans pour y arriver.
+ *
+ * Le relais est un cookie court, et il ne peut rien affirmer d'autre que ce que
+ * le visiteur a lui-même demandé :
+ *
+ *   - il ne porte QUE ce que `suiteInterne` accepte, à l'écriture comme à la
+ *     lecture — le contrôle contre la redirection ouverte s'applique deux fois ;
+ *   - il vit trente minutes, la durée d'une vérification d'e-mail, pas celle
+ *     d'une session ;
+ *   - il est effacé dès qu'il a servi, pour ne pas dérouter une visite
+ *     ultérieure qui n'aurait rien demandé.
+ *
+ * Le chemin ALTERNATIF reste entier : lien ouvert dans un autre navigateur, ou
+ * cookie expiré, et l'on retombe sur `/app`. C'est un repli de NAVIGATION, pas
+ * un repli sur une donnée inventée.
+ */
+const memoire = useCookie<string | null>('naja7i_suite', {
+  maxAge: 60 * 30,
+  sameSite: 'lax',
+  path: '/',
+  default: () => null,
+})
+
+const depuisRoute = suiteInterne(route.query.suite)
+if (depuisRoute) memoire.value = depuisRoute
+
+const suite = computed(() => depuisRoute ?? suiteInterne(memoire.value))
+const destination = computed(() => suite.value ?? localePath('/app'))
+
+/** Le relais a servi : on le retire. Il n'a pas à survivre à son usage. */
+function oublierSuite(): void {
+  memoire.value = null
+}
+
 // Le jeton arrive dans l'URL du lien reçu par e-mail. Il est consommé
 // immédiatement, puis retiré de l'URL : un jeton ne doit pas rester dans
 // l'historique du navigateur ni dans un référent transmis à un tiers.
@@ -32,7 +76,12 @@ onMounted(async () => {
   try {
     await verifyEmail(token)
     etat.value = 'reussi'
-    window.history.replaceState({}, '', window.location.pathname)
+
+    /* On retire le JETON, pas la destination : c'est le jeton qui ne doit pas
+       traîner dans l'historique. Effacer la requête entière ferait perdre la
+       suite au premier rechargement, juste avant qu'elle serve. */
+    const requete = suite.value ? `?suite=${encodeURIComponent(suite.value)}` : ''
+    window.history.replaceState({}, '', window.location.pathname + requete)
   } catch (e) {
     etat.value = 'echec'
     message.value = e instanceof ApiRequestError ? e.error.message : t('errors.network')
@@ -62,8 +111,11 @@ useHead({ title: t('verification.titre') })
 
     <template v-else-if="etat === 'reussi'">
       <div class="alerte alerte--succes" role="status">{{ t('verification.reussi') }}</div>
-      <NuxtLink :to="localePath('/app')" class="btn">
-        {{ t('verification.continuer') }}
+
+      <!-- Le candidat repart OÙ IL ALLAIT, pas sur un tableau de bord générique.
+           `oublierSuite` retire le relais au moment où il sert. -->
+      <NuxtLink :to="destination" class="btn" @click="oublierSuite">
+        {{ suite ? t('verification.continuer_suite') : t('verification.continuer') }}
       </NuxtLink>
     </template>
 

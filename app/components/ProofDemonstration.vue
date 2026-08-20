@@ -30,11 +30,29 @@ interface Demonstration {
   remediation: { title: string; estimated_minutes: number | null } | null
 }
 
-const { t, te } = useI18n()
+const { t, te, locale } = useI18n()
 const api = useApi()
 
-const { data, error } = await useAsyncData('demonstration', () =>
-  api.get<{ data: Demonstration; meta?: { notice?: string } }>('/demonstration/correction'),
+/*
+ * LA LOCALE EST DEMANDÉE EXPLICITEMENT, ET C'EST UN DÉFAUT CORRIGÉ.
+ *
+ * `DemonstrationController` lit le paramètre de REQUÊTE `locale`, avec `fr`
+ * pour défaut, et filtre la banque dessus (`where('locale', $locale)`).
+ * `useApi` envoie `Accept-Language` — que ce contrôleur ne consulte pas. Un
+ * visiteur arabophone recevait donc une question française, sur le bloc même
+ * qui porte la promesse du produit.
+ *
+ * La clé de `useAsyncData` porte la locale : sans elle, la réponse française
+ * resterait en cache après la bascule de langue, et le correctif serait invisible
+ * une navigation sur deux.
+ */
+const { data, error } = await useAsyncData(
+  () => `demonstration:${locale.value}`,
+  () => api.get<{ data: Demonstration; meta?: { notice?: string } }>(
+    '/demonstration/correction',
+    { locale: locale.value },
+  ),
+  { watch: [locale] },
 )
 
 const demo = computed(() => data.value?.data ?? null)
