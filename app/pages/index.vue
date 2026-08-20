@@ -56,6 +56,36 @@ const PREUVES = ['autopsie', 'distracteurs', 'assise'] as const
  *  aucune n'annonce une fonctionnalité, un délai ou un prix qui n'existe pas. */
 const FAQ = ['officiel', 'compte', 'gratuit', 'sources', 'paiement'] as const
 
+/**
+ * « Essayer la question » — V4 §4.2 : le premier geste ne change pas de page.
+ *
+ * Le CTA principal pointait vers `/se-preparer`, et l'ancre `#demonstration`
+ * venait en second. La carte de question étant désormais le point focal du
+ * héros, la déplacer d'un écran pour y revenir n'a plus de sens : à 1440 px
+ * elle est déjà là.
+ *
+ * ON DÉPLACE LE FOCUS, PAS SEULEMENT LE REGARD. Un défilement seul laisse le
+ * clavier au début du document : l'utilisateur qui suit le bouton à la
+ * tabulation retraverse tout l'en-tête. Le focus sur le premier bouton radio
+ * met le geste suivant — répondre — à une touche.
+ *
+ * `preventScroll` puis `scrollIntoView` explicite : le défilement natif du
+ * focus ignore `prefers-reduced-motion`, celui-ci le respecte.
+ */
+function essayerLaQuestion() {
+  const carte = document.getElementById('demonstration')
+  if (!carte) return
+
+  const sobre = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  carte.scrollIntoView({ behavior: sobre ? 'auto' : 'smooth', block: 'center' })
+
+  const premiere = carte.querySelector<HTMLInputElement>('input[type="radio"]')
+  /* Pas d'option à focaliser : la démonstration est en repli. La carte
+   * elle-même porte `tabindex="-1"`, le focus y reste utile. */
+  if (premiere) premiere.focus({ preventScroll: true })
+  else carte.focus({ preventScroll: true })
+}
+
 useSeoCatalogue({
   title: t('accueil.seo_titre'),
   description: t('accueil.seo_description'),
@@ -100,13 +130,22 @@ useSeoCatalogue({
               pli, et un lien de fragment vers une cible `tabindex="-1"` y amène
               le regard ET le focus clavier sans une ligne de JavaScript.
             -->
-            <NuxtLink class="btn btn--grand" :to="localePath('/se-preparer')">
+            <!-- V4 §4.2 : le premier geste est de RÉPONDRE, sur place. Un
+                 bouton et non un lien de fragment — l'action déplace le focus
+                 dans la page, elle ne navigue pas. -->
+            <button type="button" class="btn btn--grand" @click="essayerLaQuestion">
               {{ t('accueil.action_principale') }}
-            </NuxtLink>
-            <a class="lien-second" href="#demonstration">
+            </button>
+            <NuxtLink class="lien-second" :to="localePath('/se-preparer')">
               {{ t('accueil.action_seconde') }}
-            </a>
+            </NuxtLink>
           </div>
+
+          <!-- Micro-preuve : elle lève les deux objections qui arrêtent un
+               visiteur avant le premier clic — « faut-il un compte ? » et
+               « est-ce que ça compte contre moi ? ». Elle n'est pas un
+               argument commercial, c'est un fait du produit. -->
+          <p class="heros__micro-preuve">{{ t('accueil.micro_preuve') }}</p>
 
           <!--
             Compteurs calculés depuis le catalogue réel, et STRICTEMENT
@@ -115,15 +154,6 @@ useSeoCatalogue({
             bloc entier disparaît si aucune métrique ne subsiste — trois cases
             dont deux sont vides se lisent comme un rendu cassé.
           -->
-          <template v-if="chiffres.mesures.length">
-            <dl class="assise">
-              <div v-for="mesure in chiffres.mesures" :key="mesure.cle">
-                <dt>{{ t(`accueil.chiffre_${mesure.cle}`) }}</dt>
-                <dd>{{ nombre(mesure.valeur) }}</dd>
-              </div>
-            </dl>
-            <p class="assise__note">{{ t('accueil.assise_note') }}</p>
-          </template>
         </div>
 
         <!-- `tabindex="-1"` rend la cible focusable par le lien de fragment sans
@@ -131,6 +161,35 @@ useSeoCatalogue({
         <div id="demonstration" tabindex="-1" class="ancre-demonstration">
           <ProofDemonstration contexte="accueil" />
         </div>
+
+        <!--
+          LES COMPTEURS SORTENT DE LA COLONNE ÉDITORIALE — V4 §4.3.
+
+          Ils s'intercalaient entre la micro-preuve et la question. À 390 px,
+          où la grille s'empile, ils repoussaient la carte SOUS LE PLI : le
+          premier écran montrait une promesse et trois nombres, jamais l'objet
+          de la promesse. Le cahier fixe l'ordre — promesse, micro-preuve,
+          question, choix, action — et les compteurs n'y figurent pas.
+
+          Troisième enfant de grille plutôt qu'un `order` CSS : l'ordre du DOM
+          reste l'ordre lu. Un `order` aurait donné une page qui se lit
+          autrement qu'elle ne s'affiche, et c'est précisément ce qu'on a
+          refusé sur le bloc confiance de la fiche d'annonce.
+
+          À 1440 px, la grille place ce troisième enfant en deuxième rangée,
+          sous la colonne éditoriale : la composition d'origine est conservée.
+        -->
+        <template v-if="chiffres.mesures.length">
+          <div class="heros__assise">
+            <dl class="assise">
+              <div v-for="mesure in chiffres.mesures" :key="mesure.cle">
+                <dt>{{ t(`accueil.chiffre_${mesure.cle}`) }}</dt>
+                <dd>{{ nombre(mesure.valeur) }}</dd>
+              </div>
+            </dl>
+            <p class="assise__note">{{ t('accueil.assise_note') }}</p>
+          </div>
+        </template>
       </div>
     </section>
 
@@ -270,7 +329,44 @@ useSeoCatalogue({
 <style scoped>
 .heros { padding-block: var(--e-6) var(--e-5); background: var(--fond); border-block-end: 1px solid var(--bordure); }
 .heros__grille { display: grid; gap: var(--e-5); align-items: start; }
-@media (min-width: 56rem) { .heros__grille { grid-template-columns: 1fr 1fr; gap: var(--e-6); } }
+
+/*
+ * HÉROS ASYMÉTRIQUE 5/12 + 7/12 — V4 §4.2.
+ *
+ * Deux colonnes égales donnaient deux blocs de même poids : l'œil ne savait
+ * pas lequel était le produit. La carte de question reçoit les 7/12 et devient
+ * le point focal ; l'éditorial tient en 5/12, ce qui resserre aussi sa mesure
+ * de lecture — un titre court se lit mieux sur une colonne étroite.
+ *
+ * `min-block-size` vise les 620–700 px du cahier SANS les imposer : `min` et
+ * non `height`, pour qu'un texte plus long en arabe puisse pousser la section
+ * au lieu d'être coupé. La hauteur est un objectif de composition, jamais une
+ * contrainte de boîte.
+ */
+@media (min-width: 56rem) {
+  .heros__grille {
+    grid-template-columns: 5fr 7fr;
+    gap: var(--e-7);
+    align-items: start;
+    min-block-size: 620px;
+  }
+
+  /* Les compteurs reprennent la colonne éditoriale, en deuxième rangée : la
+     composition d'origine est rendue, sans les remettre devant la question. */
+  .heros__assise { grid-column: 1; }
+}
+
+/* Marge de séparation à 390 px, où ils suivent la carte au lieu de la
+   précéder. Le trait de la règle `.assise` fait déjà la coupure visuelle. */
+.heros__assise { margin-block-start: var(--e-2); }
+
+/* Le fait qui lève les deux objections d'avant le premier clic. Ténu, mais sur
+   `--fond` : `--texte-doux` y rend 7,04:1, bien au-dessus du seuil. */
+.heros__micro-preuve {
+  margin-block-start: var(--e-3);
+  font-size: var(--t-sm);
+  color: var(--texte-doux);
+}
 .heros__titre {
   text-wrap: balance; font-size: var(--t-4xl); max-inline-size: 16ch; }
 .heros__titre :deep(em) { font-style: normal; color: var(--terre-700); }
@@ -290,11 +386,64 @@ useSeoCatalogue({
 .assise dd { margin: 0; font-size: var(--t-xl); font-weight: 800; letter-spacing: -.03em; }
 .assise__note { margin-block-start: var(--e-2); font-size: var(--t-xs); color: var(--texte-doux); max-inline-size: 52ch; }
 
-.etapes { display: grid; gap: var(--e-3); margin-block-start: var(--e-4); padding: 0; list-style: none; }
-@media (min-width: 48rem) { .etapes { grid-template-columns: repeat(4, 1fr); } }
-.etape { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r); padding: var(--e-4); }
+/*
+ * CHRONOLOGIE — V4 §4.5 : « une ligne de progression sur bureau, une
+ * chronologie verticale sur mobile ».
+ *
+ * Quatre cartes bordées ne disaient pas qu'il s'agit d'un ORDRE : elles se
+ * lisaient comme quatre offres au choix. Le §6 interdit d'ailleurs « la
+ * multiplication de cartes blanches ». La ligne, elle, porte le sens : on la
+ * suit, et elle a un début.
+ *
+ * Le trait est un `::before` sur la liste, pas une bordure de chaque puce :
+ * une bordure par élément se rompt à chaque intervalle, et le dernier segment
+ * dépasse. Il est en `inset-inline` et `inset-block`, donc il se retourne seul
+ * en arabe sans une seule règle miroir.
+ */
+.etapes {
+  display: grid;
+  gap: var(--e-5);
+  margin-block-start: var(--e-5);
+  padding: 0;
+  list-style: none;
+  position: relative;
+}
+
+/* Mobile : trait vertical, aligné sur le centre des pastilles (26 px / 2). */
+.etapes::before {
+  content: '';
+  position: absolute;
+  inset-block: 13px;
+  inset-inline-start: 12px;
+  inline-size: 2px;
+  background: var(--bordure-forte);
+}
+
+.etape {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  column-gap: var(--e-3);
+  align-items: start;
+}
+
+@media (min-width: 48rem) {
+  .etapes { grid-template-columns: repeat(4, 1fr); gap: var(--e-4); }
+
+  /* Bureau : le trait passe à l'horizontale, sur la ligne des pastilles. */
+  .etapes::before {
+    inset-block: 13px auto;
+    inset-inline: 13px 13px;
+    inline-size: auto;
+    block-size: 2px;
+  }
+
+  .etape { grid-template-columns: 1fr; row-gap: var(--e-2); }
+}
+/* `position: relative` + `z-index` : la pastille masque le trait qui passe
+   derrière elle. Sans cela, la ligne barre le chiffre. */
 .etape__n { display: inline-flex; align-items: center; justify-content: center; inline-size: 26px; block-size: 26px;
-  border-radius: 999px; background: var(--vert-700); color: #fff; font-size: var(--t-xs); font-weight: 800; margin-block-end: var(--e-2); }
+  border-radius: 999px; background: var(--vert-700); color: #fff; font-size: var(--t-xs); font-weight: 800;
+  position: relative; z-index: 1; flex: none; }
 .etape__titre { font-size: var(--t-md); margin-block-end: 4px; }
 .etape__texte { font-size: var(--t-sm); color: var(--texte-doux); }
 /* `margin-block-start: auto` aligne les actions d'une rangée même quand les

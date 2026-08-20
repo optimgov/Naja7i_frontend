@@ -92,18 +92,16 @@ useSeoCatalogue({
 
 <template>
   <div>
-    <!-- ═══════════════ BLOC 1 — la promesse, puis le choix ═══════════════ -->
-    <section class="section preparer__tete">
+    <!-- ═══════════ BLOC 1 — le choix, tout de suite — V4 §5 ═══════════
+         La promesse occupait une section pleine hauteur AVANT la liste : à
+         390 px, le premier écran ne montrait aucune épreuve. Le cahier est
+         explicite — « le premier écran répond à une seule question : quelle
+         épreuve voulez-vous préparer ? ». Titre et liste fusionnent donc en
+         une seule section, et le chapeau tombe : le H1 le dit déjà. -->
+    <section id="epreuves" class="section preparer__tete" tabindex="-1">
       <div class="enveloppe">
         <p class="oeil">{{ t('preparer.oeil') }}</p>
         <h1 class="preparer__titre">{{ t('preparer.titre') }}</h1>
-        <p class="chapeau">{{ t('preparer.chapeau') }}</p>
-      </div>
-    </section>
-
-    <section id="epreuves" class="section section--douce" tabindex="-1">
-      <div class="enveloppe">
-        <h2 class="titre-section">{{ t('preparer.epreuves_titre') }}</h2>
         <p class="preparer__friction">{{ t('preparer.friction') }}</p>
 
         <!-- Catalogue illisible : on ne sait pas, et on ne fabrique pas une

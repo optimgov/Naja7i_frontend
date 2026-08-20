@@ -44,6 +44,20 @@ const { t } = useI18n()
       <path v-else d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z" />
     </svg>
 
+    <!--
+      LE LIBELLÉ RESTE, MAIS IL SORT DU RENDU VISUEL — V4 §4.1.
+
+      Écrit en clair, « Passer au thème sombre » occupait la largeur de trois
+      contrôles et donnait à l'en-tête l'allure d'une barre d'outils
+      d'administration. Le cahier demande un contrôle compact dont le nom
+      accessible reste complet.
+
+      `.visuellement-cache` et non `aria-label` sur le bouton : un `aria-label`
+      REMPLACE le contenu pour un lecteur d'écran, mais le laisse invisible aux
+      outils de traduction du navigateur et aux extensions qui lisent le texte.
+      Le texte reste donc dans le document, hors du flux visuel — et `title`
+      continue de servir l'info-bulle à la souris.
+    -->
     <span class="bascule-theme__texte">
       {{ estSombre ? t('theme.vers_clair') : t('theme.vers_sombre') }}
     </span>
@@ -81,21 +95,32 @@ const { t } = useI18n()
   flex: none;
 }
 
-/* Sous 26rem, le libellé passe en lecture d'écran seule : deux bascules et un
-   lien de connexion ne tiennent pas côte à côte sur un téléphone étroit.
-   L'icône reste, la cible tactile aussi — elle ne descend jamais sous 34 px. */
-@media (max-width: 26rem) {
-  .bascule-theme__texte {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+/*
+ * LE LIBELLÉ EST EN LECTURE D'ÉCRAN SEULE, À TOUTES LES LARGEURS — V4 §4.1.
+ *
+ * Il ne l'était que sous 26 rem. Écrit en clair sur un bureau, « Passer au
+ * thème sombre » occupait la largeur de trois contrôles et donnait à l'en-tête
+ * l'allure d'une barre d'outils d'administration — le reproche exact du
+ * cahier. L'icône porte l'état, `title` porte l'info-bulle à la souris, et ce
+ * texte reste le nom accessible.
+ *
+ * Il RESTE DANS LE DOCUMENT plutôt que de devenir un `aria-label` : un
+ * `aria-label` remplace le contenu pour un lecteur d'écran, mais le dérobe aux
+ * outils de traduction du navigateur, qui ne traduisent que du texte rendu.
+ */
+.bascule-theme__texte {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
-  .bascule-theme {
-    padding-inline: var(--e-2);
-  }
+/* Le bouton n'entoure plus qu'une icône : le rembourrage se resserre, et la
+   cible reste carrée. Elle ne descend jamais sous 34 px de haut, et le socle
+   impose 44 px de cible tactile sur les surfaces publiques. */
+.bascule-theme {
+  padding-inline: var(--e-2);
 }
 </style>

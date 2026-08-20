@@ -96,11 +96,11 @@
     "mega_illisible": "Le catalogue n’a pas pu être lu. La page des concours reste accessible."
   },
   "accueil": {
-    "oeil": "Concours de la fonction publique marocaine",
-    "titre": "Comprendre ses erreurs, pas seulement les compter.",
-    "chapeau": "Chaque correction explique pourquoi la bonne réponse est juste, et pourquoi chaque autre option est fausse. C'est ce qui distingue une révision d'un score.",
-    "action_principale": "Commencer à se préparer",
-    "action_seconde": "Essayer une correction",
+    "oeil": "Préparation aux concours publics au Maroc",
+    "titre": "Comprenez chaque erreur. Progressez là où elle commence.",
+    "chapeau": "Répondez à une question réelle de préparation. La correction explique la bonne réponse, chaque distracteur et la cause probable de l'erreur.",
+    "action_principale": "Essayer la question",
+    "action_seconde": "Choisir mon concours",
     "chiffre_filieres": "Filières",
     "chiffre_familles": "Familles de concours",
     "chiffre_ouvertes": "Ouvertes à la préparation",
@@ -140,7 +140,8 @@
     "fil_oeil": "Le fil",
     "fil_titre": "Ce qui vient de s’ouvrir",
     "fil_tout_voir": "Toutes les opportunités",
-    "fil_fixture": "Données d’exemple — {source}. Le collecteur d’annonces n’est pas encore branché."
+    "fil_fixture": "Données d’exemple — {source}. Le collecteur d’annonces n’est pas encore branché.",
+    "micro_preuve": "Essai sans compte · aucune réponse enregistrée"
   },
   "recherche": {
     "ouvrir": "Rechercher",
@@ -178,7 +179,7 @@
   },
   "preparer": {
     "oeil": "La méthode",
-    "titre": "Commencez par comprendre vos erreurs.",
+    "titre": "Choisissez votre épreuve et situez votre niveau.",
     "chapeau": "Choisissez une épreuve, voyez comment les corrections fonctionnent, puis commencez un diagnostic qui pourra être repris.",
     "seo_titre": "Se préparer — diagnostic et corrections expliquées",
     "seo_description": "Choisissez l’épreuve que vous préparez, voyez une correction complète, puis commencez un diagnostic dont chaque erreur reçoit sa raison.",
