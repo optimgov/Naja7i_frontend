@@ -45,7 +45,7 @@ import type { Filiere } from '~/composables/useCatalogue'
  */
 const props = defineProps<{ filieres: Filiere[], illisible: boolean }>()
 
-const { t, te } = useI18n()
+const { t } = useI18n()
 const localePath = useLocalePath()
 
 /** Les trois premières familles PUBLIÉES, dans l'ordre du contrat. */
@@ -58,10 +58,17 @@ function preparable(filiere: Filiere): boolean {
   return (filiere.families ?? []).some((f) => f.availability === 'open')
 }
 
-/** L'état se LIT — aucun code d'énumération brut à l'écran. */
+/**
+ * L'état se LIT — aucun code d'énumération brut à l'écran.
+ *
+ * Le repli rendait le code reçu : « waitlist » s'affichait tel quel dans le
+ * menu le plus vu du site dès que la clé manquait. La correspondance partagée
+ * rend `null` sur une valeur qu'on ne sait pas nommer, et la mention disparaît
+ * plutôt que de fuir un identifiant de base de données.
+ */
 function disponibilite(code: string): string {
-  const cle = `catalogue.dispo_${code}`
-  return te(cle) ? t(cle) : code
+  const cle = cleDisponibilite(code)
+  return cle ? t(cle) : ''
 }
 
 const colonnes = computed(() => props.filieres)
@@ -84,7 +91,9 @@ const colonnes = computed(() => props.filieres)
 
           <!-- L'état est écrit, pas teinté : `open`, `waitlist` et `closed` ne
                se distinguent accessiblement par aucune échelle de couleur. -->
-          <p class="mega__etat">{{ disponibilite(filiere.availability) }}</p>
+          <p v-if="disponibilite(filiere.availability)" class="mega__etat">
+            {{ disponibilite(filiere.availability) }}
+          </p>
 
           <ul class="mega__liste">
             <li v-for="famille in familles(filiere)" :key="famille.uuid">

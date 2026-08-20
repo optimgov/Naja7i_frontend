@@ -27,6 +27,16 @@ import type { NuxtError } from '#app'
  * `/ar/…`, `useI18n()` retomberait sur le français et servirait une page
  * d'erreur française à un lecteur arabophone. On lit donc le préfixe du
  * chemin, qui est la seule information fiable ici.
+ *
+ * ET LE THÈME VIENT D'ICI AUSSI, POUR LA MÊME RAISON
+ *
+ * Cette page ne remplace pas seulement une route : elle remplace `app.vue`. La
+ * racine de Nuxt monte `<ErrorComponent v-else-if="error">`, donc l'appel unique
+ * à `useThemeApplique()` de `app.vue` n'a jamais été exécuté ici. L'attribut
+ * `data-theme` manquait : un candidat ayant choisi le sombre recevait cette
+ * page en clair, et une passe d'audit « sombre » y mesurait le thème clair sans
+ * s'en apercevoir. C'est le seul écran du produit qui avait ce trou, parce que
+ * c'est le seul qui ne passe pas par `app.vue`.
  */
 const props = defineProps<{ error: NuxtError }>()
 
@@ -38,6 +48,8 @@ const languePath = computed<'fr' | 'ar'>(() =>
 )
 
 if (locale.value !== languePath.value) await setLocale(languePath.value)
+
+useThemeApplique()
 
 useHead({
   htmlAttrs: {
@@ -110,6 +122,15 @@ useSeoMeta({ title: () => titre.value, robots: 'noindex' })
 
 <template>
   <div class="erreur">
+    <!-- LA BASCULE EXISTE ICI COMME AILLEURS. Elle manquait au seul écran qui
+         ne passe pas par `app.vue`, si bien qu'un candidat en thème sombre n'y
+         avait aucun moyen de revenir au clair — et que la passe sombre de
+         `npm run audit` cliquait un sélecteur absent, échouait en silence, puis
+         mesurait le thème clair en l'étiquetant « sombre ». -->
+    <div class="erreur__barre">
+      <BasculeTheme />
+    </div>
+
     <main class="erreur__contenu">
       <NuxtLink :to="`/${languePath}`" class="erreur__marque" :aria-label="t('erreur.retour_accueil')">
         <LogoNaja7i />
@@ -150,15 +171,25 @@ useSeoMeta({ title: () => titre.value, robots: 'noindex' })
 </template>
 
 <style scoped>
+/* Deux rangées : la commande en haut, le message centré dans ce qui reste.
+   `place-items: center` sur une grille à un seul enfant tenait tant qu'il n'y
+   en avait qu'un ; la bascule aurait été centrée avec le message. */
 .erreur {
   display: grid;
-  place-items: center;
+  grid-template-rows: auto 1fr;
   min-block-size: 100dvh;
   padding: var(--e-5) var(--e-4);
   background: var(--fond);
 }
 
+.erreur__barre {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .erreur__contenu {
+  align-self: center;
+  justify-self: center;
   inline-size: 100%;
   max-inline-size: 34rem;
   text-align: center;

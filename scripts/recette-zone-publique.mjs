@@ -1269,6 +1269,82 @@ const page = await contexte.newPage()
   )
 }
 
+// ═══ 5 sexies. CE QUI NE DOIT PAS ÊTRE INDEXÉ NE L'EST PAS, DANS LE HTML SERVI ═══
+{
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * POURQUOI CE CONTRÔLE LIT LE HTML SERVI, ET PAS LE DOM
+   *
+   * Un robot d'indexation n'exécute pas toujours le JavaScript, et quand il le
+   * fait, c'est lors d'un second passage qui peut ne jamais venir. Une balise
+   * `robots` posée après hydratation ne protège donc rien : elle rassure la
+   * personne qui inspecte l'écran, et laisse la page indexée. Le contrôle porte
+   * sur ce que le serveur ENVOIE — `fetch`, pas `page.evaluate`.
+   *
+   * TROIS POLITIQUES, ET ELLES NE SE CONFONDENT PAS
+   *
+   *   authentification   noindex, nofollow — rien derrière ce formulaire n'a
+   *                      vocation à être découvert, et suivre ses liens ne
+   *                      mènerait qu'à d'autres redirections vers la connexion ;
+   *   /recherche         noindex, FOLLOW — les résultats ne s'indexent pas, mais
+   *                      les pages qu'ils désignent, si ;
+   *   catalogue          aucune balise `robots` — ce sont les pages qu'on veut
+   *                      voir remonter, et une balise de trop y coûterait tout.
+   *
+   * Le troisième cas est le plus important à mesurer : une politique posée au
+   * GABARIT peut déborder sur le gabarit public d'un seul copier-coller, et
+   * personne ne s'en apercevrait avant la chute du trafic.
+   */
+  const robotsDe = async (chemin) => {
+    const html = await fetch(`${BASE}${chemin}`, {
+      headers: { Accept: 'text/html' },
+    }).then((r) => r.text())
+
+    return html.match(/<meta[^>]+name="robots"[^>]+content="([^"]+)"/)?.[1] ?? ''
+  }
+
+  // ── R10. Les écrans d'authentification, dans les deux langues ──
+  for (const chemin of [
+    '/fr/connexion',
+    '/fr/inscription',
+    '/fr/mot-de-passe-oublie',
+    '/fr/nouveau-mot-de-passe',
+    '/fr/verifier-email',
+    '/ar/connexion',
+    '/ar/inscription',
+  ]) {
+    const robots = await robotsDe(chemin)
+
+    note(
+      `R10 — ${chemin} est noindex,nofollow dans le HTML servi`,
+      /noindex/.test(robots) && /nofollow/.test(robots),
+      `meta robots = « ${robots || 'ABSENTE'} »`,
+    )
+  }
+
+  // ── R11. La page d'erreur, qui ne passe par aucun gabarit ──
+  {
+    const robots = await robotsDe('/fr/page-qui-n-existe-pas')
+
+    note(
+      "R11 — la page d'erreur reste noindex",
+      /noindex/.test(robots),
+      `meta robots = « ${robots || 'ABSENTE'} »`,
+    )
+  }
+
+  // ── R12. Le catalogue public ne doit RIEN porter ──
+  for (const chemin of ['/fr/concours', '/fr/opportunites', '/ar/concours']) {
+    const robots = await robotsDe(chemin)
+
+    note(
+      `R12 — ${chemin} reste indexable (aucune balise robots)`,
+      robots === '',
+      robots ? `meta robots = « ${robots} » — la politique a débordé` : 'aucune balise robots',
+    )
+  }
+}
+
 // ══════════════════════════════════ 6. RTL et dir sur le collecteur ═══
 {
   await page.goto(`${BASE}/ar/opportunites`, { waitUntil: 'networkidle' })

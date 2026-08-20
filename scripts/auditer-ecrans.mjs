@@ -145,6 +145,91 @@ if (modeCi) {
   console.log(`Mode CI — ${exclus.length} écran(s) NON audités, faute de backend : ${exclus.join(', ')}.\n`)
 }
 
+// ------------------------------------------------- la passe sombre est-elle vraie ?
+/**
+ * PRÉFLIGHT — SANS LUI, LA PASSE « SOMBRE » PEUT MESURER LE THÈME CLAIR.
+ *
+ * `auditer.mjs` déclenche la variante sombre en cliquant le sélecteur reçu en
+ * `--sombre`, et il entoure ce clic d'un `.catch(() => {})`. Sur un écran où le
+ * sélecteur n'existe pas — c'était le cas de la page d'erreur, seul écran qui
+ * ne passe pas par `app.vue` — le clic échoue en silence, l'audit mesure le
+ * thème clair, et il l'étiquette « sombre ». Le rapport annonce alors une
+ * couverture qu'il n'a pas : deux passes sur 204 mesuraient deux fois le même
+ * thème.
+ *
+ * On ne corrige pas `auditer.mjs` : il est livré par la conception, et le dépôt
+ * l'appelle tel quel. On vérifie donc AVANT, ici, ce que son `.catch` avale :
+ * pour chaque écran, le clic doit faire passer `<html>` de clair à
+ * `data-theme="sombre"`. Un écran qui n'y arrive pas arrête la passe, au lieu
+ * de produire une ligne verte qui ne prouve rien.
+ *
+ * Les cookies sont vidés entre deux écrans : le thème est un cookie d'un an, et
+ * sans cela le deuxième écran partirait déjà sombre — le clic le rendrait
+ * clair, et le contrôle mesurerait l'inverse de ce qu'il croit.
+ */
+async function verifierBasculeSombre(selecteur, cibles, base) {
+  const navigateur = await chromium.launch()
+  const contexte = await navigateur.newContext()
+  const page = await contexte.newPage()
+  const muets = []
+
+  const theme = () => page.evaluate(() => document.documentElement.dataset.theme ?? 'clair')
+
+  for (const [nom, chemin] of cibles) {
+    await contexte.clearCookies()
+
+    try {
+      await page.goto(base + chemin, { waitUntil: 'networkidle' })
+
+      const avant = await theme()
+      if (avant !== 'clair') {
+        muets.push(`${nom} — l'écran part déjà en « ${avant} », le clic ne prouverait rien`)
+        continue
+      }
+
+      const bouton = page.locator(selecteur).first()
+      if ((await bouton.count()) === 0) {
+        muets.push(`${nom} — aucun élément ${selecteur} : la bascule est absente de cet écran`)
+        continue
+      }
+
+      await bouton.click({ timeout: 5000 })
+      await page.waitForFunction(
+        () => document.documentElement.dataset.theme === 'sombre',
+        undefined,
+        { timeout: 5000 },
+      ).catch(() => {})
+
+      const apres = await theme()
+      if (apres !== 'sombre') {
+        muets.push(`${nom} — après le clic, <html data-theme> vaut « ${apres} », pas « sombre »`)
+      }
+    }
+    catch (e) {
+      muets.push(`${nom} — ${e.message.split('\n')[0]}`)
+    }
+  }
+
+  await navigateur.close()
+  return muets
+}
+
+if (selSombre) {
+  console.log(`# Préflight — la bascule ${selSombre} rend-elle vraiment le thème sombre ?\n`)
+
+  const muets = await verifierBasculeSombre(selSombre, cibles, base)
+
+  if (muets.length) {
+    console.log(`${muets.length} écran(s) dont la passe sombre mesurerait le thème clair :`)
+    for (const m of muets) console.log(`  - ${m}`)
+    console.log('\nLa passe est arrêtée : un audit qui ne peut pas déclencher le thème')
+    console.log("qu'il annonce vaut moins que pas d'audit du tout.\n")
+    process.exit(1)
+  }
+
+  console.log(`  ok  ${cibles.length} écran(s) passent réellement en sombre au clic.\n`)
+}
+
 // ------------------------------------------------------------- orchestration
 const binaire = chromium.executablePath()
 

@@ -345,7 +345,7 @@ const RECETTES = [
    * réel — elles atteignent leurs écrans par leur adresse, et c'est
    * exactement ce que la recette humaine du 17 août reprochait au produit.
    */
-  ['les portes — PORTE-1 à PORTE-5', 'scripts/recette-portes.mjs', []],
+  ['les portes — PORTE-1 à PORTE-7', 'scripts/recette-portes.mjs', []],
   ['passation d’un diagnostic', 'scripts/recette-passation.mjs', [A.email, A.motDePasse]],
   /*
    * LE QUOTA F03 EST REMIS À NEUF AVANT FRONT-3.

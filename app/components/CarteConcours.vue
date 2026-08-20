@@ -1,17 +1,25 @@
 <script setup lang="ts">
+import type { Disponibilite } from '~/utils/disponibilite'
+
 const props = defineProps<{
   to: string
   titre: string
   texte?: string | null
-  disponibilite: 'open' | 'waitlist' | 'closed'
+  disponibilite: Disponibilite
   meta?: string | null
 }>()
 
 const { t } = useI18n()
 
-const libelleEtat = computed(() =>
-  props.disponibilite === 'open' ? t('catalogue.ouvert') : t('catalogue.en_preparation'),
-)
+/**
+ * LES TROIS ÉTATS SE DISENT, ET ILS SE DISENT DIFFÉREMMENT.
+ *
+ * Cette pastille repliait tout ce qui n'était pas `open` sur « En préparation ».
+ * Un concours `closed` était donc annoncé comme un concours à venir — la seule
+ * chose que le candidat ne devait pas croire. La correspondance est désormais
+ * exhaustive et partagée : voir `app/utils/disponibilite.ts`.
+ */
+const libelleEtat = computed(() => t(CLES_DISPONIBILITE[props.disponibilite]))
 </script>
 
 <template>

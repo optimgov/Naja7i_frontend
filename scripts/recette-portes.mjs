@@ -611,6 +611,44 @@ console.log('9. la destination traverse-t-elle le tunnel d’authentification ?'
   await ctxNeuf.close()
 }
 
+// ═══ PORTE-7. L'ESPACE CANDIDAT N'EST PAS INDEXABLE, ET IL FAUT UNE SESSION POUR LE DIRE ═══
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * POURQUOI CE CONTRÔLE VIT ICI, ET NULLE PART AILLEURS
+ *
+ * La recette de la zone publique mesure la balise `robots` des écrans
+ * d'authentification : ils se servent sans compte. `/app` non — sans session,
+ * la garde `auth` renvoie vers la connexion, et on mesurerait la balise de
+ * l'écran de connexion en croyant mesurer celle du tableau de bord. C'est
+ * exactement le genre de vert qui ne prouve rien.
+ *
+ * Cette recette a une session : elle vient d'inscrire un compte, de vérifier
+ * son adresse et de le mener jusqu'à l'ordonnance. `contexte.request` partage
+ * son bocal à cookies, donc la requête est authentifiée — et elle lit le HTML
+ * SERVI, pas le DOM hydraté : un robot ne voit rien d'autre.
+ */
+{
+  const reponse = await contexte.request.get(`${BASE}/fr/app`)
+  const html = await reponse.text()
+  const robots = html.match(/<meta[^>]+name="robots"[^>]+content="([^"]+)"/)?.[1] ?? ''
+
+  /* La preuve que la session a tenu : sans elle, on aurait le gabarit `auth`,
+     dont la balise est la même — et le contrôle passerait pour de mauvaises
+     raisons. */
+  const sousSession = reponse.status() === 200 && /appli__entete/.test(html)
+
+  if (!sousSession) {
+    nonVerifie('PORTE-7', 'l’espace candidat est noindex,nofollow dans le HTML servi',
+      `la requête n'a pas atteint l'espace candidat (${reponse.status()}) — la balise lue ne serait pas la sienne`)
+  } else if (/noindex/.test(robots) && /nofollow/.test(robots)) {
+    ok('PORTE-7', 'l’espace candidat est noindex,nofollow dans le HTML servi',
+      `/fr/app sous session → meta robots = « ${robots} »`)
+  } else {
+    ko('PORTE-7', 'l’espace candidat est noindex,nofollow dans le HTML servi',
+      `/fr/app sous session → meta robots = « ${robots || 'ABSENTE'} »`)
+  }
+}
+
 await navigateur.close()
 
 // ═════════════════════════════════════════════════════════════════ verdict

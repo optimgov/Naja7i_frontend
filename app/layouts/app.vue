@@ -20,6 +20,11 @@ const nomAutre = computed(() => locales.value.find((l) => l.code === autre.value
 
 useLangueEtDirection()
 
+// L'espace candidat n'existe que pour la personne connectée : rien n'y est
+// indexable, et un robot qui suivrait ses liens n'y trouverait que des
+// redirections vers la connexion. Même politique que le gabarit `auth`.
+useNonIndexable()
+
 const reseau = useReseau()
 const file = useFileEnvoi()
 

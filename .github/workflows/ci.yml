@@ -60,6 +60,14 @@ jobs:
       - name: Vérifier les locales et les propriétés logiques
         run: node scripts/verifier-locales.mjs
 
+      # Le contrat public sert trois disponibilités ; la banque locale n'en
+      # porte que deux. Aucun audit de rendu ne peut donc voir ce que le produit
+      # fait de `closed` — il l'annonçait « En préparation », c'est-à-dire un
+      # concours manqué présenté comme un concours à venir. Ce contrôle injecte
+      # les trois valeurs lui-même, sans serveur ni navigateur.
+      - name: Vérifier les trois états de disponibilité
+        run: node scripts/verifier-disponibilite.mjs
+
       - name: Compiler
         run: npm run build
         env:

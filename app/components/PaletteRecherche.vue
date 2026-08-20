@@ -128,15 +128,21 @@ async function ouvrirActif(): Promise<void> {
   await navigateTo(localePath(entree.chemin))
 }
 
-/** L'état se LIT. Aucun code d'énumération brut à l'écran. */
+/**
+ * L'état se LIT. Aucun code d'énumération brut à l'écran.
+ *
+ * Les entrées de catalogue passent par la correspondance partagée
+ * (`app/utils/disponibilite.ts`) : les trois états du contrat y sont nommés une
+ * seule fois, pour la carte, le méga-menu et les deux surfaces de recherche.
+ */
 function etat(entree: EntreeRecherche): string {
   if (!entree.etat) return ''
 
   const cle = entree.type === 'opportunite'
     ? `recherche.etat_${entree.etat}`
-    : `catalogue.dispo_${entree.etat}`
+    : cleDisponibilite(entree.etat)
 
-  return te(cle) ? t(cle) : ''
+  return cle && te(cle) ? t(cle) : ''
 }
 
 onBeforeUnmount(() => {

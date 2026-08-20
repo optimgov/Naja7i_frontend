@@ -31,6 +31,39 @@ export function urlCanonique(langue: string, chemin: string): string {
   return `${useOrigine()}/${langue}${chemin}`
 }
 
+/**
+ * LES SURFACES QUI NE DOIVENT PAS ÊTRE INDEXÉES — la politique en un endroit.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * POURQUOI `noindex, nofollow` ICI, ET `noindex, follow` SUR `/recherche`
+ *
+ * `/recherche` est une page de résultats internes : elle ne doit pas être
+ * indexée, mais les liens qu'elle porte mènent à des pages de catalogue qui,
+ * elles, DOIVENT l'être — d'où `follow`.
+ *
+ * L'authentification et l'espace candidat sont l'exact opposé. Rien derrière un
+ * formulaire de connexion n'a vocation à être découvert par un robot : une
+ * page de vérification d'e-mail, un tableau de bord, une correction de
+ * tentative n'existent que pour la personne connectée. `follow` y enverrait un
+ * robot explorer des adresses qui répondront toutes par une redirection vers la
+ * connexion — du budget d'exploration dépensé pour fabriquer du bruit.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * POSÉE AU GABARIT, PAS À LA PAGE
+ *
+ * Les deux gabarits `auth` et `app` couvrent l'ensemble de ces écrans, et un
+ * écran ajouté demain en hérite sans qu'on ait à y penser. Répéter la balise
+ * page par page garantit qu'une page l'oubliera — et ce serait précisément la
+ * page ajoutée en dernier, celle que personne ne relit.
+ *
+ * Ce n'est PAS une mesure de sécurité : un robot n'a de toute façon pas de
+ * session. C'est une mesure de propreté d'index, et elle vaut pour les moteurs
+ * qui respectent la balise, ce qu'ils font tous.
+ */
+export function useNonIndexable(): void {
+  useSeoMeta({ robots: 'noindex,nofollow' })
+}
+
 export function useSeoCatalogue(options: {
   title: string
   description: string
