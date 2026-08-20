@@ -15,8 +15,14 @@
  *   --cookies <chemin>  cookies Playwright (JSON) — pour un écran sous session
  *   --chromium <chemin> binaire (défaut : $CHROMIUM ou /opt/pw-browsers/chromium)
  *
- * Sortie : un rapport lisible, trié par gravité. Code de sortie 1 s'il reste
- * des anomalies « grave », 0 sinon — utilisable en intégration continue.
+ * Sortie : un rapport lisible, trié par gravité. Codes de sortie :
+ *   0  toutes les passes ont abouti et aucune anomalie « grave » ne subsiste
+ *   1  une anomalie « grave » subsiste, OU une passe de navigation a échoué
+ *   2  usage incorrect, ou cible injoignable avant la première passe
+ *
+ * Une passe en échec ne mesure rien. La compter comme un succès ferait dire à
+ * l'audit le contraire de ce qu'il a constaté : c'est pire que pas d'audit,
+ * parce que le vert est cru.
  */
 
 import { chromium } from 'playwright';
@@ -220,6 +226,26 @@ const navigateur = await chromium.launch({ executablePath });
 const cookies = fichierCookies ? JSON.parse(readFileSync(fichierCookies, 'utf8')) : null;
 const rapport = [];
 
+// Précontrôle : la cible répond-elle ? Sans lui, un serveur éteint produit N
+// passes en échec, chacune rattrapée par son `catch`, et un rapport qui parle
+// d'absence d'anomalie alors qu'il n'a rien mesuré. On distingue « rien à
+// auditer » de « tout est conforme » avant d'aller plus loin.
+{
+  const pageTest = await navigateur.newPage();
+  try {
+    await pageTest.goto(url, { waitUntil: 'load' });
+  } catch (e) {
+    console.error(`Cible injoignable : ${url}`);
+    console.error(String(e.message || e).split('\n')[0]);
+    console.error('Aucune passe n\'a été exécutée — rien n\'a été audité.');
+    if (/^https?:/.test(url)) console.error('Démarrer le serveur, puis relancer.');
+    await pageTest.close();
+    await navigateur.close();
+    process.exit(2);
+  }
+  await pageTest.close();
+}
+
 for (const largeur of largeurs) {
   for (const hash of hashs.length ? hashs : ['']) {
     for (const variante of ['clair-ltr', selSombre && 'sombre-ltr', selRtl && 'clair-rtl'].filter(Boolean)) {
@@ -283,7 +309,10 @@ let graves = 0;
 const lignes = [];
 lignes.push(`# Revue de rendu — ${cible}`);
 lignes.push('');
+const enEchec = groupes.erreurs?.length ?? 0;
+const abouties = rapport.length - enEchec;
 lignes.push(`${rapport.length} passes : ${largeurs.join(' / ')} px × ${(hashs.length || 1)} écran(s) × variantes de langue et de thème.`);
+lignes.push(`${abouties} passe(s) mesurée(s)${enEchec ? `, ${enEchec} en échec — non mesurée(s)` : ''}.`);
 lignes.push('');
 
 for (const [cle, [gravite, titre]] of Object.entries(GRAVITE)) {
@@ -322,8 +351,14 @@ if (groupes.erreurs) {
   lignes.push('');
 }
 
-if (!graves && !groupes.statuts?.length && !groupes.cibles?.length) {
-  lignes.push('Aucune anomalie détectée sur les six contrôles automatiques.');
+if (enEchec) {
+  lignes.push(`**Audit non concluant** : ${enEchec} passe(s) n'ont rien mesuré.`);
+  lignes.push('Le silence des contrôles ci-dessus ne vaut pas conformité.');
+  lignes.push('');
+}
+
+if (!enEchec && !graves && !groupes.statuts?.length && !groupes.cibles?.length) {
+  lignes.push(`Aucune anomalie détectée sur les six contrôles automatiques, sur ${abouties} passes.`);
   lignes.push('');
   lignes.push('Ces contrôles ne remplacent pas le regard : hiérarchie, rythme vertical,');
   lignes.push('justesse du ton et rendu réel des polices arabes se jugent sur capture.');
@@ -332,4 +367,6 @@ if (!graves && !groupes.statuts?.length && !groupes.cibles?.length) {
 const texte = lignes.join('\n');
 console.log(texte);
 if (sortieJson) writeFileSync(sortieJson, JSON.stringify(rapport, null, 2));
-process.exit(graves ? 1 : 0);
+// Une passe en échec est un motif d'échec au même titre qu'une anomalie grave :
+// dans les deux cas, l'écran n'est pas démontré conforme.
+process.exit(graves || enEchec ? 1 : 0);
