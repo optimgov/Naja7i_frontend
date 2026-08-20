@@ -1011,6 +1011,264 @@ const page = await contexte.newPage()
   await page.screenshot({ path: `${SORTIE}-05-recherche.png`, fullPage: true })
 }
 
+// ═════ 5 quinquies. Le méga-menu, le menu « Plus », et aucun lien mort ═════
+{
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * UN MÉGA-MENU SE JUGE AU CLAVIER
+   *
+   * Les quatre comportements exigés — ouverture au clic ET au clavier,
+   * fermeture par Échap et par clic extérieur, focus RENDU au déclencheur, un
+   * seul panneau ouvert — ne se voient sur aucune capture. Chacun casse en
+   * silence, et le plus coûteux est le retour du focus : sans lui, on ferme le
+   * menu et l'on repart du début du document.
+   *
+   * `usePanneau` les porte pour les trois panneaux de l'en-tête. Ce bloc
+   * éprouve le méga-menu, la palette étant éprouvée plus haut : si le
+   * composable cédait, les deux rougiraient ensemble.
+   */
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${BASE}/fr/concours`, { waitUntil: 'networkidle' })
+
+  const declencheur = page.locator('.nav__declencheur')
+
+  // ── M1. Ouverture, et le panneau vient du CATALOGUE ──
+  await declencheur.click()
+  await page.waitForTimeout(250)
+
+  const ouvert = await page.evaluate(() => {
+    const bouton = document.querySelector('.nav__declencheur')
+    const panneau = document.querySelector('#mega-concours')
+    return {
+      expanded: bouton?.getAttribute('aria-expanded') ?? '',
+      controls: bouton?.getAttribute('aria-controls') ?? '',
+      colonnes: document.querySelectorAll('.mega__colonne').length,
+      liensFiliere: [...document.querySelectorAll('.mega__titre a')]
+        .map(a => a.getAttribute('href') ?? ''),
+      familles: document.querySelectorAll('.mega__lien').length,
+      etats: [...document.querySelectorAll('.mega__etat')].map(e => (e.textContent || '').trim()),
+      illisible: document.querySelectorAll('.mega__illisible').length,
+    }
+  })
+
+  note(
+    'le méga-menu s’ouvre au clic et s’annonce développé',
+    ouvert.expanded === 'true' && ouvert.controls === 'mega-concours',
+    `aria-expanded=${ouvert.expanded} · aria-controls=${ouvert.controls}`,
+  )
+
+  note(
+    'ses colonnes viennent du catalogue, pas d’une liste écrite dans le composant',
+    ouvert.illisible === 0 && ouvert.colonnes > 0 && ouvert.familles > 0
+    && ouvert.liensFiliere.every(h => h.startsWith('/fr/concours/')),
+    ouvert.illisible
+      ? 'le panneau rend son état « catalogue illisible » : rien n’est mesuré ici'
+      : `${ouvert.colonnes} colonne(s) · ${ouvert.familles} famille(s) · `
+        + `filières : ${ouvert.liensFiliere.join(', ')}`,
+  )
+
+  /* AUCUN CODE D'ÉNUMÉRATION BRUT À L'ÉCRAN : `open`, `waitlist` et `closed`
+     se traduisent. Le contrôle cherche le code, pas la traduction — il vaut
+     donc dans les deux langues. */
+  note(
+    'l’état de disponibilité est traduit, jamais rendu en code',
+    ouvert.etats.length > 0 && ouvert.etats.every(e => !/^(open|waitlist|closed)$/.test(e)),
+    `états rendus : ${ouvert.etats.join(' · ') || 'aucun'}`,
+  )
+
+  // ── M2. La tabulation ENTRE dans le panneau ──
+  /* Le panneau est SŒUR de la nav dans le DOM, immédiatement après elle : la
+     tabulation depuis la dernière entrée du menu doit y entrer naturellement.
+     Un panneau posé ailleurs aurait obligé le candidat à traverser tout
+     l'en-tête pour atteindre ce qu'il vient d'ouvrir. */
+  await page.locator('.mega__titre a').first().focus()
+  const dansPanneau = await page.evaluate(
+    () => Boolean(document.querySelector('#mega-concours')?.contains(document.activeElement)),
+  )
+
+  note(
+    'le contenu du méga-menu est atteignable au clavier',
+    dansPanneau,
+    `focus à l’intérieur du panneau : ${dansPanneau}`,
+  )
+
+  // ── M3. Échap ferme ET rend le focus ──
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(250)
+
+  const apresEchap = await page.evaluate(() => ({
+    panneau: document.querySelectorAll('#mega-concours').length,
+    expanded: document.querySelector('.nav__declencheur')?.getAttribute('aria-expanded') ?? '',
+    focus: (document.activeElement?.className ?? ''),
+  }))
+
+  note(
+    'Échap ferme le méga-menu et rend le focus à son déclencheur',
+    apresEchap.panneau === 0 && apresEchap.expanded === 'false'
+    && apresEchap.focus.includes('nav__declencheur'),
+    `panneau : ${apresEchap.panneau} nœud(s) · aria-expanded=${apresEchap.expanded} · `
+    + `focus sur « ${apresEchap.focus || 'rien'} »`,
+  )
+
+  // ── M4. Un clic extérieur ferme — sans voler le focus ──
+  await declencheur.click()
+  await page.waitForTimeout(200)
+
+  /*
+   * ON CLIQUE UN POINT, PAS UN ÉLÉMENT.
+   *
+   * La première écriture visait le `<h1>` de la page : Playwright a refusé
+   * pendant trente secondes, en expliquant que le panneau interceptait le clic.
+   * C'était exact, et c'était même la preuve que le méga-menu se comporte comme
+   * un méga-menu — il RECOUVRE le contenu. Un clic « extérieur » doit donc
+   * viser une coordonnée réellement située hors du panneau, ce qui est aussi le
+   * geste du candidat : il clique dans la page, sous le menu déployé.
+   */
+  const sousLePanneau = await page.evaluate(() => {
+    const r = document.querySelector('#mega-concours')?.getBoundingClientRect()
+    return { x: Math.round(window.innerWidth / 2), y: Math.round((r?.bottom ?? 0) + 60) }
+  })
+
+  await page.mouse.click(sousLePanneau.x, sousLePanneau.y)
+  await page.waitForTimeout(250)
+
+  const apresDehors = await page.evaluate(() => ({
+    panneau: document.querySelectorAll('#mega-concours').length,
+    focus: document.activeElement?.className ?? '',
+  }))
+
+  note(
+    'un clic extérieur ferme le panneau sans reprendre le focus',
+    apresDehors.panneau === 0 && !apresDehors.focus.includes('nav__declencheur'),
+    `panneau : ${apresDehors.panneau} · focus après le clic : `
+    + `« ${apresDehors.focus || 'aucun'} » (le rendre ici le volerait à l’élément désigné)`,
+  )
+
+  // ── M5. UN SEUL panneau ouvert à la fois ──
+  await declencheur.click()
+  await page.waitForTimeout(200)
+  await page.locator('.recherche-globale__declencheur').click()
+  await page.waitForTimeout(250)
+
+  const simultanes = await page.evaluate(() => ({
+    mega: document.querySelectorAll('#mega-concours').length,
+    palette: document.querySelectorAll('#palette-recherche').length,
+  }))
+
+  note(
+    'ouvrir la recherche ferme le méga-menu — un seul panneau à la fois',
+    simultanes.mega === 0 && simultanes.palette === 1,
+    `méga-menu : ${simultanes.mega} · palette : ${simultanes.palette}`,
+  )
+
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(200)
+
+  // ── M6. En RTL, le panneau tient dans la fenêtre ──
+  /* Un panneau ancré à son déclencheur déborderait du côté fermé en arabe.
+     Celui-ci s'ancre sur l'en-tête, `inset-inline: 0` — le contrôle vérifie
+     qu'aucun débordement horizontal n'apparaît, panneau ouvert. */
+  await page.goto(`${BASE}/ar/concours`, { waitUntil: 'networkidle' })
+  await page.locator('.nav__declencheur').click()
+  await page.waitForTimeout(300)
+
+  const rtl = await page.evaluate(() => {
+    const p = document.querySelector('#mega-concours')
+    const r = p?.getBoundingClientRect()
+    return {
+      dir: document.documentElement.dir,
+      ouvert: Boolean(p),
+      deborde: r ? r.left < -1 || r.right > document.documentElement.clientWidth + 1 : false,
+      defilement: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    }
+  })
+
+  note(
+    'en arabe, le méga-menu s’ouvre et ne déborde pas de la fenêtre',
+    rtl.dir === 'rtl' && rtl.ouvert && !rtl.deborde && !rtl.defilement,
+    `dir=${rtl.dir} · panneau ouvert : ${rtl.ouvert} · débordement : ${rtl.deborde} · `
+    + `défilement horizontal : ${rtl.defilement}`,
+  )
+
+  // ── M7. Le menu « Plus » sur téléphone ──
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto(`${BASE}/fr/opportunites`, { waitUntil: 'networkidle' })
+
+  const plus = page.locator('.plus__declencheur')
+  await plus.click()
+  await page.waitForTimeout(250)
+
+  const contenuPlus = await page.evaluate(
+    () => [...document.querySelectorAll('.plus__lien')].map(a => a.getAttribute('href') ?? ''),
+  )
+
+  note(
+    'le menu « Plus » s’ouvre et ne porte que des routes réelles',
+    contenuPlus.length > 0 && contenuPlus.every(h => h.startsWith('/')),
+    `${contenuPlus.length} entrée(s) : ${contenuPlus.join(', ')}`,
+  )
+
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(250)
+
+  const plusFerme = await page.evaluate(() => ({
+    panneau: document.querySelectorAll('#menu-plus').length,
+    focus: document.activeElement?.className ?? '',
+  }))
+
+  note(
+    'Échap ferme « Plus » et rend le focus à son déclencheur',
+    plusFerme.panneau === 0 && plusFerme.focus.includes('plus__declencheur'),
+    `panneau : ${plusFerme.panneau} · focus sur « ${plusFerme.focus || 'rien'} »`,
+  )
+
+  // ── M8. AUCUN LIEN PUBLIC NE MÈNE À UNE PAGE QUI N'EXISTE PAS ──
+  /*
+   * On récolte les destinations INTERNES de toutes les surfaces de navigation —
+   * en-tête, méga-menu, menu « Plus », barre basse, pied — et on les demande au
+   * serveur. Un 404 dans un menu de premier niveau coûte plus qu'une place
+   * inoccupée ; c'est la raison pour laquelle « Annales » n'y figure pas.
+   *
+   * `404 assumé, jamais 403` est la règle du dépôt : un 403 sur une surface
+   * publique serait un défaut à part entière, et il est signalé comme tel.
+   */
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${BASE}/fr`, { waitUntil: 'networkidle' })
+  await page.locator('.nav__declencheur').click()
+  await page.waitForTimeout(300)
+
+  const destinations = await page.evaluate(() => {
+    const zones = ['.publique__entete', '#mega-concours', '.barre-basse', '.pied']
+    const vus = new Set()
+
+    for (const zone of zones) {
+      for (const a of document.querySelectorAll(`${zone} a[href]`)) {
+        const href = a.getAttribute('href') ?? ''
+        /* Seules les destinations INTERNES : les avis officiels partent chez
+           l'administration, et leur disponibilité ne nous appartient pas. */
+        if (href.startsWith('/') && !href.startsWith('//')) vus.add(href)
+      }
+    }
+
+    return [...vus]
+  })
+
+  const morts = []
+  for (const chemin of destinations) {
+    const r = await fetch(`${BASE}${chemin}`, { redirect: 'manual' })
+    if (r.status === 403) morts.push(`${chemin} → 403 (la règle du dépôt est 404, jamais 403)`)
+    else if (r.status >= 400) morts.push(`${chemin} → ${r.status}`)
+  }
+
+  note(
+    'aucun lien des surfaces de navigation ne mène à une page absente',
+    destinations.length > 0 && morts.length === 0,
+    morts.length
+      ? `LIENS MORTS : ${morts.join(' · ')}`
+      : `${destinations.length} destination(s) vérifiée(s) : ${destinations.join(', ')}`,
+  )
+}
+
 // ══════════════════════════════════ 6. RTL et dir sur le collecteur ═══
 {
   await page.goto(`${BASE}/ar/opportunites`, { waitUntil: 'networkidle' })
