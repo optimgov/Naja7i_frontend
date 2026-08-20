@@ -90,28 +90,51 @@ function basculer(nom: string, valeur: string): void {
 
 // ─────────────────────────────────────────────────────────── filtrage
 
-const filtrees = computed(() => {
-  const q = recherche.value.trim().toLowerCase()
+/** Les dimensions filtrables. Nommées, parce qu'on doit pouvoir en EXCLURE une. */
+type Dimension = 'filiere' | 'type' | 'region' | 'sous' | 'prep' | 'closes' | 'q'
 
-  return toutes.value.filter((a) => {
-    /* Les closes sont MASQUÉES par défaut, et récupérables par une case. Les
-     * montrer d'office ferait passer un dépôt fermé pour une occasion. */
-    if (!avecCloses.value && !estOuverte(a)) return false
-    if (sous7j.value && echeanceDe(a).palier !== 'imminente') return false
-    if (filiere.value && (a.naja7i.filiere ?? '') !== filiere.value) return false
-    if (type.value && a.type !== type.value) return false
-    if (region.value && !a.regions.includes(region.value)) return false
-    if (avecPrep.value && rattachementDe(a) !== 'prepare') return false
+/**
+ * Une annonce passe-t-elle les filtres — TOUS SAUF UN ?
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * `sauf` EST TOUTE LA CORRECTION DES FACETTES
+ *
+ * Les compteurs du rail étaient calculés sur la liste COMPLÈTE : « Éducation
+ * 14 » restait 14 après avoir coché « Clôture sous 7 jours », alors que deux
+ * annonces seulement subsistaient. Le candidat cochait donc une facette qui
+ * annonçait quatorze résultats et en obtenait deux — le compteur ne décrivait
+ * pas la liste qu'il allait obtenir, il décrivait une liste qui n'existait plus.
+ *
+ * Un compteur de facette répond à UNE question : « combien de résultats si je
+ * coche celle-ci ? ». Il doit donc appliquer tous les autres filtres actifs, et
+ * PAS le sien — sinon un filtre à choix unique ne compterait plus que l'option
+ * déjà cochée, et toutes les autres tomberaient à zéro.
+ *
+ * `sauf` vaut `null` pour la liste réelle : tout s'applique.
+ */
+function passe(a: Annonce, sauf: Dimension | null): boolean {
+  /* Les closes sont MASQUÉES par défaut, et récupérables par une case. Les
+   * montrer d'office ferait passer un dépôt fermé pour une occasion. */
+  if (sauf !== 'closes' && !avecCloses.value && !estOuverte(a)) return false
+  if (sauf !== 'sous' && sous7j.value && echeanceDe(a).palier !== 'imminente') return false
+  if (sauf !== 'filiere' && filiere.value && (a.naja7i.filiere ?? '') !== filiere.value) return false
+  if (sauf !== 'type' && type.value && a.type !== type.value) return false
+  if (sauf !== 'region' && region.value && !a.regions.includes(region.value)) return false
+  if (sauf !== 'prep' && avecPrep.value && rattachementDe(a) !== 'prepare') return false
 
+  if (sauf !== 'q') {
+    const q = recherche.value.trim().toLowerCase()
     if (q) {
       const foin = [a.titre, a.org, a.grade ?? '', ...a.specialites, ...a.regions]
         .join(' ').toLowerCase()
       if (!foin.includes(q)) return false
     }
+  }
 
-    return true
-  })
-})
+  return true
+}
+
+const filtrees = computed(() => toutes.value.filter(a => passe(a, null)))
 
 /** Le nombre de filtres actifs — annoncé sur le bouton du rail replié. */
 const actifs = computed(() =>
@@ -179,21 +202,87 @@ const groupes = computed<{ titre: string, annonces: Annonce[] }[]>(() => {
 
 // ────────────────────────────────────────────── options des filtres
 
-function compter(extraire: (a: Annonce) => string[]): { valeur: string, n: number }[] {
+/**
+ * Les options d'une facette, comptées DANS LE CONTEXTE des autres filtres.
+ *
+ * DEUX RÈGLES, ET LA SECONDE EST LA PLUS UTILE :
+ *
+ * 1. Une option à ZÉRO n'est pas offerte. C'est un cul-de-sac : on la coche, on
+ *    obtient une liste vide, et il faut la décocher. La retirer épargne
+ *    l'aller-retour — et c'est la même règle que les compteurs publics de
+ *    l'accueil, appliquée ici.
+ *
+ * 2. SAUF si elle est ACTIVE. Une option cochée qui tomberait à zéro à cause
+ *    d'un autre filtre disparaîtrait du rail — et deviendrait alors impossible
+ *    à DÉCOCHER. Le candidat se retrouverait enfermé dans une liste vide par un
+ *    filtre qu'il ne voit plus.
+ */
+function compter(
+  dimension: Dimension,
+  extraire: (a: Annonce) => string[],
+  actif: string,
+): { valeur: string, n: number }[] {
   const compte = new Map<string, number>()
+
   for (const a of toutes.value) {
+    if (!passe(a, dimension)) continue
+
     for (const v of extraire(a)) {
       if (v) compte.set(v, (compte.get(v) ?? 0) + 1)
     }
   }
+
+  /* Règle 2 : l'option active reste offerte, fût-elle à zéro. */
+  if (actif && !compte.has(actif)) compte.set(actif, 0)
+
   return [...compte.entries()]
     .map(([valeur, n]) => ({ valeur, n }))
+    .filter(o => o.n > 0 || o.valeur === actif)
     .sort((x, y) => y.n - x.n)
 }
 
-const optionsFiliere = computed(() => compter(a => [a.naja7i.filiere ?? '']))
-const optionsType = computed(() => compter(a => [a.type]))
-const optionsRegion = computed(() => compter(a => a.regions).slice(0, 10))
+const optionsFiliere = computed(
+  () => compter('filiere', a => [a.naja7i.filiere ?? ''], filiere.value),
+)
+const optionsType = computed(() => compter('type', a => [a.type], type.value))
+const optionsRegion = computed(
+  () => compter('region', a => a.regions, region.value).slice(0, 10),
+)
+
+// ─────────────────────────────────────────── l'état vide, actionnable
+
+/**
+ * LES CRITÈRES EN CLAIR — et c'est ce qui manquait le plus.
+ *
+ * L'état vide disait « Aucune annonce ne correspond à ces filtres. » sans dire
+ * LESQUELS, et sans offrir d'en sortir. Sur téléphone, où le rail est replié
+ * derrière un bouton, le candidat ne voyait même pas ce qu'il avait coché : il
+ * lui restait à rouvrir le rail et à décocher à l'aveugle.
+ */
+const criteres = computed(() => {
+  const out: string[] = []
+
+  if (recherche.value) out.push(t('opportunites.critere_recherche', { q: recherche.value }))
+  if (filiere.value) out.push(libelle('filiere', filiere.value))
+  if (type.value) out.push(libelle('type', type.value))
+  if (region.value) out.push(region.value)
+  if (sous7j.value) out.push(t('opportunites.filtre_7j'))
+  if (avecPrep.value) out.push(t('opportunites.filtre_prep'))
+  if (avecCloses.value) out.push(t('opportunites.filtre_closes'))
+
+  return out
+})
+
+/**
+ * TOUT RETIRER, EN UNE ACTION.
+ *
+ * La VUE est conservée : ce n'est pas un filtre mais un mode d'affichage, et la
+ * réinitialiser ferait perdre un choix que le candidat n'a pas remis en cause.
+ */
+function toutRetirer(): void {
+  const v = param('vue')
+  router.replace({ query: v ? { vue: v } : {} })
+}
 
 /** Le rail est replié sur téléphone, ouvert sur grand écran. Voir commun.css. */
 const railOuvert = ref(false)
@@ -319,8 +408,36 @@ useSeoCatalogue({
           <span class="tapis__compte">{{ t('opportunites.n_annonces', filtrees.length, { named: { n: filtrees.length } }) }}</span>
         </div>
 
-        <div v-if="!filtrees.length" class="vide">
-          {{ t('opportunites.aucune') }}
+        <!-- ═══════════════ L'ÉTAT VIDE, ET IL EST ACTIONNABLE ═══════════════
+             Trois pièces : ce qui a été demandé, une action pour tout retirer,
+             et une porte qui reste vraie même sans filtre. Une phrase seule
+             laissait le candidat rouvrir le rail et décocher à l'aveugle — sur
+             téléphone, où le rail est replié, il ne voyait même pas ses
+             critères. -->
+        <div v-if="!filtrees.length" class="vide vide--filtres">
+          <p class="vide__phrase">{{ t('opportunites.aucune') }}</p>
+
+          <template v-if="criteres.length">
+            <p class="vide__criteres">
+              <span class="vide__label">{{ t('opportunites.criteres_actifs') }}</span>
+              <span v-for="critere in criteres" :key="critere" class="nature" dir="auto">
+                {{ critere }}
+              </span>
+            </p>
+
+            <button type="button" class="btn btn--fantome" @click="toutRetirer">
+              {{ t('opportunites.tout_retirer') }}
+            </button>
+          </template>
+
+          <!-- Aucun filtre actif ET aucune annonce : ce n'est plus un problème
+               de critères. On ne prétend pas le contraire, et on ne propose pas
+               de « tout retirer » qui ne retirerait rien. -->
+          <p v-else class="vide__phrase">{{ t('opportunites.aucune_sans_filtre') }}</p>
+
+          <NuxtLink class="lien-second" :to="localePath('/opportunites?sous=7j')">
+            {{ t('opportunites.voir_proches') }}
+          </NuxtLink>
         </div>
 
         <template v-for="groupe in groupes" v-else :key="groupe.titre">
@@ -341,4 +458,16 @@ useSeoCatalogue({
 .tapis__entete { padding-block: var(--e-6) var(--e-4); }
 .tapis__titre { font-size: var(--t-4xl); max-inline-size: 20ch; }
 .tapis__fixture { margin-block-start: var(--e-3); font-size: var(--t-xs); color: var(--texte-doux); }
+
+.vide--filtres { display: grid; gap: var(--e-4); justify-items: center; }
+.vide__phrase { margin: 0; max-inline-size: 52ch; }
+.vide__criteres {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e-2);
+  margin: 0;
+}
+.vide__label { font-size: var(--t-sm); font-weight: 700; color: var(--texte); }
 </style>

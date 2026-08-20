@@ -122,6 +122,118 @@ const page = await contexte.newPage()
   await page.screenshot({ path: `${SORTIE}-01-tapis.png`, fullPage: true })
 }
 
+// ═════════════ 2 bis. Facettes contextuelles et état vide ═════════════
+{
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * LE COMPTEUR DOIT DÉCRIRE LA LISTE QU'ON VA OBTENIR
+   *
+   * Les compteurs du rail étaient calculés sur la liste COMPLÈTE : « Éducation
+   * 14 » restait 14 après avoir coché « Clôture sous 7 jours », alors que deux
+   * annonces seulement subsistaient. Le candidat cochait une facette qui
+   * annonçait quatorze résultats et en obtenait deux.
+   *
+   * LE CONTRÔLE COMPARE DEUX ÉTATS DU MÊME ÉCRAN — la somme des compteurs
+   * d'une facette à choix unique, avec et sans un autre filtre actif. Vérifier
+   * un nombre en dur aurait figé la fixture dans la recette ; comparer deux
+   * mesures ne suppose rien de son contenu.
+   */
+  await page.goto(`${BASE}/fr/opportunites`, { waitUntil: 'networkidle' })
+
+  const sommeNature = async () => page.evaluate(() => {
+    const groupes = [...document.querySelectorAll('.rail__groupe')]
+    /* Le groupe « Nature » est le deuxième du rail — filière, nature, région. */
+    const nature = groupes[1]
+    if (!nature) return null
+    return [...nature.querySelectorAll('.filtre__n')]
+      .reduce((total, n) => total + Number((n.textContent || '0').replace(/\D/g, '')), 0)
+  })
+
+  const avant = await sommeNature()
+
+  /* On coche « Clôture sous 7 jours » — une dimension AUTRE que la nature. */
+  await page.goto(`${BASE}/fr/opportunites?sous=7j`, { waitUntil: 'networkidle' })
+  const apres = await sommeNature()
+  const resultats7j = Number((await page.locator('.tapis__compte').innerText()).replace(/\D/g, ''))
+
+  note(
+    'les compteurs de facettes suivent les AUTRES filtres actifs',
+    avant !== null && apres !== null && apres < avant && apres === resultats7j,
+    `somme des compteurs « Nature » : ${avant} sans filtre → ${apres} avec ?sous=7j · `
+    + `${resultats7j} résultat(s) affichés`,
+  )
+
+  /*
+   * AUCUNE FACETTE À ZÉRO N'EST OFFERTE. Une option à zéro est un cul-de-sac :
+   * on la coche, on obtient une liste vide, et il faut la décocher.
+   */
+  const zeros = await page.evaluate(
+    () => [...document.querySelectorAll('.filtre__n')]
+      .filter(n => Number((n.textContent || '').replace(/\D/g, '')) === 0)
+      .length,
+  )
+
+  note(
+    'aucune facette à zéro n’est proposée',
+    zeros === 0,
+    `${zeros} option(s) à zéro dans le rail`,
+  )
+
+  /*
+   * MAIS UNE FACETTE ACTIVE RESTE OFFERTE, FÛT-ELLE À ZÉRO. Sans cette
+   * exception, une option cochée qui tombe à zéro à cause d'un autre filtre
+   * disparaîtrait du rail — et deviendrait impossible à DÉCOCHER. Le candidat
+   * serait enfermé dans une liste vide par un filtre qu'il ne voit plus.
+   */
+  await page.goto(
+    `${BASE}/fr/opportunites?filiere=education&q=zzzzqqqq`,
+    { waitUntil: 'networkidle' },
+  )
+
+  const activeVisible = await page.evaluate(() => {
+    const cases = [...document.querySelectorAll('.rail__groupe input[type="checkbox"]')]
+    return cases.some(c => c.checked)
+  })
+
+  note(
+    'une facette active reste décochable même tombée à zéro',
+    activeVisible,
+    `case cochée encore présente dans le rail : ${activeVisible}`,
+  )
+
+  // ─────────────────────────────── L'ÉTAT VIDE EST ACTIONNABLE
+  const vide = await page.evaluate(() => ({
+    phrase: (document.querySelector('.vide__phrase')?.textContent || '').trim(),
+    criteres: [...document.querySelectorAll('.vide__criteres .nature')]
+      .map(n => (n.textContent || '').trim()),
+    bouton: (document.querySelector('.vide--filtres .btn')?.textContent || '').trim(),
+    sortie: document.querySelectorAll('.vide--filtres a').length,
+  }))
+
+  note(
+    'l’état vide dit les critères EN CLAIR et offre une sortie',
+    vide.phrase.length > 0 && vide.criteres.length >= 2
+    && vide.bouton.length > 0 && vide.sortie >= 1,
+    `« ${vide.phrase} » · critères : ${vide.criteres.join(' + ') || 'AUCUN'} · `
+    + `action : « ${vide.bouton} » · ${vide.sortie} porte(s)`,
+  )
+
+  /* ET LA RÉINITIALISATION TIENT EN UNE ACTION — y compris dans l'URL, sans
+     quoi un rechargement ramènerait les filtres qu'on vient de retirer. */
+  const avantClic = Number((await page.locator('.tapis__compte').innerText()).replace(/\D/g, ''))
+  await page.locator('.vide--filtres .btn').click()
+  await page.waitForTimeout(400)
+
+  const apresClic = Number((await page.locator('.tapis__compte').innerText()).replace(/\D/g, ''))
+  const requete = new URL(page.url()).search
+
+  note(
+    'un seul geste retire tous les filtres, URL comprise',
+    avantClic === 0 && apresClic > 0 && !requete.includes('filiere') && !requete.includes('q='),
+    `${avantClic} → ${apresClic} annonce(s) · URL après le clic : « ${requete || '(aucune requête)'} »`,
+  )
+}
+
 // ═══════════════════════ 3. La fiche : SSR, JSON-LD, validThrough ═══
 {
   await page.goto(`${BASE}/fr/opportunites`, { waitUntil: 'networkidle' })

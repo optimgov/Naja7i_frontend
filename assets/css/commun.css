@@ -1271,6 +1271,22 @@ html[dir='rtl'] .bandeau-echeance__lien:hover .fleche { transform: scaleX(-1) tr
 }
 .vue[aria-pressed='true'] { color: var(--texte); background: var(--surface); box-shadow: var(--ombre-1); }
 
+/* ─── LES TROIS VUES N'AVAIENT AUCUNE RÉPONSE AU SURVOL ────────────────────
+ *
+ * Relevé par `scripts/recette-contraste-interactif.mjs`, qui liste les
+ * sélecteurs dont un survol ne change RIEN : `.vue` y figurait aux huit
+ * contextes. Trois boutons côte à côte, dont un seul se distingue — par son
+ * `aria-pressed` —, et rien n'indiquait que les deux autres étaient cliquables.
+ *
+ * `:not([aria-pressed='true'])` : le bouton actif garde son aplat, sans quoi le
+ * survol l'effacerait au moment précis où l'on repasse dessus.
+ *
+ * `--texte` sur `--surface` : 15,4:1 en clair. La règle ne crée aucune
+ * composition nouvelle — c'est celle de l'état actif, appliquée au survol.
+ */
+.vue:not([aria-pressed='true']):hover,
+.vue:not([aria-pressed='true']):focus-visible { color: var(--texte); background: var(--surface); }
+
 .tapis__compte { font-size: var(--t-s); color: var(--texte-doux); font-variant-numeric: tabular-nums; }
 
 .tapis__grille { display: grid; gap: var(--e-3); grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); }
