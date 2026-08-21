@@ -1,27 +1,45 @@
 <script setup lang="ts">
 import { ApiRequestError } from '~/composables/useApi'
+import { normaliserProfilPrepare } from '~/composables/useMonDossier'
 
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t, locale, setLocale } = useI18n()
 const localePath = useLocalePath()
 const { user, refresh } = useAuth()
-const { profil, actes, modifierCompte, modifierMotDePasse } = useMonDossier()
+const { profil, actes, modifierCompte, modifierProfil, modifierMotDePasse } = useMonDossier()
 const { data: profilPrepare, pending: profilCharge, error: profilErreur } = await profil()
 const { data: actesJuridiques, pending: actesCharges, error: actesErreur } = await actes()
+const { epreuvesOuvertes } = useCatalogue()
+const { data: epreuves, pending: epreuvesChargees, error: epreuvesErreur } = await epreuvesOuvertes()
 
-const compte = reactive({ email: user.value?.email ?? '', phone: user.value?.phone ?? '', locale: user.value?.locale ?? 'fr' as 'fr' | 'ar' })
+const compte = reactive({
+  email: user.value?.email ?? '',
+  phone: user.value?.phone ?? '',
+  locale: user.value?.locale ?? 'fr' as 'fr' | 'ar',
+  current_password: '',
+})
 const motDePasse = reactive({ current_password: '', password: '', password_confirmation: '' })
+const parcours = reactive({
+  exam_code: profilPrepare.value?.exam_code ?? '',
+  objective: profilPrepare.value?.objective ?? '',
+  target_date: profilPrepare.value?.target_date ?? '',
+})
 const erreursCompte = ref<Record<string, string>>({})
+const erreursParcours = ref<Record<string, string>>({})
 const erreursMotDePasse = ref<Record<string, string>>({})
 const erreurCompte = ref('')
+const erreurParcours = ref('')
 const erreurMotDePasse = ref('')
 const succesCompte = ref(false)
+const succesParcours = ref(false)
 const succesMotDePasse = ref(false)
 const envoiCompte = ref(false)
+const envoiParcours = ref(false)
 const envoiMotDePasse = ref(false)
 
 const epreuve = computed(() => profilPrepare.value?.exam_code ?? null)
+const emailModifie = computed(() => compte.email.trim() !== (user.value?.email ?? ''))
 
 function libelleActe(acte: { document_kind: string }): string {
   const connus: Record<string, string> = {
@@ -39,8 +57,14 @@ async function enregistrerCompte(): Promise<void> {
   succesCompte.value = false
   const langueAvant = locale.value
   try {
-    await modifierCompte({ email: compte.email.trim(), phone: compte.phone.trim() || null, locale: compte.locale })
+    await modifierCompte({
+      email: compte.email.trim(),
+      phone: compte.phone.trim() || null,
+      locale: compte.locale,
+      current_password: compte.current_password || null,
+    })
     await refresh()
+    compte.current_password = ''
     succesCompte.value = true
     if (langueAvant !== compte.locale) await setLocale(compte.locale)
   } catch (error: unknown) {
@@ -49,6 +73,29 @@ async function enregistrerCompte(): Promise<void> {
       if (!Object.keys(erreursCompte.value).length) erreurCompte.value = error.message
     }
   } finally { envoiCompte.value = false }
+}
+
+async function enregistrerParcours(): Promise<void> {
+  envoiParcours.value = true
+  erreursParcours.value = {}
+  erreurParcours.value = ''
+  succesParcours.value = false
+
+  try {
+    const response = await modifierProfil(normaliserProfilPrepare(parcours))
+    profilPrepare.value = response.data
+    parcours.exam_code = response.data.exam_code ?? ''
+    parcours.objective = response.data.objective ?? ''
+    parcours.target_date = response.data.target_date ?? ''
+    succesParcours.value = true
+  } catch (error: unknown) {
+    if (error instanceof ApiRequestError) {
+      erreursParcours.value = error.fieldErrors
+      if (!Object.keys(erreursParcours.value).length) erreurParcours.value = error.message
+    }
+  } finally {
+    envoiParcours.value = false
+  }
 }
 
 async function enregistrerMotDePasse(): Promise<void> {
@@ -102,6 +149,12 @@ useHead({ title: () => t('dossier.titre') })
             <option value="fr">Français</option><option value="ar">العربية</option>
           </select>
         </label>
+        <label class="champ">
+          <span class="champ__label">{{ t('dossier.compte_mot_de_passe') }}</span>
+          <input v-model="compte.current_password" class="champ__saisie" type="password" autocomplete="current-password" :required="emailModifie" :aria-required="emailModifie" :aria-invalid="Boolean(erreursCompte.current_password)">
+          <span v-if="erreursCompte.current_password" class="champ__erreur" dir="auto">{{ erreursCompte.current_password }}</span>
+          <span v-else class="champ__aide">{{ t('dossier.compte_mot_de_passe_aide') }}</span>
+        </label>
         <button class="btn" type="submit" :disabled="envoiCompte">{{ envoiCompte ? t('dossier.envoi') : t('dossier.enregistrer') }}</button>
       </form>
     </section>
@@ -110,9 +163,39 @@ useHead({ title: () => t('dossier.titre') })
       <h2>{{ t('dossier.parcours') }}</h2>
       <p v-if="profilCharge">{{ t('dossier.chargement') }}</p>
       <div v-else-if="profilErreur" class="alerte alerte--systeme" role="alert">{{ t('dossier.profil_indisponible') }}</div>
-      <p v-else-if="epreuve" dir="auto">{{ t('dossier.epreuve_preparee') }} <strong>{{ epreuve }}</strong></p>
-      <p v-else>{{ t('dossier.profil_vide') }}</p>
-      <NuxtLink class="lien-second" :to="localePath('/se-preparer')">{{ t('dossier.gerer_parcours') }}</NuxtLink>
+      <template v-else>
+        <p v-if="epreuve" dir="auto">{{ t('dossier.epreuve_preparee') }} <strong>{{ epreuve }}</strong></p>
+        <p v-else>{{ t('dossier.profil_vide') }}</p>
+        <div v-if="erreurParcours" class="alerte alerte--systeme" role="alert" dir="auto">{{ erreurParcours }}</div>
+        <div v-if="succesParcours" class="alerte alerte--succes" role="status">{{ t('dossier.parcours_succes') }}</div>
+        <form class="dossier__formulaire" novalidate @submit.prevent="enregistrerParcours">
+          <label class="champ">
+            <span class="champ__label">{{ t('dossier.epreuve') }}</span>
+            <select v-model="parcours.exam_code" class="champ__saisie" required :disabled="epreuvesChargees || Boolean(epreuvesErreur)" :aria-invalid="Boolean(erreursParcours.exam_code)">
+              <option value="" disabled>{{ t('dossier.epreuve_choisir') }}</option>
+              <option v-for="option in epreuves ?? []" :key="option.code" :value="option.code" dir="auto">
+                {{ option.name }} — {{ option.famille.name }}
+              </option>
+            </select>
+            <span v-if="erreursParcours.exam_code" class="champ__erreur" dir="auto">{{ erreursParcours.exam_code }}</span>
+            <span v-else-if="epreuvesChargees" class="champ__aide">{{ t('dossier.epreuves_chargement') }}</span>
+            <span v-else-if="epreuvesErreur" class="champ__erreur" role="alert">{{ t('dossier.epreuves_indisponibles') }}</span>
+            <span v-else class="champ__aide">{{ t('dossier.epreuve_aide') }}</span>
+          </label>
+          <label class="champ">
+            <span class="champ__label">{{ t('dossier.objectif') }}</span>
+            <textarea v-model="parcours.objective" class="champ__saisie" rows="3" dir="auto" :aria-invalid="Boolean(erreursParcours.objective)" />
+            <span v-if="erreursParcours.objective" class="champ__erreur" dir="auto">{{ erreursParcours.objective }}</span>
+          </label>
+          <label class="champ">
+            <span class="champ__label">{{ t('dossier.date_cible') }}</span>
+            <input v-model="parcours.target_date" class="champ__saisie" type="date" :aria-invalid="Boolean(erreursParcours.target_date)">
+            <span v-if="erreursParcours.target_date" class="champ__erreur" dir="auto">{{ erreursParcours.target_date }}</span>
+          </label>
+          <button class="btn" type="submit" :disabled="envoiParcours">{{ envoiParcours ? t('dossier.parcours_envoi') : t('dossier.parcours_enregistrer') }}</button>
+        </form>
+        <NuxtLink class="lien-second dossier__porte" :to="localePath('/se-preparer')">{{ t('dossier.voir_preparations') }}</NuxtLink>
+      </template>
     </section>
 
     <section class="dossier__bloc">
@@ -152,4 +235,5 @@ useHead({ title: () => t('dossier.titre') })
 .dossier__actes { display: grid; gap: var(--e-2); padding: 0; list-style: none; }
 .dossier__actes li { display: flex; justify-content: space-between; gap: var(--e-3); padding-block: var(--e-2); border-block-end: 1px solid var(--bordure); }
 .dossier__liens { display: flex; flex-wrap: wrap; gap: var(--e-4); }
+.dossier__porte { display: inline-block; margin-block-start: var(--e-4); }
 </style>
