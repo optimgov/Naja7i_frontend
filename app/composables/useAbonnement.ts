@@ -23,6 +23,8 @@ export interface Plan {
   currency: string
   /** Nul = sans terme. L'écran écrit « sans limite de durée », il n'invente pas. */
   duration_days: number | null
+  /** Version contractuelle opaque à renvoyer lors de la souscription. */
+  version_uuid: string
   capabilities: string[]
 }
 

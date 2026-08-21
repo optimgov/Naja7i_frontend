@@ -39,7 +39,7 @@ const api = useApi()
 const envoi = ref(false)
 const erreur = ref<string | null>(null)
 
-async function payer(planCode: string): Promise<void> {
+async function payer(plan: Plan): Promise<void> {
   if (envoi.value) return
   envoi.value = true
   erreur.value = null
@@ -47,7 +47,7 @@ async function payer(planCode: string): Promise<void> {
   try {
     await api.post(
       '/me/orders/simulated',
-      { plan_code: planCode },
+      { plan_code: plan.code, version_uuid: plan.version_uuid },
       { 'Idempotency-Key': crypto.randomUUID() },
     )
     emit('paye')
@@ -75,7 +75,7 @@ async function payer(planCode: string): Promise<void> {
         class="btn btn--fantome"
         :class="{ 'btn--choisi': plan.code === props.planChoisi }"
         :disabled="envoi"
-        @click="payer(plan.code)"
+        @click="payer(plan)"
       >
         {{ t('abonnement.simulation_payer', { plan: plan.name }) }}
       </button>
