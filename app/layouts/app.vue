@@ -62,6 +62,9 @@ watch(
         </NuxtLink>
 
         <div class="appli__actions">
+          <NuxtLink :to="localePath('/app/mon-dossier')" class="btn btn--discret">
+            {{ t('dossier.navigation') }}
+          </NuxtLink>
           <BasculeTheme />
 
           <NuxtLink
@@ -127,8 +130,14 @@ watch(
 
 .appli__actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--e-2);
+}
+
+@media (max-width: 40rem) {
+  .appli__barre { align-items: flex-start; }
+  .appli__actions { justify-content: flex-end; }
 }
 
 .appli__contenu {

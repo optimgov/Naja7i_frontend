@@ -5,6 +5,7 @@ export interface CandidateUser {
   locale: 'fr' | 'ar'
   status: string
   email_verified: boolean
+  phone_verified?: boolean
   roles?: string[]
 }
 
@@ -90,6 +91,10 @@ export function useAuth() {
     await api.post('/auth/password/reset', payload)
   }
 
+  async function refresh(): Promise<void> {
+    await fetchMe()
+  }
+
   return {
     user: readonly(user),
     pendingLegal: readonly(pendingLegal),
@@ -103,5 +108,6 @@ export function useAuth() {
     resendVerification,
     requestPasswordReset,
     resetPassword,
+    refresh,
   }
 }
