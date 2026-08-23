@@ -16,7 +16,7 @@
  *   3. démarre l'API si elle ne tourne pas
  *   4. sème la banque de questions de recette PAR L'API de la chaîne éditoriale
  *   5. démarre le frontend s'il ne tourne pas
- *   6. prépare les deux comptes candidats
+ *   6. prépare un compte candidat PAR PALIER
  *   7. joue TOUTES les recettes, dans l'ordre
  *
  * L'ORDRE DES ÉTAPES 3 À 5 EST UN CHOIX. Le semis passe désormais par l'API :
@@ -67,6 +67,26 @@ const WEB = process.env.BASE_URL || 'http://localhost:3000'
 const MAILPIT = process.env.MAILPIT_URL || 'http://localhost:8025'
 const SORTIE = process.env.SORTIE || '/tmp/recette'
 const COMPTES = `${SORTIE}-comptes.json`
+
+/*
+ * L'ÉPREUVE DE RECETTE, nommée UNE FOIS.
+ *
+ * Elle était écrite en dur dans les préparations et laissée au défaut dans les
+ * scripts — deux endroits pour un même fait, qui n'attendaient que de diverger.
+ * C'est celle que sème `semer-banque.mjs`.
+ */
+const EPREUVE = process.env.CODE_EPREUVE || 'CRMEF-FR-SPEC-2025'
+
+/*
+ * L'HORODATAGE DE L'EXÉCUTION, posé une fois et partagé.
+ *
+ * Les comptes dont LE PALIER SE CONSOMME sont neufs à chaque passage : celui du
+ * chemin de revenu, parce que la conversion est irréversible, et ceux d'essai,
+ * parce que l'enveloppe gratuite vaut quarante questions et ne se renouvelle
+ * pas. L'horodatage vient d'ICI et non du script qui les crée, pour qu'ils
+ * portent tous le même et se reconnaissent ensemble dans la base.
+ */
+const HORODATAGE = String(Date.now())
 
 const demarres = []
 let etape = 0
@@ -433,7 +453,13 @@ titre('Comptes candidats')
 if (
   lancer('node', ['scripts/recette/preparer-comptes.mjs'], {
     cwd: FRONT,
-    env: { ...process.env, API_BASE_URL: API, MAILPIT_URL: MAILPIT, COMPTES_FICHIER: COMPTES },
+    env: {
+      ...process.env,
+      API_BASE_URL: API,
+      MAILPIT_URL: MAILPIT,
+      COMPTES_FICHIER: COMPTES,
+      HORODATAGE_RECETTE: HORODATAGE,
+    },
   }) !== 0
 ) {
   echouer('la préparation des comptes a échoué')
@@ -441,19 +467,105 @@ if (
 
 const comptes = JSON.parse(readFileSync(COMPTES, 'utf8'))
 
-const A = comptes.find((c) => c.cle === 'A')
-const B = comptes.find((c) => c.cle === 'B')
+const parCle = (cle) => {
+  const c = comptes.find((x) => x.cle === cle)
+  if (!c) echouer(`le compte « ${cle} » n'a pas été préparé`)
+  return c
+}
+
+const PASSATION = parCle('PASSATION')
+const REFUS = parCle('REFUS')
+const FILE = parCle('FILE')
+const FILE_2 = parCle('FILE_2')
+const ENTREE = parCle('ENTREE')
+const SESSION = parCle('SESSION')
+const CONVERSION = parCle('CONVERSION')
+
+/**
+ * POSER LE PALIER D'UN COMPTE, ET ÉCHOUER SI ON N'Y ARRIVE PAS.
+ *
+ * `poser-le-palier.php` achète par la vraie chaîne — coupon, `CouponGateway`,
+ * `AbonnementService` — et relit les capacités obtenues avant de rendre la
+ * main. Il est idempotent : un compte qui porte déjà le palier n'est pas
+ * réacheté.
+ */
+const palier = (compte) =>
+  preparer('poser-le-palier.php', { COMPTE_EMAIL: compte.email, PALIER: compte.palier })
+
+/**
+ * DONNER À UN COMPTE LE PASSÉ QUE SON SCÉNARIO EXIGE.
+ *
+ * Une ordonnance et un calendrier mémoire naissent des réponses d'une série
+ * passée. Avec un compte par palier, le compte de FRONT-4 est neuf : il faut
+ * lui poser ce passé plutôt que de l'hériter d'un scénario joué plus tôt.
+ */
+const amorcer = (compte, exigence = 'cause-diagnostiquee') =>
+  lancer('node', ['scripts/recette/amorcer-un-passe.mjs'], {
+    cwd: FRONT,
+    env: {
+      ...env,
+      API_BASE_URL: API,
+      COMPTE_EMAIL: compte.email,
+      COMPTE_MDP: compte.motDePasse,
+      CODE_EPREUVE: EPREUVE,
+      /* CE QUE LE SCÉNARIO ATTEND DU PASSÉ, dit par lui.
+       *
+       * FRONT-4 a besoin d'un rendez-vous mémoire, qui exige une cause
+       * étiquetée sur le distracteur choisi. Le chemin de revenu, lui, n'a
+       * besoin que d'une correction verrouillable — `cause_locked` se lit sur
+       * « fausse, et non révélée », sans cause étiquetée. Confondre les deux
+       * ferait échouer le second sur une exigence qui n'est pas la sienne. */
+      EXIGENCE: exigence,
+    },
+  })
+
+/** Enchaîne des préparations, et s'arrête à la première qui échoue. */
+const enchainer = (...etapes) => () => {
+  for (const etape of etapes) {
+    const code = etape()
+    if (code !== 0) return code
+  }
+  return 0
+}
 
 // ─────────────────────────────────────────────────────────────── recettes
 /*
- * L'ORDRE COMPTE, et il n'est pas arbitraire :
+ * ═══════════════════════════════════════════════════════════════════════════
+ * UNE RECETTE MESURE UN PALIER, PAS UN COMPTE — M-016
  *
- *   passation   ouvre une série et la mène jusqu'à la correction — elle crée
- *               l'historique dont les suivantes ont besoin ;
- *   front3      éprouve les refus et la restitution sur cet historique ;
- *   front4      l'entraînement et les révisions, qui naissent des erreurs ;
- *   file-envoi  en dernier : elle met délibérément la file en échec, et laisse
- *               une entrée refusée derrière elle.
+ * Chaque entrée DÉCLARE le palier qu'elle éprouve, et ce palier est POSÉ avant
+ * qu'elle ne s'exécute. Ce n'était pas le cas : le palier était ce que les
+ * scénarios précédents avaient laissé au compte A, c'est-à-dire un état que
+ * personne n'écrivait nulle part.
+ *
+ * Depuis les murs du lot 3A.9, cet implicite était devenu faux. FRONT-4,
+ * l'examen blanc et la file d'envoi jouaient sur un compte d'ESSAI des
+ * fonctions PAYANTES. FRONT-4 ne rougissait même pas : il plantait sur un
+ * champ absent, et l'on ne savait pas si c'était le lot ou la donnée.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * L'ORDRE N'EST PLUS UNE CONDITION DE JUSTESSE
+ *
+ * Il l'était de deux façons, et les deux sont tombées :
+ *
+ *   · « l'abonnement en dernier », parce qu'ouvrir l'abonnement de A aurait
+ *     fait mesurer aux suivantes un mur déjà tombé. Ce scénario a désormais
+ *     SON compte, neuf à chaque exécution — il ne peut plus contaminer
+ *     personne, et sa place dans la liste n'a plus d'importance ;
+ *   · l'historique de la passation, dont FRONT-4 héritait. `amorcer()` le pose.
+ *
+ * UNE TROISIÈME EST TOMBÉE APRÈS COUP, et elle ne se voyait pas : les
+ * scénarios d'essai se partageaient UNE enveloppe de quarante questions. Celui
+ * qui passait en premier prenait le budget des autres — un ordre implicite, et
+ * le plus dangereux des trois puisque rien ne le nommait. Chaque palier d'essai
+ * a maintenant son compte, neuf à chaque exécution : il n'y a plus de budget
+ * commun à se disputer. Voir `preparer-comptes.mjs`.
+ *
+ * Ce qui subsiste n'est plus une condition de justesse mais de LISIBILITÉ : la
+ * zone publique en premier parce qu'un échec du tapis n'a rien à voir avec un
+ * candidat, et la file d'envoi en dernier parce qu'elle laisse délibérément une
+ * entrée refusée derrière elle. Aucune des deux ne rendrait une autre recette
+ * fausse si on la déplaçait.
  */
 const RECETTES = [
   /*
@@ -461,10 +573,14 @@ const RECETTES = [
    *
    * Elle ne demande ni session ni backend : ses données viennent de la fixture
    * servie par le BFF. La jouer avant les recettes authentifiées la rend
-   * lisible isolément — un échec du tapis n'a rien à voir avec l'état du
-   * candidat A, et l'ordre le dit.
+   * lisible isolément — un échec du tapis n'a rien à voir avec l'état d'un
+   * candidat, et l'ordre le dit.
    */
-  ['zone publique — ZP-1', 'scripts/recette-zone-publique.mjs', []],
+  {
+    nom: 'zone publique — ZP-1',
+    script: 'scripts/recette-zone-publique.mjs',
+    palier: 'aucun — visiteur sans compte',
+  },
   /*
    * LE CONTRASTE DES ÉTATS INTERACTIFS, juste après, et pour la même raison :
    * il ne demande aucune session. `--complet` lui ouvre les écrans de catalogue
@@ -475,82 +591,142 @@ const RECETTES = [
    * Il complète `npm run audit`, qui mesure les écrans AU REPOS : un survol et
    * un focus changent des couleurs que cet audit-là ne voit jamais.
    */
-  ['contraste des états interactifs', 'scripts/recette-contraste-interactif.mjs', ['--complet']],
+  {
+    nom: 'contraste des états interactifs',
+    script: 'scripts/recette-contraste-interactif.mjs',
+    args: ['--complet'],
+    palier: 'aucun — visiteur sans compte',
+  },
   /*
-   * LES PORTES AVANT TOUT LE RESTE, et l'ordre est une contrainte.
-   *
-   * Elle part d'un compte qui n'existe pas encore et le mène de l'inscription
-   * à la question miroir. Elle N'UTILISE NI A NI B, précisément parce que son
-   * premier contrôle exige un compte à ZÉRO tentative : un compte que les
-   * recettes suivantes ont travaillé ne pourrait plus le produire.
-   *
-   * Elle est jouée tôt pour une autre raison : si la première porte est
-   * fermée, aucune des recettes suivantes ne décrit ce que vit un candidat
-   * réel — elles atteignent leurs écrans par leur adresse, et c'est
-   * exactement ce que la recette humaine du 17 août reprochait au produit.
+   * LES PORTES partent d'un compte qui n'existe pas encore et le mènent de
+   * l'inscription à la question miroir. Elle N'UTILISE AUCUN compte préparé,
+   * précisément parce que son premier contrôle exige un compte à ZÉRO
+   * tentative — qu'un compte déjà travaillé ne pourrait plus produire. Elle
+   * s'inscrit elle-même, et mesure donc le palier que l'inscription donne.
    */
-  ['les portes — PORTE-1 à PORTE-7', 'scripts/recette-portes.mjs', []],
-  ['passation d’un diagnostic', 'scripts/recette-passation.mjs', [A.email, A.motDePasse]],
+  {
+    nom: 'les portes — PORTE-1 à PORTE-7',
+    script: 'scripts/recette-portes.mjs',
+    palier: 'essai — le compte s’inscrit lui-même pendant le scénario',
+  },
+  {
+    nom: 'passation d’un diagnostic',
+    script: 'scripts/recette-passation.mjs',
+    compte: PASSATION,
+    palier: 'essai (compte neuf) — répondre aux questions est le seul droit du gratuit',
+  },
   /*
-   * LE QUOTA F03 EST REMIS À NEUF AVANT FRONT-3.
+   * FRONT-3 ÉPROUVE LES REFUS : elle a besoin du mur DEBOUT, donc du palier
+   * gratuit. Sur un compte payant, elle mesurerait des portes ouvertes en
+   * croyant mesurer des portes fermées.
    *
-   * Il est CUMULATIF par conception et ne se remet jamais à zéro : sur un
-   * poste, le compte de recette épuise ses deux unités à la première
-   * exécution ; en CI la base est neuve et il les a toutes. La recette
-   * mesurait donc deux choses différentes selon la machine — même défaut que
-   * le calendrier au D-F49, et invisible jusqu'ici parce que le BLOC-1 le
-   * masquait : les causes sortaient sans acquisition, donc il y en avait
-   * toujours à l'écran.
+   * LE QUOTA F03 EST REMIS À NEUF AVANT ELLE. Il est CUMULATIF par conception
+   * et ne se remet jamais à zéro : sur un poste, le compte épuise ses deux
+   * unités à la première exécution ; en CI la base est neuve et il les a
+   * toutes. La recette mesurait donc deux choses selon la machine — même
+   * défaut que le calendrier au D-F49.
    */
-  [
-    'FRONT-3 — les cas qui doivent échouer',
-    'scripts/recette-front3.mjs',
-    [A.email, A.motDePasse],
-    { avant: () => preparer('remettre-quota.php', { COMPTE_EMAIL: A.email }) },
-  ],
+  {
+    nom: 'FRONT-3 — les cas qui doivent échouer',
+    script: 'scripts/recette-front3.mjs',
+    compte: REFUS,
+    palier: 'essai (compte neuf) — le mur doit être DEBOUT pour qu’on mesure sa fermeture',
+    avant: (c) => enchainer(
+      () => palier(c),
+      () => preparer('remettre-quota.php', { COMPTE_EMAIL: c.email }),
+    ),
+  },
   /*
-   * FRONT-4 EXIGE UN CALENDRIER ÉCHU, et il faut le lui donner.
+   * FRONT-4 EST LA BOUCLE QUOTIDIENNE, ET ELLE EST PAYANTE.
    *
-   * Un rendez-vous naît au palier 1 : `due_on` = demain. Sur un poste les
-   * comptes traînent depuis des jours et tout est échu ; sur une base neuve
-   * RIEN ne l'est jamais. La recette mesurait donc deux choses différentes
-   * selon la machine, et la première exécution en CI l'a montré — « 0 échus »,
-   * puis un clic dans le vide. Voir `echoir-revisions.php` : il recule
-   * l'échéance, et elle seule.
+   * Entraînement ciblé (`series.targeted`), séance mémoire (`memory.sessions`)
+   * et ordonnance (`remediation.plan`) : seule « Session complète » compose les
+   * trois depuis l'arbitrage D-CAT. C'est le scénario que l'implicite avait le
+   * plus abîmé — il jouait sur un compte d'essai, et plantait.
+   *
+   * Trois préparations, dans cet ordre, et chacune échoue bruyamment :
+   *   1. le palier, sans quoi rien n'est ouvert ;
+   *   2. le PASSÉ — une erreur commise avec certitude, sans quoi l'ordonnance
+   *      est vide et le calendrier aussi ;
+   *   3. l'ÉCHÉANCE reculée. Un rendez-vous naît au palier 1, `due_on` =
+   *      demain : sur une base neuve RIEN n'est jamais échu, et la recette
+   *      mesurerait « 0 échus » puis un clic dans le vide (D-F49).
    */
-  [
-    'FRONT-4 — la boucle quotidienne',
-    'scripts/recette-front4.mjs',
-    [A.email, A.motDePasse],
-    { avant: () => preparer('echoir-revisions.php', {
-      COMPTE_EMAIL: A.email,
-      CODE_EPREUVE: 'CRMEF-FR-SPEC-2025',
-    }) },
-  ],
+  {
+    nom: 'FRONT-4 — la boucle quotidienne',
+    script: 'scripts/recette-front4.mjs',
+    compte: SESSION,
+    palier: 'session-180j — la boucle quotidienne est payante depuis D-CAT',
+    avant: (c) => enchainer(
+      () => palier(c),
+      () => amorcer(c),
+      () => preparer('echoir-revisions.php', { COMPTE_EMAIL: c.email, CODE_EPREUVE: EPREUVE }),
+    ),
+  },
   /*
-   * L'EXAMEN BLANC AVANT LA FILE D'ENVOI, et l'ordre n'est pas indifférent.
+   * L'EXAMEN BLANC MESURE LE SOCLE, PAS LA PROFONDEUR.
    *
-   * La recette du simulateur laisse derrière elle une simulation EXPIRÉE — elle
-   * fait exprès de dépasser l'échéance pour vérifier le refus. La file d'envoi,
-   * elle, pose des entrées et met délibérément la file en échec : elle doit
-   * rester la dernière, comme depuis le FRONT-5.
+   * `simulator.full` est composée par les TROIS offres payantes. On prend donc
+   * la plus petite — « Entrée » — et c'est un choix de mesure : si le socle
+   * suffit, on le prouve ; le mesurer sur « Session complète » laisserait
+   * croire que l'examen blanc demande la profondeur.
    */
-  ['examen blanc — E9, E10, E11', 'scripts/recette-simulation.mjs', [A.email, A.motDePasse]],
-  [
-    'file d’envoi — BLOC-4, BLOC-5 et SSR',
-    'scripts/recette-file-envoi.mjs',
-    [A.email, A.motDePasse, B.email, B.motDePasse],
-  ],
+  {
+    nom: 'examen blanc — E9, E10, E11',
+    script: 'scripts/recette-simulation.mjs',
+    compte: ENTREE,
+    palier: 'decouverte-7j — `simulator.full` est dans le socle payant, pas dans la profondeur',
+  },
   /*
-   * L'ABONNEMENT EN DERNIER, et l'ordre est une contrainte.
+   * LA FILE D'ENVOI EN DERNIER, et c'est de la lisibilité, pas de la justesse :
+   * elle met délibérément la file en échec et laisse une entrée refusée
+   * derrière elle.
    *
-   * Cette recette OUVRE un abonnement au compte A : à partir de là, son quota
-   * de causes est illimité. Toute recette jouée après verrait donc un mur
-   * payant ouvert et mesurerait autre chose que ce qu'elle croit. Elle a aussi
-   * besoin que le quota soit ÉPUISÉ pour éprouver la fermeture — ce que
-   * FRONT-3 vient de faire.
+   * SON PROPRIÉTAIRE EST AU SOCLE PAYANT, ET C'EST UNE MESURE, PAS UN CONFORT.
+   * Elle ouvre HUIT séries de cinq — quarante unités, l'enveloppe d'essai
+   * exactement, sans une de marge. Constaté : sur un compte d'essai elle rougit
+   * sur `ENVELOPPE_EPUISEE` à la septième, c'est-à-dire pour une raison qui ne
+   * dit rien sur la file. Or aucune de ses assertions ne regarde un mur — ce
+   * qu'elle éprouve est le PROPRIÉTAIRE d'une file. On lui donne donc le plus
+   * petit palier dont l'enveloppe est illimitée, et l'on retire de son verdict
+   * la seule cause d'échec qui lui soit étrangère.
+   *
+   * L'INTRUSE RESTE EN ESSAI : elle se connecte, échoue à écouler la file d'un
+   * autre, et repart sans répondre à rien. Une identité ordinaire est
+   * exactement ce que ce cas demande.
    */
-  ['abonnement — le chemin de revenu', 'scripts/recette-abonnement.mjs', [A.email, A.motDePasse]],
+  {
+    nom: 'file d’envoi — BLOC-4, BLOC-5 et SSR',
+    script: 'scripts/recette-file-envoi.mjs',
+    compte: FILE,
+    second: FILE_2,
+    palier: 'decouverte-7j (propriétaire) + essai (intruse) — la propriété d’une file, jamais un droit',
+    avant: (c) => enchainer(() => palier(c), () => palier(FILE_2)),
+  },
+  /*
+   * LE CHEMIN DE REVENU, SUR UN COMPTE NEUF À CHAQUE EXÉCUTION.
+   *
+   * Il CONVERTIT — et la conversion est irréversible (ADR-0033). Le rejouer sur
+   * un compte fixe mesurerait, dès la deuxième exécution, un compte déjà
+   * converti : l'inverse exact de ce qu'il éprouve. Son compte neuf est aussi
+   * ce qui a permis de retirer l'invariant « en dernier ».
+   *
+   * Il lui faut un passé — « la cause est fermée avant » se lit sur une
+   * correction — et un quota ÉPUISÉ, sans quoi la première erreur ouvrirait sa
+   * cause avec le quota gratuit et l'on conclurait « le mur est tombé » en
+   * n'ayant mesuré que la gratuité.
+   */
+  {
+    nom: 'abonnement — le chemin de revenu',
+    script: 'scripts/recette-abonnement.mjs',
+    compte: CONVERSION,
+    palier: 'essai → actif (compte neuf) — c’est la CONVERSION qu’il mesure',
+    avant: (c) => enchainer(
+      () => palier(c),
+      () => amorcer(c, 'erreur-certaine'),
+      () => preparer('epuiser-quota.php', { COMPTE_EMAIL: c.email }),
+    ),
+  },
 ]
 
 /*
@@ -586,7 +762,24 @@ const depart = Date.now()
 const bilan = []
 let attente = 0
 
-for (const [i, [nom, script, args, options = {}]] of RECETTES.entries()) {
+for (const [i, scenario] of RECETTES.entries()) {
+  const { nom, script, compte, second, palier: palierDit } = scenario
+
+  /*
+   * LES ARGUMENTS SE DÉDUISENT DU COMPTE, ils ne se recopient plus.
+   *
+   * Chaque script prend `<email> <motDePasse>`, et la file d'envoi une seconde
+   * identité. Les épeler à chaque entrée était la porte ouverte à ce que le
+   * lot corrige : un scénario dont on croit lire le compte, et qui en reçoit
+   * un autre.
+   */
+  const args = scenario.args ?? [
+    ...(compte ? [compte.email, compte.motDePasse] : []),
+    ...(second ? [second.email, second.motDePasse] : []),
+  ]
+
+  const options = scenario.avant && compte ? { avant: scenario.avant(compte) } : {}
+
   /* La pause précède AUSSI la première recette. Deux exécutions rapprochées de
    * `npm run recette` se marchent dessus autrement : la seconde hérite du
    * budget consommé par la première et échoue sur un 429 dès l'ouverture. Une
@@ -601,10 +794,27 @@ for (const [i, [nom, script, args, options = {}]] of RECETTES.entries()) {
 
   titre(nom)
 
+  /*
+   * LE PALIER SE DIT AVANT LA MESURE, et il se dit à voix haute.
+   *
+   * C'est l'exigence du lot : une recette qui ne dit pas quel palier elle
+   * éprouve ne prouve rien. Un opérateur qui lit ce journal sait, ligne par
+   * ligne, sur quoi le verdict porte — et un scénario vert sur le mauvais
+   * palier se voit ici, pas trois heures plus tard.
+   */
+  console.log(`  palier éprouvé : ${palierDit}`)
+  if (compte) console.log(`  compte : ${compte.email}${second ? ` + ${second.email}` : ''}`)
+
   /* Une préparation qui échoue arrête tout : jouer la recette sur un état
    * qu'on n'a pas su poser rendrait son verdict ininterprétable. */
   if (options.avant && options.avant() !== 0) {
     echouer(`la préparation de « ${nom} » a échoué`)
+  }
+
+  /* Le palier des scénarios SANS préparation propre est posé quand même : un
+   * compte réutilisé d'une exécution à l'autre doit être vérifié, pas supposé. */
+  if (!options.avant && compte && palier(compte) !== 0) {
+    echouer(`le palier de « ${nom} » n'a pas pu être posé sur ${compte.email}`)
   }
 
   const t0 = Date.now()
