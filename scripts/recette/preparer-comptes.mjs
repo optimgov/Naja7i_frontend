@@ -1,16 +1,74 @@
 #!/usr/bin/env node
 /**
- * preparer-comptes.mjs — crée et vérifie les deux comptes candidats de recette.
+ * preparer-comptes.mjs — crée et vérifie les comptes candidats de recette.
  *
  *   node scripts/recette/preparer-comptes.mjs
  *
- * Deux comptes, parce que le BLOC-4 l'exige : la file d'envoi doit refuser de
- * s'écouler sous une autre identité, et cela ne se vérifie qu'avec une seconde
- * identité réelle.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * UN COMPTE PAR PALIER — M-016
  *
- * Les adresses sont DÉTERMINISTES et rejouables : le script réutilise un compte
- * existant plutôt que d'en créer un nouveau à chaque exécution. Une CI qui sème
- * un compte par passage laisse une base qui enfle sans que personne ne regarde.
+ * Il y en avait deux, nommés A et B, et le second n'existait que pour le
+ * BLOC-4 : la file d'envoi doit refuser de s'écouler sous une autre identité,
+ * ce qui ne se vérifie qu'avec une seconde identité réelle.
+ *
+ * A portait tout le reste — et donc, depuis les murs du lot 3A.9, il portait
+ * une CONTRADICTION. FRONT-4, l'examen blanc et la file d'envoi jouaient sur
+ * un compte d'ESSAI des fonctions devenues PAYANTES. Le palier n'était écrit
+ * nulle part : il était ce que les recettes précédentes avaient laissé.
+ *
+ * Le lot tranche « une recette mesure un palier, pas un compte ». Le nom du
+ * compte dit donc maintenant son palier, et c'est la première façon de le
+ * rendre explicite : personne ne peut lire `recette.session` en croyant
+ * mesurer un essai.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * POURQUOI ON NE REDESCEND PAS UN COMPTE D'UN PALIER
+ *
+ * Parce que le produit l'interdit, et qu'il a raison. `OffreGratuiteService`
+ * refuse un essai à qui en a déjà reçu un OU a déjà converti, et les deux
+ * faits se lisent sur des traces DURABLES — jamais sur un droit actif
+ * (ADR-0033). Un essai clos ne se rouvre pas.
+ *
+ * Un script qui saurait le rouvrir fabriquerait un état que la plateforme ne
+ * peut pas produire, et la recette mesurerait alors un produit imaginaire.
+ * D'où des comptes distincts plutôt qu'un compte qu'on remet à zéro.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * UN COMPTE DONT LE PALIER SE CONSOMME NE PEUT PAS ÊTRE DÉTERMINISTE
+ *
+ * Les adresses fixes sont rejouables : le script réutilise le compte existant
+ * plutôt que d'en créer un à chaque passage — une CI qui sème un compte par
+ * exécution laisse une base qui enfle sans que personne ne regarde. C'est une
+ * bonne règle, et elle a une frontière qu'il a fallu MESURER pour la voir.
+ *
+ * `conversion` était donné comme l'exception : il CONVERTIT, la conversion est
+ * irréversible, le rejouer sur un compte fixe mesurerait dès la deuxième
+ * exécution un compte déjà converti. C'était vrai, mais ce n'était pas une
+ * exception — c'était un cas particulier d'une règle plus large :
+ *
+ *   UN COMPTE DONT LE PALIER EST CONSOMMÉ PAR LA MESURE NE SE REJOUE PAS.
+ *
+ * L'ESSAI EST DANS CE CAS, ET C'EST LA MESURE QUI L'A DIT. Le droit
+ * `questions.answer` de l'essai porte `quota_value = 40` : quarante questions,
+ * gouvernantes, jamais renouvelées. Les paliers vendables portent `NULL` —
+ * « RÈGLE 2, l'illimité gagne », dans `EnveloppeDeQuestions::gouvernante()`.
+ *
+ * Un compte d'essai FIXE est donc à usage unique. Constaté, pas déduit : après
+ * une exécution, `recette.essai@naja7i.test` était à reliquat 0, et la
+ * suivante aurait échoué sur `ENVELOPPE_EPUISEE` dès la passation. Pire, les
+ * scénarios d'essai se partageaient les mêmes quarante unités : celui qui
+ * passait en premier prenait le budget des autres. C'est un ORDRE IMPLICITE,
+ * exactement ce que ce lot retire — et il aurait remplacé la béquille
+ * « l'abonnement en dernier » par une béquille moins visible.
+ *
+ * D'où : un compte d'essai NEUF PAR SCÉNARIO et par exécution. Aucun scénario
+ * ne peut dépenser le budget d'un autre, parce qu'il n'y a plus de budget
+ * commun. Le coût est de trois comptes par passage, et il est assumé : la
+ * chaîne ne sait pas rendre une enveloppe, et un script qui saurait le faire
+ * fabriquerait un candidat que la plateforme ne vend pas.
+ *
+ * Les comptes PAYANTS restent fixes : leur enveloppe est illimitée, donc rien
+ * ne s'y consomme, et `poser-le-palier.php` est idempotent.
  *
  * La vérification d'e-mail passe par Mailpit — le même service qu'en
  * développement, déclaré comme conteneur dans le workflow. Lire le jeton dans
@@ -24,13 +82,94 @@ import { client, jetonDeVerification } from './client-api.mjs'
 const API = process.env.API_BASE_URL || 'http://localhost:8000'
 const MAILPIT = process.env.MAILPIT_URL || 'http://localhost:8025'
 const SORTIE = process.env.COMPTES_FICHIER || '/tmp/recette-comptes.json'
+const MDP = 'Recette-FRONT3-2026!'
+
+/*
+ * `palier` est DÉCLARATIF : c'est `poser-le-palier.php` qui l'établit, scénario
+ * par scénario, et qui échoue s'il n'y parvient pas. Ce fichier ne fait que
+ * créer les identités et dire à quoi chacune est destinée.
+ */
+/*
+ * L'HORODATAGE DE L'EXÉCUTION, reçu de l'orchestrateur.
+ *
+ * Il vient de LÀ-BAS et non d'ici : tous les comptes jetables d'un même
+ * passage portent alors le même, et se reconnaissent ensemble dans la base
+ * quand on vient y voir ce qu'une exécution a laissé.
+ */
+const HORODATAGE = process.env.HORODATAGE_RECETTE || String(Date.now())
+
+/** Un compte jetable : son palier se consomme, il ne se rejoue donc jamais. */
+const jetable = (nom) => `recette.${nom}.${HORODATAGE}@naja7i.test`
 
 export const COMPTES = [
-  { cle: 'A', email: 'recette.a@naja7i.test', motDePasse: 'Recette-FRONT3-2026!' },
-  { cle: 'B', email: 'recette.b@naja7i.test', motDePasse: 'Recette-FRONT3-2026!' },
+  {
+    cle: 'PASSATION',
+    email: jetable('passation'),
+    motDePasse: MDP,
+    palier: 'essai',
+    role: 'le palier gratuit : répondre aux questions, et rien d’autre',
+  },
+  {
+    cle: 'REFUS',
+    email: jetable('refus'),
+    motDePasse: MDP,
+    palier: 'essai',
+    role: 'le mur DEBOUT : ce que le gratuit se voit refuser',
+  },
+  {
+    /*
+     * LA FILE OUVRE HUIT SÉRIES DE CINQ — QUARANTE UNITÉS, l'enveloppe
+     * d'essai EXACTEMENT. Zéro marge : le premier cas qu'on lui ajoute la
+     * ferait rougir sur « série indisponible », c'est-à-dire pour une raison
+     * étrangère à ce qu'elle prouve.
+     *
+     * Ce qu'elle éprouve est le PROPRIÉTAIRE d'une file, jamais un droit —
+     * aucune de ses assertions ne regarde un mur. Son propriétaire prend donc
+     * le plus petit palier dont l'enveloppe est ILLIMITÉE. C'est un choix de
+     * mesure, pas un contournement : on retire de son verdict la seule cause
+     * d'échec qui ne dit rien sur la file.
+     */
+    cle: 'FILE',
+    email: 'recette.file@naja7i.test',
+    motDePasse: MDP,
+    palier: 'decouverte-7j',
+    role: 'le propriétaire de la file — enveloppe illimitée, pour que seule la file la fasse rougir',
+  },
+  {
+    /* L'INTRUSE RESTE EN ESSAI, et elle reste FIXE : elle se connecte, tente
+     * d'écouler la file d'un autre, et repart. Elle ne répond à aucune
+     * question, donc elle ne consomme rien — une identité ordinaire est
+     * précisément ce que ce cas demande. */
+    cle: 'FILE_2',
+    email: 'recette.file-2@naja7i.test',
+    motDePasse: MDP,
+    palier: 'essai',
+    role: 'la seconde identité du BLOC-4 — la file refuse de s’écouler sous elle',
+  },
+  {
+    cle: 'ENTREE',
+    email: 'recette.entree@naja7i.test',
+    motDePasse: MDP,
+    palier: 'decouverte-7j',
+    role: 'le socle payant : questions, causes, série ciblée, examen blanc',
+  },
+  {
+    cle: 'SESSION',
+    email: 'recette.session@naja7i.test',
+    motDePasse: MDP,
+    palier: 'session-180j',
+    role: 'la profondeur : ordonnance, séance mémoire, carte détaillée',
+  },
+  {
+    cle: 'CONVERSION',
+    email: jetable('conversion'),
+    motDePasse: MDP,
+    palier: 'essai',
+    role: 'le chemin de revenu — il convertit, donc il ne se rejoue jamais',
+  },
 ]
 
-async function preparer({ cle, email, motDePasse }) {
+async function preparer({ cle, email, motDePasse, palier, role }) {
   const sac = client(API)
   await sac.ouvrir()
 
@@ -43,8 +182,9 @@ async function preparer({ cle, email, motDePasse }) {
   if (connexion.statut < 400) {
     const moi = await sac.appel('/api/v1/me')
     if (moi.statut < 400 && moi.corps?.data?.email_verified) {
-      console.log(`  compte ${cle} : déjà présent et vérifié (${email})`)
-      return { cle, email, motDePasse, uuid: moi.corps.data.uuid }
+      console.log(`  ${cle} · palier ${palier} · déjà présent (${email})`)
+      console.log(`      ${role}`)
+      return { cle, email, motDePasse, palier, role, uuid: moi.corps.data.uuid }
     }
   }
 
@@ -80,8 +220,9 @@ async function preparer({ cle, email, motDePasse }) {
     throw new Error(`compte ${cle} : vérification refusée — ${verif.statut} ${verif.texte.slice(0, 200)}`)
   }
 
-  console.log(`  compte ${cle} : créé et vérifié (${email})`)
-  return { cle, email, motDePasse, uuid: verif.corps?.data?.uuid ?? null }
+  console.log(`  ${cle} · palier ${palier} · créé et vérifié (${email})`)
+  console.log(`      ${role}`)
+  return { cle, email, motDePasse, palier, role, uuid: verif.corps?.data?.uuid ?? null }
 }
 
 const prets = []
