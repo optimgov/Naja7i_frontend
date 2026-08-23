@@ -2,6 +2,11 @@
 /**
  * recette-abonnement.mjs — le chemin de revenu, de bout en bout.
  *
+ * PALIER ÉPROUVÉ : ESSAI → ACTIF, sur un compte NEUF à chaque exécution.
+ * C'est la CONVERSION qu'elle mesure. Elle est irréversible (ADR-0033) : la
+ * rejouer sur un compte fixe mesurerait, dès la deuxième fois, un compte déjà
+ * converti — l'inverse exact de ce qu'elle éprouve.
+ *
  *   node scripts/recette-abonnement.mjs <email> <motDePasse>
  *
  * CE QU'ELLE ÉPROUVE, et c'est le parcours entier :
@@ -203,8 +208,21 @@ if (epuise.code !== 0) {
     `${offres} offre(s) à l’écran · ${servies.length} servie(s) par l’API`,
   )
 
-  /* AUCUN NOM DE CAPACITÉ À L'ÉCRAN : le candidat lit ce qu'il gagne. */
-  const codes = ['corrections.cause', 'series.targeted', 'simulator.full', 'certification.take']
+  /*
+   * AUCUN NOM DE CAPACITÉ À L'ÉCRAN : le candidat lit ce qu'il gagne.
+   *
+   * LES CODES VIENNENT DE L'API, PLUS D'UNE LISTE ÉCRITE ICI. La liste en dur
+   * portait `certification.take` — une fonction qui n'existe pas — et ignorait
+   * `questions.answer`, que les trois paliers ouvrent depuis D-CAT-1. Elle
+   * cherchait donc une fuite impossible et laissait passer la seule qui
+   * pouvait survenir : exactement le défaut que ce même lot a corrigé dans
+   * `/tarifs`, et pour la même raison — une liste recopiée décrit un catalogue
+   * qu'elle ne lit pas.
+   *
+   * On interroge maintenant ce que le serveur SERT vraiment. La recette suit le
+   * catalogue sans qu'on ait à la rouvrir.
+   */
+  const codes = [...new Set(servies.flatMap(o => o.capabilities ?? []))]
   const fuites = codes.filter(c => texte.includes(c))
 
   note(
@@ -294,6 +312,11 @@ let fermeesAvant = 0
     const avant = JSON.parse((await api(`/me/attempts/${tentative.uuid}/correction`)).corps)
     fermeesAvant = causeFermee(avant)
 
+    /* CE QUE LE COMPTE PORTE DÉJÀ, lu AVANT la saisie. Voir la note plus bas :
+     * « n'ouvre rien » est une comparaison, pas un compte à zéro. */
+    const capacitesAvant = [...JSON.parse((await api('/me/subscription')).corps).data.capabilities]
+      .sort()
+
     await page.goto(`${BASE}/fr/app/abonnement`, { waitUntil: 'networkidle' })
     await page.fill('#code-cadeau', code)
     await page.locator('.code button[type="submit"]').click()
@@ -302,10 +325,33 @@ let fermeesAvant = 0
     const etat = JSON.parse((await api('/me/subscription')).corps).data
     const banniere = await page.locator('.attente').count()
 
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * « N'OUVRE RIEN » EST UNE COMPARAISON, PAS UN COMPTE À ZÉRO — M-016
+     *
+     * Cette ligne exigeait `capabilities.length === 0`. Ce n'est pas ce que le
+     * cas s'appelle : il dit qu'une commande EN ATTENTE n'ouvre RIEN DE PLUS.
+     * Les deux phrases ne coïncident que sur un compte qui ne porte déjà rien.
+     *
+     * C'était le cas de l'ancien compte partagé, dont l'essai était clos depuis
+     * longtemps — l'assertion encodait donc un palier qu'elle ne déclarait pas,
+     * et c'est exactement le défaut que ce lot ferme. Sur le palier que ce
+     * scénario DIT éprouver — l'essai — elle est fausse : un essai porte
+     * `questions.answer`, et un vrai candidat qui saisit un coupon le garde.
+     *
+     * On compare donc l'avant et l'après. La formulation devient vraie sur
+     * n'importe quel palier, et elle rougirait encore si une commande en
+     * attente ouvrait quoi que ce soit.
+     */
+    const capacitesApres = [...etat.capabilities].sort()
+    const ouvertesEnPlus = capacitesApres.filter(c => !capacitesAvant.includes(c))
+
     note(
-      'saisir un coupon crée une commande EN ATTENTE, et n’ouvre RIEN',
-      etat.pending_orders === 1 && etat.capabilities.length === 0 && banniere === 1,
-      `commandes en attente : ${etat.pending_orders} · capacités ouvertes : ${etat.capabilities.length}`
+      'saisir un coupon crée une commande EN ATTENTE, et n’ouvre RIEN DE PLUS',
+      etat.pending_orders === 1 && ouvertesEnPlus.length === 0 && banniere === 1,
+      `commandes en attente : ${etat.pending_orders}`
+      + ` · capacités avant : ${capacitesAvant.join(', ') || 'aucune'}`
+      + ` · ouvertes en plus : ${ouvertesEnPlus.join(', ') || 'aucune'}`
       + ` · bandeau « en cours de validation » : ${banniere}`,
     )
 

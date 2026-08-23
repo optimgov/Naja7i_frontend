@@ -2,6 +2,22 @@
 /**
  * recette-file-envoi.mjs — les deux bloquants de l'audit tournée 2.
  *
+ * PALIER ÉPROUVÉ : DECOUVERTE-7J pour le propriétaire (`recette.file`),
+ * ESSAI pour l'intruse (`recette.file-2`).
+ *
+ * Ce qu'elle éprouve est le PROPRIÉTAIRE d'une file d'envoi, jamais un droit —
+ * aucune de ses assertions ne regarde un mur. Le palier du propriétaire est
+ * donc choisi pour une seule raison, et c'est une raison de MESURE : elle ouvre
+ * huit séries de cinq, soit quarante unités, et l'enveloppe d'essai en vaut
+ * quarante tout juste. Sur un compte gratuit elle rougit sur
+ * `ENVELOPPE_EPUISEE` — pour une cause qui ne dit rien sur la file. On lui
+ * donne le plus petit palier dont l'enveloppe est illimitée, et son verdict ne
+ * porte plus que sur ce qu'elle prouve.
+ *
+ * L'intruse reste gratuite : elle se connecte, échoue à écouler la file d'un
+ * autre, et repart sans répondre à rien. Elle ne consomme donc pas d'enveloppe,
+ * et une identité ordinaire est exactement ce que ce cas demande.
+ *
  *   node scripts/recette-file-envoi.mjs <emailA> <mdpA> <emailB> <mdpB> [codeEpreuve]
  *
  * BLOC-4 — propriétaire et coordination entre onglets.
@@ -652,7 +668,16 @@ for (const forme of ['tableau v1', 'enveloppe v2 sans repère']) {
   const attempt = JSON.parse(ouvert.corps).data
 
   if (!attempt) {
-    note(`BLOC-FRONT-1 — une entrée d’une AUTRE série ne bloque pas (${forme})`, false, 'série indisponible')
+    /* LE REFUS SE RAPPORTE, il ne se résume pas. « Série indisponible » ne
+     * distingue pas une enveloppe épuisée d'un mur, d'un semis manquant ou
+     * d'une panne — et c'est en cherchant cette différence qu'on a trouvé que
+     * ce scénario ne tenait pas dans l'enveloppe gratuite. Un rouge muet coûte
+     * le temps que la recette existe pour économiser. */
+    note(
+      `BLOC-FRONT-1 — une entrée d’une AUTRE série ne bloque pas (${forme})`,
+      false,
+      `série indisponible : ${ouvert.statut} ${ouvert.corps.slice(0, 200)}`,
+    )
   }
   else {
     await repondreToutParApi(page, attempt.uuid)
@@ -729,7 +754,11 @@ for (const forme of ['tableau v1', 'enveloppe v2 sans repère']) {
   const attempt = JSON.parse(ouvert.corps).data
 
   if (!attempt) {
-    note('BLOC-FRONT-1 — une entrée irrattachable bloque par prudence', false, 'série indisponible')
+    note(
+      'BLOC-FRONT-1 — une entrée irrattachable bloque par prudence',
+      false,
+      `série indisponible : ${ouvert.statut} ${ouvert.corps.slice(0, 200)}`,
+    )
   }
   else {
     await repondreToutParApi(page, attempt.uuid)

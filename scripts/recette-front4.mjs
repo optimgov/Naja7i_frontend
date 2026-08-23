@@ -2,6 +2,12 @@
 /**
  * recette-front4.mjs — la boucle quotidienne, cas par cas.
  *
+ * PALIER ÉPROUVÉ : SESSION-180J (`recette.session@naja7i.test`).
+ * La boucle quotidienne est PAYANTE depuis l'arbitrage D-CAT : série ciblée,
+ * séance mémoire et ordonnance ne sont composées ensemble que par « Session
+ * complète ». Le scénario le vérifie avant de mesurer, et refuse de tourner
+ * sur un palier plus bas plutôt que de planter dessus.
+ *
  *   node scripts/recette-front4.mjs <email> <motDePasse> [codeEpreuve] [--partie 1|2]
  *
  * Partie 1 : l'entraînement ciblé (E7) et sa passation.
@@ -92,6 +98,49 @@ async function passerLaSerie() {
 }
 
 await connecter()
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LE PALIER SE VÉRIFIE AVANT DE MESURER — M-016
+ *
+ * Ce scénario éprouve la boucle quotidienne, et elle est PAYANTE depuis
+ * l'arbitrage D-CAT : entraînement ciblé (`series.targeted`), séance mémoire
+ * (`memory.sessions`) et ordonnance (`remediation.plan`) ne sont composées
+ * ensemble que par « Session complète ».
+ *
+ * Sans ce contrôle, la recette PLANTAIT — `Cannot read properties of undefined
+ * (reading 'length')` — parce qu'elle lisait `plan.data` sans envisager que le
+ * serveur puisse ne pas rendre le champ. Un scénario qui plante ne mesure
+ * rien : on ne sait ni si le lot est fautif, ni si c'est la donnée.
+ *
+ * Il échoue donc PROPREMENT, en nommant ce qui manque et le palier attendu.
+ * C'est la différence entre un test qui rougit et un test qui s'écroule.
+ */
+{
+  const reponse = await api(`/me/plan/${codeEpreuve}?limit=20`)
+  const corps = JSON.parse(reponse.corps)
+
+  if (!Array.isArray(corps.data)) {
+    note(
+      'le palier ouvre la boucle quotidienne',
+      false,
+      'le serveur ne rend PAS l’ordonnance pour ce compte : `remediation.plan` n’est pas'
+      + ' dans son accès. Ce scénario demande le palier « session-180j ».'
+      + ' Voir scripts/recette/poser-le-palier.php.',
+    )
+
+    writeFileSync(`${SORTIE}.json`, JSON.stringify(resultats, null, 2))
+    console.log('\n── 0/1 cas conforme — palier insuffisant, rien n’a été mesuré ──')
+    await navigateur.close()
+    process.exit(1)
+  }
+
+  note(
+    'le palier ouvre la boucle quotidienne',
+    true,
+    `ordonnance rendue : ${corps.data.length} ligne(s) · le compte porte bien la profondeur`,
+  )
+}
 
 // ══════════════════════════════════════════════════════════ PARTIE 1 — E7
 if (partie === '1' || partie === 'toutes') {
