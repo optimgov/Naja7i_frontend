@@ -26,7 +26,22 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Tenancy\TenantContext;
 
-$email = getenv('COMPTE_EMAIL') ?: 'recette.a@naja7i.test';
+/*
+ * AUCUN DÉFAUT DE COMPTE — M-016.
+ *
+ * Cette ligne portait `recette.a@naja7i.test`, un compte que la recette ne
+ * prépare plus. Un défaut qui nomme un compte absent est un piège à deux
+ * détentes : il masque l'oubli de la variable, et si ce compte survit d'une
+ * base ancienne, la préparation réussit EN SILENCE sur le mauvais candidat.
+ *
+ * On refuse plutôt que de deviner. Même garde que `poser-le-palier.php`.
+ */
+$email = getenv('COMPTE_EMAIL') ?: '';
+
+if (! str_ends_with($email, '@naja7i.test')) {
+    echo "ÉCHEC : COMPTE_EMAIL doit être une adresse de recette (@naja7i.test), reçu « {$email} ».\n";
+    exit(1);
+}
 
 app(TenantContext::class)->set(Tenant::where('kind', 'platform')->firstOrFail());
 
