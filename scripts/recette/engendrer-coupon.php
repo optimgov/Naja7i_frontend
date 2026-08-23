@@ -24,10 +24,33 @@ use App\Tenancy\TenantContext;
 
 app(TenantContext::class)->set(Tenant::where('kind', 'platform')->firstOrFail());
 
-$plan = Plan::active()->ordered()->first();
+/*
+ * ─────────────────────────────────────────────────────────────────────────
+ * L'OFFRE LA PLUS COMPLÈTE QUI SE VEND — et surtout pas la première venue.
+ *
+ * Ce script prenait `Plan::active()->ordered()->first()`. Depuis l'arbitrage
+ * D-CAT, le porteur du GRATUIT est une offre comme les autres, semée par le
+ * même chemin, et il porte `position = 0` : « la première » était donc devenue
+ * l'offre à 0 MAD. La recette du chemin de revenu émettait un coupon pour ce
+ * que le compte possède déjà, et n'ouvrait aucune capacité payante.
+ *
+ * `enVente()` écarte le gratuit par construction — « le gratuit ne se vend
+ * pas : il se reçoit » (ADR-0028). Et l'on prend la PLUS COMPLÈTE des offres
+ * vendables, pas la moins chère : la recette doit pouvoir éprouver la boucle
+ * entière, et seule « Session complète » compose la profondeur
+ * (`remediation.plan`, `memory.sessions`, `mastery.detail`).
+ *
+ * On trie sur le NOMBRE DE CAPACITÉS, pas sur le prix : un tarif se change en
+ * back-office sans déploiement, et ce script se mettrait alors à vendre autre
+ * chose sans que personne ne le voie.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+$plan = Plan::enVente()->get()
+    ->sortByDesc(fn (Plan $p): int => count($p->capabilities ?? []))
+    ->first();
 
 if ($plan === null) {
-    echo "ÉCHEC : aucune offre active. Lancez `php artisan db:seed --class=PlansSeeder`.\n";
+    echo "ÉCHEC : aucune offre en vente. Lancez `php artisan db:seed --class=PlansSeeder`.\n";
     exit(1);
 }
 

@@ -271,7 +271,11 @@ let apiSousProfilRecette = false
 
 if (!(await repond(`${API}/up`, 2, 500))) {
   console.log('  API absente — démarrage de php artisan serve (profil de limitation : recette)')
-  lancerEnFond('php', artisan('serve', '--port=8000'), {
+  /* Le PORT vient de `API_BASE_URL`, il n'est plus écrit ici. Le script
+   * acceptait déjà qu'on vise une autre API par cette variable, puis démarrait
+   * la sienne sur 8000 quoi qu'il arrive : viser un autre port ne pouvait que
+   * mener à `repond()` sur un serveur qui n'existait pas. */
+  lancerEnFond('php', artisan('serve', `--port=${new URL(API).port || '8000'}`), {
     cwd: BACKEND,
     env: { ...env, RATE_LIMIT_PROFILE: 'recette' },
   })
@@ -333,12 +337,94 @@ if (!(await repond(`${WEB}/fr/connexion`, 2, 500))) {
     }
     lancerEnFond('node', ['.output/server/index.mjs'], {
       cwd: FRONT,
-      env: { ...process.env, API_BASE_URL: API, NITRO_PORT: '3000' },
+      /* Même correction que pour l'API : le port vient de `BASE_URL`. */
+      env: { ...process.env, API_BASE_URL: API, NITRO_PORT: new URL(WEB).port || '3000' },
     })
   }
   if (!(await repond(`${WEB}/fr/connexion`))) echouer("le frontend n'a pas démarré")
 } else {
   console.log('  frontend déjà en marche')
+  await verifierQueLeFrontendEstCeluiDuDepot()
+}
+
+/**
+ * LE FRONTEND TROUVÉ EN MARCHE EST-IL CELUI QU'ON VIENT D'ÉCRIRE ?
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CE QUE CETTE VÉRIFICATION FERME, ET CE QU'ELLE A COÛTÉ
+ *
+ * « Ce qu'elle a trouvé déjà en marche, elle le laisse » est une bonne règle :
+ * un poste de développement a le droit d'avoir ses serveurs ouverts. Mais elle
+ * portait une conséquence que personne n'avait écrite — la recette mesurait
+ * alors le serveur, pas le dépôt.
+ *
+ * Constaté au lot M-009, et ce n'est pas une hypothèse : un
+ * `node .output/server/index.mjs` démarré DEUX JOURS plus tôt répondait sur le
+ * port 3000. La recette l'a mesuré, ZP-1 a rougi sur un défaut du bloc de
+ * démonstration corrigé depuis, et le même ZP-1 passait sur la compilation du
+ * jour. Une recette qui échoue sur du code qu'on n'a pas écrit fait perdre
+ * exactement le temps qu'elle existe pour économiser — et, dans l'autre sens,
+ * une recette VERTE sur un serveur périmé est bien pire : elle certifie un lot
+ * qu'elle n'a jamais exécuté.
+ *
+ * C'est la leçon que ce chantier a apprise trois fois en un jour, appliquée à
+ * l'orchestrateur lui-même : un contrôle qui ne peut pas rougir ne prouve rien.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * COMMENT
+ *
+ * Nuxt écrit l'identifiant de compilation dans `.output/public/_nuxt/builds/
+ * latest.json`, et le sert dans la charge utile de chaque page. Les deux
+ * doivent coïncider. C'est un test d'identité, pas de fraîcheur : il ne se
+ * trompe ni sur une horloge, ni sur un fuseau, ni sur un fichier retouché.
+ *
+ * On s'ARRÊTE plutôt que d'avertir. Un avertissement au milieu de deux cents
+ * lignes de journal n'est lu qu'après coup, quand on cherche déjà pourquoi le
+ * résultat est incompréhensible.
+ *
+ * En mode `RECETTE_DEV`, `.output` n'existe pas : `npm run dev` recompile à
+ * chaud, la question ne se pose pas, et l'absence du fichier suffit à le dire.
+ */
+async function verifierQueLeFrontendEstCeluiDuDepot() {
+  const marque = `${FRONT}/.output/public/_nuxt/builds/latest.json`
+
+  if (!existsSync(marque)) {
+    console.log('  (pas de compilation dans .output — serveur de développement supposé, identité non vérifiable)')
+    return
+  }
+
+  let attendu
+  try {
+    attendu = JSON.parse(readFileSync(marque, 'utf8')).id
+  } catch {
+    echouer(`${marque} est illisible : impossible de savoir quelle compilation le serveur sert.`)
+  }
+
+  let servi
+  try {
+    const page = await (await fetch(`${WEB}/fr/connexion`)).text()
+    servi = page.match(/buildId\s*:\s*"([^"]+)"/)?.[1]
+  } catch {
+    servi = undefined
+  }
+
+  if (!servi) {
+    echouer(
+      'le frontend en marche ne déclare aucun identifiant de compilation :'
+      + ' impossible de vérifier qu\'il sert le code de ce dépôt.',
+    )
+  }
+
+  if (servi !== attendu) {
+    echouer(
+      `le frontend en marche sur ${WEB} sert la compilation ${servi}, alors que`
+      + ` .output contient ${attendu}. Il a été démarré avant vos modifications :`
+      + ' la recette mesurerait un autre code que le vôtre. Arrêtez-le et relancez,'
+      + ' ou visez le vôtre avec BASE_URL.',
+    )
+  }
+
+  console.log(`  compilation servie vérifiée : ${servi}`)
 }
 
 // ──────────────────────────────────────────────────────────────── comptes

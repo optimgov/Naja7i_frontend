@@ -386,11 +386,47 @@ const uuidTentative = urlTentative.split('/app/tentative/')[1].split(/[?#]/)[0]
   const disclaimer = (await page.locator('.disclaimer').textContent().catch(() => ''))?.trim() ?? ''
   const anglesMorts = await page.locator('[data-angle-mort="true"]').count()
 
-  note(
-    'aucune prédiction : le disclaimer du serveur est affiché',
-    disclaimer.length > 0,
-    `« ${disclaimer.slice(0, 90)}… »`,
-  )
+  /*
+   * ═════════════════════════════════════════════════════════════════════════
+   * LE DISCLAIMER N'EST PAS DÛ : IL EST DÛ *SI* L'ORDONNANCE EST RENDUE.
+   *
+   * Cette assertion exigeait le disclaimer sans condition. Elle datait d'avant
+   * le lot 3A.9, où l'ordonnance était ouverte à tout compte. Depuis
+   * l'arbitrage D-CAT, `remediation.plan` n'est composée que par « Session
+   * complète » : pour tout autre palier, le serveur ne rend NI `data` NI
+   * `meta.disclaimer` — l'avertissement qualifie une ordonnance, et il n'y en
+   * a pas.
+   *
+   * L'attente était donc devenue impossible à tenir, et elle rougissait sur un
+   * écran parfaitement correct. Mesuré : le commit qui précède le lot M-009
+   * échoue exactement ici, au même score.
+   *
+   * On mesure maintenant la RÈGLE, dans ses deux sens — c'est ce qui la rend
+   * capable de rougir pour la bonne raison :
+   *
+   *   · ordonnance rendue  → le disclaimer du serveur est là, affiché sans
+   *     retouche, et jamais remplacé par un repli écrit dans le gabarit ;
+   *   · ordonnance absente → AUCUN disclaimer (l'imiter viderait de son sens
+   *     la clause qui nous engage), aucune ligne de plan, et une issue — la
+   *     page ne se termine jamais close.
+   */
+  const ordonnanceRendue = (await page.locator('.plan, .vide').count()) > 0
+  const issue = await page.locator('.non-rendu').count()
+
+  if (ordonnanceRendue) {
+    note(
+      'aucune prédiction : le disclaimer du serveur est affiché',
+      disclaimer.length > 0,
+      `« ${disclaimer.slice(0, 90)}… »`,
+    )
+  } else {
+    note(
+      'ordonnance hors accès : aucun disclaimer imité, et une issue rendue',
+      disclaimer.length === 0 && issue === 1,
+      `disclaimer absent : ${disclaimer.length === 0} · bloc d’issue : ${issue}`
+        + ' (le champ n’est pas dans la réponse du serveur — voir lot 3A.9)',
+    )
+  }
   note(
     'un domaine jamais évalué est un angle mort',
     anglesMorts >= 0,
