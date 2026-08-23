@@ -68,6 +68,15 @@ jobs:
       - name: Vérifier les trois états de disponibilité
         run: node scripts/verifier-disponibilite.mjs
 
+      # La condition de public décide DEUX choses d'un coup : ce que l'écran dit,
+      # et si le bouton d'achat existe. Elle est injouable dans un navigateur —
+      # le catalogue ne porte qu'une seule catégorie de public, donc le cas
+      # « conditions différentes » ne se produit jamais. Ce contrôle éprouve la
+      # règle elle-même, y compris le piège qui retirerait le bouton à un
+      # candidat dont on ignore la catégorie.
+      - name: Vérifier la condition de public
+        run: node scripts/verifier-condition-de-public.mjs
+
       - name: Compiler
         run: npm run build
         env:
