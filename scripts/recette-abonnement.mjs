@@ -264,6 +264,71 @@ if (epuise.code !== 0) {
   await page.screenshot({ path: `${SORTIE}-01-tarifs.png`, fullPage: true })
 }
 
+// ══════════ 2 bis. LES DEUX CHEMINS D'ARRIVÉE — M-009, pas 5 ═══
+/*
+ * UN MÊME COMPTE DOIT VOIR LE MÊME ÉCRAN, QU'IL OUVRE L'ADRESSE OU QU'IL VIENNE
+ * D'UN ÉCRAN AUTHENTIFIÉ.
+ *
+ * `/tarifs` est une surface PUBLIQUE : rien n'y appelle `fetchMe()`, donc
+ * `isAuthenticated` y est toujours faux au rendu SERVEUR. Une condition de
+ * public qui s'appuierait dessus ne se serait vue qu'en navigation client — le
+ * même candidat aurait donc trouvé deux écrans différents selon son chemin, et
+ * le bouton aurait disparu sous son curseur après hydratation.
+ *
+ * Le rendu serveur reconnaît la session par le COOKIE entrant, le client par
+ * `isAuthenticated` — `naja7i-session` étant `HttpOnly`, aucun des deux ne peut
+ * emprunter la voie de l'autre. Ce cas mesure que les deux aboutissent au même
+ * écran.
+ *
+ * CE QU'IL NE PROUVE PAS ENCORE, ET IL FAUT LE DIRE : le catalogue ne porte
+ * qu'UNE catégorie de public, donc aucune offre n'est jamais « réservée à
+ * quelqu'un d'autre » et les deux chemins rendent identiquement même si l'un
+ * était aveugle. Il ne discriminera que le jour où une seconde catégorie
+ * existera — c'est un filet posé d'avance, pas une preuve d'aujourd'hui. Ce qui
+ * prouve la lecture serveur AUJOURD'HUI est `npm run publics`, et la mesure des
+ * appels d'API rapportée au retour du pas 5.
+ */
+{
+  const etat = async () => ({
+    offres: await page.locator('.offre').count(),
+    boutons: await page.locator('.offre .btn').count(),
+    mentions: (await page.locator('.offre__public').allInnerTexts()).map(t => t.trim()),
+    grises: await page.locator('.offre [disabled], .offre [aria-disabled="true"]').count(),
+  })
+
+  /* Chemin 1 — navigation CLIENT depuis un écran authentifié. */
+  await page.goto(`${BASE}/fr/app/abonnement`, { waitUntil: 'networkidle' })
+  await page.locator('a[href$="/tarifs"]').first().click()
+  await page.waitForURL('**/tarifs', { timeout: 20000 })
+  await page.waitForSelector('.offre', { timeout: 15000 })
+  const parNavigation = await etat()
+
+  /* Chemin 2 — entrée DIRECTE sur l'adresse, donc rendu serveur, même session. */
+  await page.goto(`${BASE}/fr/tarifs`, { waitUntil: 'networkidle' })
+  await page.reload({ waitUntil: 'networkidle' })
+  await page.waitForSelector('.offre', { timeout: 15000 })
+  const parAdresse = await etat()
+
+  const memeEcran = JSON.stringify(parNavigation) === JSON.stringify(parAdresse)
+
+  note(
+    'les deux chemins d’arrivée sur /tarifs rendent le même écran',
+    memeEcran && parNavigation.offres > 0,
+    memeEcran
+      ? `${parNavigation.offres} offre(s) · ${parNavigation.boutons} bouton(s) · `
+        + `${parNavigation.mentions.length} mention(s) · identique par les deux chemins`
+      : `navigation ${JSON.stringify(parNavigation)} ≠ adresse ${JSON.stringify(parAdresse)}`,
+  )
+
+  /* LA CONDITION NE GRISE JAMAIS. Un bouton désactivé reconstituerait le 403 en
+   * français : soit l'action est proposée, soit elle n'existe pas dans le rendu. */
+  note(
+    'aucun bouton d’offre grisé, par l’un ou l’autre chemin',
+    parNavigation.grises === 0 && parAdresse.grises === 0,
+    `désactivés : ${parNavigation.grises} (navigation) · ${parAdresse.grises} (adresse)`,
+  )
+}
+
 // ═══════════ 3. Le mur payant mène aux offres, sans bouton grisé ═══
 let tentative = null
 {
