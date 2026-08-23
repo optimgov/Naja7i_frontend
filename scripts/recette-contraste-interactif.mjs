@@ -2,6 +2,9 @@
 /**
  * recette-contraste-interactif.mjs — le contraste DANS les états interactifs.
  *
+ * PALIER ÉPROUVÉ : AUCUN — visiteur sans compte.
+ * Elle mesure des couleurs, pas des droits.
+ *
  *   node scripts/recette-contraste-interactif.mjs [baseUrl] [--complet]
  *
  * ═══════════════════════════════════════════════════════════════════════════

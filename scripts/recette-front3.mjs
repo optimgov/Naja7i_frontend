@@ -2,6 +2,15 @@
 /**
  * recette-front3.mjs — la recette du lot, cas par cas.
  *
+ * PALIER ÉPROUVÉ : ESSAI, sur un compte NEUF à chaque exécution.
+ * Elle éprouve des REFUS : il lui faut le mur DEBOUT. Sur un compte payant elle
+ * mesurerait des portes ouvertes en croyant mesurer des portes fermées.
+ *
+ * Le compte est neuf, et il n'est partagé avec aucun autre scénario : l'essai
+ * porte une enveloppe de quarante questions, non renouvelable. Deux scénarios
+ * qui s'y servent dépendent de l'ordre où on les joue, sans que rien ne le
+ * dise — l'ordre implicite que ce lot retire.
+ *
  * Elle ne teste PAS le chemin heureux : celui-là est couvert par
  * `recette-passation.mjs`. Elle teste les cas qui doivent échouer, et la façon
  * dont ils échouent — une recette qui ne vérifie que ce qui marche ne prouve

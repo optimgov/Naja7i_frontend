@@ -3,6 +3,12 @@
  * recette-passation.mjs — passe un diagnostic de bout en bout dans un vrai
  * navigateur, en enregistrant TOUT le trafic réseau.
  *
+ * PALIER ÉPROUVÉ : ESSAI, sur un compte NEUF à chaque exécution.
+ * Répondre aux questions est le seul droit du palier gratuit, et c'est tout ce
+ * que la passation demande. Le compte est neuf parce que l'essai porte une
+ * enveloppe de quarante questions qui ne se renouvelle jamais : un compte fixe
+ * serait à sec dès la deuxième exécution.
+ *
  * Ce que cette recette prouve, et qu'aucune relecture ne prouve :
  *
  *  1. Qu'aucune réponse d'API reçue PENDANT la passation ne contient

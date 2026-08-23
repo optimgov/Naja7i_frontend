@@ -2,6 +2,11 @@
 /**
  * recette-simulation.mjs — l'examen blanc, de bout en bout.
  *
+ * PALIER ÉPROUVÉ : DECOUVERTE-7J (`recette.entree@naja7i.test`).
+ * `simulator.full` est dans le SOCLE payant, composé par les trois offres.
+ * On prend donc la plus petite : si le socle suffit, on le prouve — le
+ * mesurer sur « Session complète » laisserait croire qu'il faut la profondeur.
+ *
  *   node scripts/recette-simulation.mjs <email> <motDePasse> [codeEpreuve]
  *
  * Cinq cas, et ce sont ceux qui coûtent cher s'ils cassent :

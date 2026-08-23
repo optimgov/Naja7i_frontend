@@ -2,6 +2,11 @@
 /**
  * recette-portes.mjs — LA RÈGLE DES PORTES, éprouvée sur la page rendue.
  *
+ * PALIER ÉPROUVÉ : ESSAI — et elle le pose elle-même, en s'inscrivant.
+ * Son premier contrôle exige un compte à ZÉRO tentative : aucun compte
+ * préparé ne peut le produire, elle crée donc le sien. Le palier qu'elle
+ * mesure est celui que l'inscription donne, et rien d'autre.
+ *
  *   node scripts/recette-portes.mjs [codeEpreuve]
  *
  * ═══════════════════════════════════════════════════════════════════════════

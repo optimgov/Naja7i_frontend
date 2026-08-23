@@ -2,6 +2,9 @@
 /**
  * recette-zone-publique.mjs — la zone publique v1, cas par cas.
  *
+ * PALIER ÉPROUVÉ : AUCUN — visiteur sans compte.
+ * Elle ne demande ni session ni droit : tout ce qu'elle mesure est public.
+ *
  *   node scripts/recette-zone-publique.mjs [baseUrl]
  *
  * Ce que cette recette éprouve, et pourquoi c'est celle-là :
