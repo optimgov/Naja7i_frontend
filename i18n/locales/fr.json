@@ -674,6 +674,7 @@
     "sans_terme": "sans limite de durée",
     "n_jours": "pour {n} jour | pour {n} jours",
     "choisir": "Choisir cette offre",
+    "reservee": "Réservée aux candidats {public}",
     "moyen_titre": "Comment payer",
     "moyen_texte": "Le paiement en ligne par carte n’est pas encore ouvert. En attendant, l’abonnement s’active par un code cadeau : contactez-nous, réglez par virement, et vous recevez un code à saisir dans votre espace.",
     "moyen_note": "Un code saisi est validé par notre équipe sous 48 heures ouvrées. Votre abonnement démarre à la validation, jamais avant : vous ne payez pas notre délai."

@@ -29,6 +29,17 @@ export interface DetailDeCapacite {
   description: string
 }
 
+/*
+ * `CategorieDePublic` et `conditionDePublic()` vivent dans
+ * `app/utils/publicVise.ts` : la règle est PURE, et l'y poser la rend
+ * éprouvable sans traîner le client d'API derrière elle.
+ *
+ * IMPORTÉ, PAS RÉ-EXPORTÉ. Le ré-exporter donnait deux sources au même nom pour
+ * l'auto-import de Nuxt, qui en ignorait une avec un avertissement — et un jour
+ * il aurait pu ignorer l'autre.
+ */
+import type { CategorieDePublic } from '~/utils/publicVise'
+
 export interface Plan {
   code: string
   name: string
@@ -43,6 +54,15 @@ export interface Plan {
   capabilities: string[]
   /** Les mêmes, présentés. C'est ce que l'écran rend. */
   capability_details: DetailDeCapacite[]
+  /**
+   * À QUI CETTE OFFRE EST RÉSERVÉE — ABSENTE si elle ne l'est à personne.
+   *
+   * Optionnelle au sens strict : le serveur ne sert pas la clé plutôt que de
+   * servir `null`. La typer `| null` inviterait à écrire `audience === null`,
+   * qui serait vrai pour une clé absente comme pour une clé nulle, et ferait
+   * disparaître la distinction que le contrat prend soin de tenir.
+   */
+  audience?: CategorieDePublic
 }
 
 export interface Commande {

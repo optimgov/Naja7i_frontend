@@ -1,8 +1,24 @@
+import type { CategorieDePublic } from '~/utils/publicVise'
+
 export interface ProfilPrepare {
   exam_code?: string | null
   objective?: string | null
   target_date?: string | null
   updated_at?: string | null
+  /**
+   * SA CATÉGORIE DE PUBLIC — ABSENTE quand il n'y a rien à déduire.
+   *
+   * Seul champ de cette ressource qui disparaît au lieu de valoir `null`, et
+   * l'écart est celui du serveur, pas une commodité d'ici. Les trois autres
+   * décrivent une DÉCLARATION, et « je n'ai pas encore choisi d'épreuve » est
+   * une information que `null` dit bien. La catégorie, elle, se DÉDUIT —
+   * épreuve → parcours → famille → catégorie : sans épreuve, il n'y a rien à
+   * déduire, et le champ n'existe pas.
+   *
+   * La typer `| null` inviterait à traiter « inconnu » comme une catégorie.
+   * L'absence oblige à se poser la question, et `conditionDePublic()` y répond.
+   */
+  audience?: CategorieDePublic
 }
 
 export interface ProfilPreparePayload {
