@@ -40,6 +40,28 @@ const ICI = dirname(fileURLToPath(import.meta.url))
 const FRONT = resolve(ICI, '../..')
 const BACKEND = process.env.BACKEND_DIR || resolve(FRONT, '../Naja7i_backend_front')
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * L'ENVIRONNEMENT DE BASE EST DIT, JAMAIS SUPPOSÉ
+ *
+ * Cette recette migre et sème une base RÉELLE. Elle le faisait sans `--env` :
+ * l'environnement était alors celui de `.env`, c'est-à-dire celui qu'on n'a
+ * pas regardé. C'est exactement l'incident M-005 du protocole d'orchestration,
+ * où un `migrate:fresh` sans environnement a écrasé la base de développement.
+ *
+ * La règle ne se suspend pas, elle se respecte en rendant l'environnement
+ * VISIBLE : il est nommé ici, écrit sur chaque commande `artisan`, vérifié
+ * avant la première écriture, et affiché au journal. Un opérateur qui lit la
+ * sortie sait sur quelle base il vient d'écrire.
+ *
+ * `BACKEND_ENV` permet d'en viser un autre sans toucher au script — c'est le
+ * même geste que `BACKEND_DIR` juste au-dessus.
+ */
+const ENV_BACKEND = process.env.BACKEND_ENV || 'local'
+
+/** Une commande artisan, avec son environnement écrit dessus. */
+const artisan = (...args) => ['artisan', ...args, `--env=${ENV_BACKEND}`]
+
 const API = process.env.API_BASE_URL || 'http://localhost:8000'
 const WEB = process.env.BASE_URL || 'http://localhost:3000'
 const MAILPIT = process.env.MAILPIT_URL || 'http://localhost:8025'
@@ -99,7 +121,7 @@ function lancer(commande, args, options = {}) {
  * quand ils échouent ; une exception, elle, se reconnaît à son nom.
  */
 function preparer(fichier, envSupp = {}) {
-  const r = spawnSync('php', ['artisan', 'tinker', `${ICI}/${fichier}`], {
+  const r = spawnSync('php', artisan('tinker', `${ICI}/${fichier}`), {
     cwd: BACKEND,
     encoding: 'utf8',
     env: { ...env, ...envSupp },
@@ -164,7 +186,27 @@ if (!existsSync(`${BACKEND}/.env`)) {
 
 const env = { ...process.env, OBJC_DISABLE_INITIALIZE_FORK_SAFETY: 'YES' }
 
-if (lancer('php', ['artisan', 'migrate', '--force'], { cwd: BACKEND, env }) !== 0) {
+/*
+ * ON VÉRIFIE L'ENVIRONNEMENT AVANT LA PREMIÈRE ÉCRITURE, et on l'affiche.
+ *
+ * `artisan env` ne touche à rien et dit ce que Laravel a résolu. Si le nom
+ * qu'on lui a passé n'est pas celui qu'il annonce, on s'arrête : mieux vaut
+ * refuser que migrer une base qu'on n'a pas nommée. C'est le contrôle qui
+ * manquait à M-005.
+ */
+const resolu = spawnSync('php', artisan('env'), { cwd: BACKEND, env, encoding: 'utf8' })
+const nomResolu = ((resolu.stdout ?? '') + (resolu.stderr ?? '')).match(/\[([^\]]+)\]/)?.[1]
+
+if (nomResolu !== ENV_BACKEND) {
+  echouer(
+    `l'environnement backend résolu est [${nomResolu ?? 'illisible'}] alors que la recette`
+    + ` vise [${ENV_BACKEND}]. Rien n'a été écrit.`,
+  )
+}
+
+console.log(`  environnement backend : ${ENV_BACKEND} (écrit sur chaque commande artisan)`)
+
+if (lancer('php', artisan('migrate', '--force'), { cwd: BACKEND, env }) !== 0) {
   echouer('les migrations ont échoué')
 }
 
@@ -178,7 +220,7 @@ if (lancer('php', ['artisan', 'migrate', '--force'], { cwd: BACKEND, env }) !== 
  */
 const compteFilieres = spawnSync(
   'php',
-  ['artisan', 'tinker', '--execute', 'echo \\DB::table("filieres")->count();'],
+  artisan('tinker', '--execute', 'echo \\DB::table("filieres")->count();'),
   { cwd: BACKEND, env, encoding: 'utf8' },
 )
 
@@ -187,7 +229,23 @@ const dejaSeme = /(\d+)\s*$/.test((compteFilieres.stdout ?? '').trim())
 
 if (dejaSeme) {
   console.log('  catalogue déjà semé — on ne rejoue pas CatalogueSeeder, il n’est pas idempotent')
-} else if (lancer('php', ['artisan', 'db:seed', '--force'], { cwd: BACKEND, env }) !== 0) {
+
+  /*
+   * MAIS `PlansSeeder`, LUI, EST IDEMPOTENT — deux `updateOrCreate` sur `code`
+   * — et il porte la composition arbitrée des trois paliers (D-CAT, lot 3A.9) :
+   * les noms « Entrée / Préparation / Session complète » et les capacités que
+   * chaque offre ouvre.
+   *
+   * Une base semée AVANT cet arbitrage garde « Découverte — 7 jours » et
+   * l'ancienne composition. La recette mesurerait alors l'écran sur un
+   * catalogue périmé, et le verrait juste. On rejoue donc ce semis-là, et lui
+   * seul : il ne réécrit aucune commande passée — le modèle `Plan` compose une
+   * version neuve pour toute modification contractuelle.
+   */
+  if (lancer('php', artisan('db:seed', '--class=PlansSeeder', '--force'), { cwd: BACKEND, env }) !== 0) {
+    echouer('le semis des offres (PlansSeeder, idempotent) a échoué')
+  }
+} else if (lancer('php', artisan('db:seed', '--force'), { cwd: BACKEND, env }) !== 0) {
   echouer('le semis du catalogue a échoué')
 }
 
@@ -213,7 +271,7 @@ let apiSousProfilRecette = false
 
 if (!(await repond(`${API}/up`, 2, 500))) {
   console.log('  API absente — démarrage de php artisan serve (profil de limitation : recette)')
-  lancerEnFond('php', ['artisan', 'serve', '--port=8000'], {
+  lancerEnFond('php', artisan('serve', '--port=8000'), {
     cwd: BACKEND,
     env: { ...env, RATE_LIMIT_PROFILE: 'recette' },
   })
@@ -244,7 +302,7 @@ mkdirSync(dirname(SORTIE), { recursive: true })
 const REFERENTIEL = `${SORTIE}-referentiel.json`
 
 if (
-  lancer('php', ['artisan', 'tinker', `${ICI}/preparer-referentiel.php`], {
+  lancer('php', artisan('tinker', `${ICI}/preparer-referentiel.php`), {
     cwd: BACKEND,
     env: { ...env, REFERENTIEL_FICHIER: REFERENTIEL },
   }) !== 0
