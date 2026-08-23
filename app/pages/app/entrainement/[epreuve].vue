@@ -17,6 +17,24 @@ import { ApiRequestError } from '~/composables/useApi'
  * représentative de l'épreuve, par construction. C'est dit avant le lancement,
  * pas seulement au moment du résultat — un avertissement qui arrive après le
  * score arrive trop tard.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * TROIS MURS SE CROISENT ICI, ET ILS NE SE RESSEMBLENT PAS — M-009
+ *
+ * 1. `series.targeted` ferme l'ACTION. Sans elle, le serveur refuse d'ouvrir
+ *    la série ; l'écran ne rend donc pas le formulaire du tout. Aucun bouton
+ *    grisé : le geste n'est pas dans le DOM.
+ *
+ * 2. `remediation.plan` ferme la LISTE DES DOMAINES, qui est l'ordonnance. Un
+ *    palier Entrée ou Préparation ouvre l'entraînement SANS ouvrir la
+ *    prescription : le choix « laisser Naja7i choisir » reste alors le seul, et
+ *    le groupe de cases disparaît. Une liste vide sous une légende « domaine »
+ *    se lirait « vous n'avez aucun point faible », ce qui est faux.
+ *
+ * 3. L'ENVELOPPE, elle, ne ferme rien : elle se compte. Le coût est annoncé
+ *    avant le clic, avec le reliquat servi par le serveur — et si le reliquat
+ *    ne couvre pas la demande, l'écran dit ce qui sera réellement composé.
+ *    C'est S-10, et c'est la moitié qui arrivait après le clic.
  */
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
@@ -24,13 +42,29 @@ const route = useRoute()
 const localePath = useLocalePath()
 const { t } = useI18n()
 const { ouvrirEntrainement } = useTentative()
-const { ordonnance } = useOrdonnance()
+const { ordonnance, rendue } = useOrdonnance()
+const { acces } = useAcces()
 
 const codeEpreuve = computed(() => String(route.params.epreuve ?? ''))
+
+const { lu: accesLu, ouvre, enveloppeDe } = await acces()
+
+/** L'action est-elle ouverte ? Faux aussi quand l'état est illisible. */
+const peutLancer = computed(() => ouvre(CAPACITE.SERIE_CIBLEE))
+
+/**
+ * L'enveloppe qui gouverne la composition — celle de `questions.answer`.
+ *
+ * `null` a deux sens, et l'écran n'a pas à les distinguer ici : ou bien rien
+ * ne se décompte, ou bien il n'y a pas d'enveloppe à annoncer. Dans les deux
+ * cas, le composant du coût n'écrit rien plutôt que d'inventer un nombre.
+ */
+const enveloppe = computed(() => enveloppeDe(CAPACITE.REPONDRE))
 
 /* Les domaines proposés SONT les lignes de l'ordonnance. On ne recompose pas
  * une liste : ce serait un second classement, qui finirait par diverger. */
 const { data: plan } = await ordonnance(codeEpreuve, 20)
+const ordonnanceRendue = computed(() => rendue(plan.value))
 const domaines = computed(() => plan.value?.data ?? [])
 
 /**
@@ -110,6 +144,17 @@ useHead({ title: t('entrainement.titre') })
     <h1 class="titre-page">{{ t('entrainement.titre') }}</h1>
     <p class="chapeau">{{ t('entrainement.intro') }}</p>
 
+    <!-- L'état du compte n'a pas pu être lu : on ne peut ni proposer le geste
+         — il serait refusé — ni annoncer un coût. On dit la panne, on ne la
+         déguise pas en mur. -->
+    <div v-if="!accesLu" class="alerte alerte--systeme" role="alert">
+      <span>{{ t('app.etat_illisible') }}</span>
+    </div>
+
+    <!-- La série ciblée n'est pas dans l'accès : pas de formulaire, pas de
+         bouton désactivé, pas de cadenas. Une issue, et rien d'autre. -->
+    <AccesNonRendu v-else-if="!peutLancer" cle="entrainement.non_rendu" />
+
     <!-- Aucun domaine à travailler : ce n'est pas une panne, c'est un état. -->
     <div v-if="perimetreVide" class="alerte alerte--info" role="status">
       <span>{{ t('entrainement.perimetre_vide') }}</span>
@@ -135,8 +180,17 @@ useHead({ title: t('entrainement.titre') })
       </div>
     </div>
 
-    <form class="config" novalidate @submit.prevent="lancer">
-      <fieldset class="config__bloc">
+    <!-- LE FORMULAIRE N'EXISTE QUE SI LE GESTE EST OUVERT. C'est la règle du
+         lot : ce que le palier ne rend pas n'est pas dans le DOM. Les alertes
+         de refus au-dessus ne sont, elles, atteignables qu'après un envoi —
+         donc jamais quand le formulaire n'a pas été rendu. -->
+    <form v-if="accesLu && peutLancer" class="config" novalidate @submit.prevent="lancer">
+      <!-- LE CHOIX DU DOMAINE N'EXISTE QUE SI L'ORDONNANCE EST RENDUE.
+           Sans `remediation.plan`, il n'y a pas de liste à proposer — et une
+           légende « domaine » suivie d'une seule case « laisser Naja7i
+           choisir » ferait croire à un choix qui n'en est pas un. Le serveur
+           compose alors d'après ce qu'il sait, ce qu'il faisait déjà. -->
+      <fieldset v-if="ordonnanceRendue" class="config__bloc">
         <legend class="config__titre">{{ t('entrainement.domaine') }}</legend>
 
         <label class="choix">
@@ -191,6 +245,11 @@ useHead({ title: t('entrainement.titre') })
       </div>
 
       <p class="avertissement">{{ t('entrainement.pas_une_note') }}</p>
+
+      <!-- LE COÛT, AVANT LE GESTE — S-10. Les nombres viennent du serveur ; la
+           demande vient de la case juste au-dessus. Voir `CoutAnnonce` pour la
+           seule arithmétique faite ici, et pourquoi le lot 3B l'autorise. -->
+      <CoutAnnonce :enveloppe="enveloppe" :demande="total" />
 
       <button type="submit" class="btn btn--grand" :disabled="lancement || perimetreVide">
         {{ lancement ? t('entrainement.lancement') : t('entrainement.lancer') }}

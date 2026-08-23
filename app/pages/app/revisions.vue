@@ -27,7 +27,7 @@ const route = useRoute()
 const localePath = useLocalePath()
 const { t, locale } = useI18n()
 const { parcours, enCours, dernierePassee } = useParcours()
-const { echeances, ouvrirSeance, riendEchu, sansQuestionSoeur } = useMemoire()
+const { echeances, ouvrirSeance, riendEchu, sansQuestionSoeur, rendues } = useMemoire()
 
 const { data: liste } = await parcours()
 const tentatives = computed(() => liste.value?.data ?? [])
@@ -51,6 +51,22 @@ const { data } = await useAsyncData(
 
 const rendezVous = computed(() => data.value?.data ?? [])
 const meta = computed(() => data.value?.meta ?? null)
+
+/**
+ * LA SÉANCE MÉMOIRE A-T-ELLE ÉTÉ RENDUE ? — lot 3A.9
+ *
+ * Sans `memory.sessions`, la réponse ne porte NI liste NI compteur : ni
+ * `due_total`, ni `pending`, ni `cap`, ni `next_due_on`. Les échéances restent
+ * en base — elles sont l'histoire du candidat — mais rien n'en sort.
+ *
+ * Cet écran lisait `due_total ?? 0` et concluait « rien d'échu aujourd'hui,
+ * plus aucun rendez-vous programmé ». Deux affirmations fausses, servies à
+ * quelqu'un dont on ne savait rien, sous un bouton qui aurait répondu 403.
+ *
+ * On teste donc la PRÉSENCE du champ, et le zéro redevient ce qu'il est : une
+ * bonne nouvelle.
+ */
+const echeancesRendues = computed(() => rendues(data.value))
 const rienAujourdhui = computed(() => (meta.value?.due_total ?? 0) === 0)
 
 const lancement = ref(false)
@@ -106,6 +122,12 @@ useHead({ title: t('revisions.titre') })
       <span>{{ t('revisions.aucune_epreuve') }}</span>
     </div>
 
+    <!-- Le serveur n'a rendu ni liste ni compteur : la séance mémoire n'est pas
+         dans l'accès de ce compte. On n'invente ni « rien d'échu », ni « plus
+         aucun rendez-vous », ni un bouton qui serait refusé. La page garde une
+         issue — elle ne se termine jamais close. -->
+    <AccesNonRendu v-else-if="!echeancesRendues" cle="revisions.non_rendues" />
+
     <template v-else>
       <!-- Rien d'échu : une information, pas un vide. La prochaine date en fait
            une phrase complète — « rien aujourd'hui, prochain le 12 ». -->
@@ -120,20 +142,25 @@ useHead({ title: t('revisions.titre') })
 
       <template v-else>
         <!-- Aucun plafond silencieux : servis, en attente, et le plafond dit. -->
+        <!-- Les `?? 0` de ce bloc ne fabriquent aucun chiffre : on n'y entre
+             que si le serveur A RENDU le compte, et il les sert alors tous les
+             six. Ils satisfont le typage, qui les déclare facultatifs parce
+             qu'ils DISPARAISSENT ensemble hors de l'accès — cas traité plus
+             haut, où rien de ceci n'est rendu. -->
         <ul v-if="meta" class="compte">
-          <li class="compte__servis">{{ t('revisions.servis', { n: meta.served }) }}</li>
-          <li v-if="meta.pending > 0" class="compte__attente">
-            {{ t('revisions.en_attente', { n: meta.pending }) }}
+          <li class="compte__servis">{{ t('revisions.servis', { n: meta.served ?? 0 }) }}</li>
+          <li v-if="(meta.pending ?? 0) > 0" class="compte__attente">
+            {{ t('revisions.en_attente', { n: meta.pending ?? 0 }) }}
           </li>
-          <li v-if="meta.pending > 0" class="compte__plafond">
-            {{ t('revisions.plafond', { n: meta.cap }) }}
+          <li v-if="(meta.pending ?? 0) > 0" class="compte__plafond">
+            {{ t('revisions.plafond', { n: meta.cap ?? 0 }) }}
           </li>
-          <li v-if="meta.without_sibling > 0" class="compte__sans">
-            {{ t('revisions.sans_soeur', { n: meta.without_sibling }) }}
+          <li v-if="(meta.without_sibling ?? 0) > 0" class="compte__sans">
+            {{ t('revisions.sans_soeur', { n: meta.without_sibling ?? 0 }) }}
           </li>
         </ul>
 
-        <p v-if="meta && meta.without_sibling > 0" class="sans-soeur-aide">
+        <p v-if="meta && (meta.without_sibling ?? 0) > 0" class="sans-soeur-aide">
           {{ t('revisions.sans_soeur_aide') }}
         </p>
 

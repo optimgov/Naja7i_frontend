@@ -15,8 +15,25 @@ const route = useRoute()
 const localePath = useLocalePath()
 const { t } = useI18n()
 const { ouvrir } = useTentative()
+const { acces } = useAcces()
 
 const codeEpreuve = computed(() => String(route.params.epreuve ?? ''))
+
+/*
+ * ─────────────── COMPOSER UNE SÉRIE SE PAIE, ET SE DIT AVANT ───────────────
+ *
+ * `questions.answer` gouverne la composition (lot 3B) : sans elle, le service
+ * refuse. Avec elle mais sans profil de quota, rien ne se décompte. Avec elle
+ * et une enveloppe, chaque question servie est une unité, et le reliquat est
+ * dérivé côté serveur.
+ *
+ * Le diagnostic ne laisse pas le candidat choisir le nombre de questions — le
+ * référentiel le fixe. On annonce donc son reliquat, sans supposer le coût.
+ */
+const { lu: accesLu, ouvre, enveloppeDe } = await acces()
+
+const peutComposer = computed(() => ouvre(CAPACITE.REPONDRE))
+const enveloppe = computed(() => enveloppeDe(CAPACITE.REPONDRE))
 
 const lancement = ref(false)
 const erreur = ref<ApiRequestError | null>(null)
@@ -87,7 +104,21 @@ useHead({ title: t('diagnostic.titre') })
 
     <p class="avertissement">{{ t('diagnostic.certitude_avertissement') }}</p>
 
-    <div class="lancement">
+    <!-- L'état n'a pas pu être lu : on le dit, plutôt que de proposer un geste
+         invérifiable ou d'annoncer un coût qu'on n'a pas. -->
+    <div v-if="!accesLu" class="alerte alerte--systeme" role="alert">
+      <span>{{ t('app.etat_illisible') }}</span>
+    </div>
+
+    <!-- La composition n'est pas dans l'accès — un compte épuisé, typiquement.
+         Ce qui est mesuré reste lisible au-dessus : c'est une lecture, elle n'a
+         jamais été murée. Le geste, lui, n'est pas rendu. -->
+    <AccesNonRendu v-else-if="!peutComposer" cle="diagnostic.non_rendu" />
+
+    <div v-else class="lancement">
+      <!-- LE COÛT, AVANT LE GESTE — S-10. -->
+      <CoutAnnonce :enveloppe="enveloppe" :demande="null" />
+
       <button type="button" class="btn btn--grand" :disabled="lancement || indisponible" @click="lancer">
         {{ lancement ? t('diagnostic.lancement') : t('diagnostic.lancer') }}
       </button>

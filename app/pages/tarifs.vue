@@ -8,13 +8,28 @@ import type { Plan } from '~/composables/useAbonnement'
  * ON ANNONCE CE QUE LE CANDIDAT GAGNE, JAMAIS UN NOM DE CAPACITÉ
  *
  * Le serveur sert `corrections.cause` — un code technique, juste et illisible.
- * L'écran écrit « les causes de vos erreurs, sans limite ». Un candidat
- * n'achète pas une capacité, il achète de comprendre pourquoi il s'est trompé.
+ * Le candidat lit « les causes de vos erreurs ». Il n'achète pas une capacité,
+ * il achète de comprendre pourquoi il s'est trompé.
  *
- * La correspondance est une CARTE EXHAUSTIVE : ajouter une capacité au contrat
- * sans lui donner de libellé fait rougir le typage. C'est la leçon du BLOC-5 de
- * l'audit — une correspondance par défaut laisse passer le prochain code, et
- * l'écran afficherait alors `certification.take` à un candidat.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LE LIBELLÉ VIENT DU SERVEUR, ET PLUS D'UNE CARTE ÉCRITE ICI — M-009, pas 4
+ *
+ * Cet écran tenait une correspondance code → clé i18n, typée exhaustive. La
+ * garantie de compilation était réelle, et pourtant la carte avait DÉJÀ divergé
+ * du catalogue :
+ *
+ *   · elle annonçait `certification.take`, une fonction qui n'existe pas et
+ *     qu'aucune offre ne compose (D-CAT-3 : « vendable ≠ existant ») ;
+ *   · elle ignorait `questions.answer`, que les trois paliers ouvrent depuis
+ *     l'arbitrage D-CAT-1 — le gain le plus concret des trois n'était pas dit ;
+ *   · un code inconnu disparaissait en silence, si bien qu'une capacité neuve
+ *     se serait vendue sans que personne ne le voie.
+ *
+ * Le référentiel bilingue existe côté serveur (`CapabilityDefinition`), il est
+ * administrable, et `capability_details` le sert déjà présenté et traduit. Une
+ * carte tenue dans un gabarit ne peut que vieillir : elle décrit un catalogue
+ * qu'elle ne lit pas. C'est la directive du paramétrage d'abord, appliquée à un
+ * écran qui l'enfreignait sans le savoir.
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * AUCUN PRIX EN DUR ICI
@@ -25,7 +40,7 @@ import type { Plan } from '~/composables/useAbonnement'
  */
 definePageMeta({ layout: 'public' })
 
-const { t, te } = useI18n()
+const { t } = useI18n()
 const localePath = useLocalePath()
 const { plans } = useAbonnement()
 const { isAuthenticated } = useAuth()
@@ -39,30 +54,18 @@ const illisible = computed(() => Boolean(erreurOffres.value) || !offres.value)
 const liste = computed<Plan[]>(() => (illisible.value ? [] : offres.value!))
 
 /**
- * CE QUE CHAQUE CAPACITÉ OUVRE, dit au candidat.
+ * CE QUE CHAQUE CAPACITÉ OUVRE — servi présenté, dans la langue de la page.
  *
- * Exhaustive par construction : un code ajouté au contrat sans libellé ici
- * fait rougir `nuxt typecheck` en le nommant.
+ * `capability_details` porte `{ code, label, description }`. Le serveur refuse
+ * de servir une capacité dont le référentiel bilingue est incomplet : il n'y a
+ * donc rien à filtrer ici, et aucun code brut ne peut atteindre l'écran.
+ *
+ * Le repli sur `capabilities` n'existe pas : si le champ manque, la liste
+ * disparaît. Un code technique affiché à un candidat serait pire que le
+ * silence, et une phrase inventée à sa place serait pire encore.
  */
-type Capacite = 'corrections.cause' | 'series.targeted' | 'simulator.full' | 'certification.take'
-
-const LIBELLES = {
-  'corrections.cause': 'tarifs.gain_cause',
-  'series.targeted': 'tarifs.gain_entrainement',
-  'simulator.full': 'tarifs.gain_simulateur',
-  'certification.take': 'tarifs.gain_attestation',
-} as const satisfies Record<Capacite, string>
-
-function gainDe(capacite: string): string | null {
-  const cle = LIBELLES[capacite as Capacite]
-
-  /* Un code inconnu ne s'affiche PAS. Mieux vaut une ligne manquante qu'un
-   * identifiant technique servi à un candidat. */
-  return cle && te(cle) ? t(cle) : null
-}
-
-function gains(plan: Plan): string[] {
-  return plan.capabilities.map(gainDe).filter((g): g is string => g !== null)
+function gains(plan: Plan): { code: string, label: string }[] {
+  return plan.capability_details ?? []
 }
 
 /** La durée en clair. Nulle = sans terme, et on l'écrit. */
@@ -115,10 +118,13 @@ useSeoCatalogue({
 
         <p v-if="plan.description" class="offre__texte" dir="auto">{{ plan.description }}</p>
 
-        <!-- CE QUE LE CANDIDAT GAGNE, jamais un nom de capacité. -->
+        <!-- CE QUE LE CANDIDAT GAGNE, jamais un nom de capacité. Le libellé
+             vient du référentiel bilingue du serveur : `dir="auto"`, comme
+             toute chaîne servie par l'API. -->
         <ul class="offre__gains">
-          <li v-for="gain in gains(plan)" :key="gain">
-            <span class="offre__coche" aria-hidden="true">✓</span>{{ gain }}
+          <li v-for="gain in gains(plan)" :key="gain.code">
+            <span class="offre__coche" aria-hidden="true">✓</span>
+            <span dir="auto">{{ gain.label }}</span>
           </li>
         </ul>
 

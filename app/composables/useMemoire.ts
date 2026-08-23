@@ -28,21 +28,35 @@ export interface RendezVous {
   last_reviewed_at: string | null
 }
 
+/**
+ * Le compte des échéances — servi ENTIER, ou pas du tout.
+ *
+ * Sans `memory.sessions`, la réponse ne porte ni `data` ni aucun de ces six
+ * champs : `{"meta":{"exam_code":"…"}}`, et rien d'autre. Annoncer « 42 dus »
+ * à qui ne peut pas ouvrir de séance est la définition d'une porte qui montre
+ * sans ouvrir — le candidat apprend qu'il a du retard et n'a aucun geste à
+ * faire.
+ *
+ * Tous les champs sont donc facultatifs dans le type, et le `?? 0` qui traînait
+ * dans les écrans est parti avec : un `due_total` à zéro MENT sur la mesure
+ * autant qu'une liste vide. Zéro est une information — « rien à réviser
+ * aujourd'hui » — et l'absence n'en est pas une.
+ */
 export interface MetaEcheances {
   exam_code: string
-  due_total: number
-  served: number
+  due_total?: number
+  served?: number
   /** Échus non servis aujourd'hui. Dit, jamais masqué. */
-  pending: number
-  cap: number
+  pending?: number
+  cap?: number
   /** `null` quand plus aucun rendez-vous n'est programmé. */
-  next_due_on: string | null
+  next_due_on?: string | null
   /** Échus qu'aucune question sœur ne peut servir. Un nombre, jamais le détail. */
-  without_sibling: number
+  without_sibling?: number
 }
 
 export interface Echeances {
-  data: RendezVous[]
+  data?: RendezVous[]
   meta: MetaEcheances
 }
 
@@ -120,5 +134,18 @@ export function useMemoire() {
     return e instanceof ApiRequestError && e.error.code === 'MEMORY_NO_SIBLING_QUESTION'
   }
 
-  return { echeances, ouvrirSeance, riendEchu, sansQuestionSoeur }
+  /**
+   * Les rendez-vous ont-ils été RENDUS ?
+   *
+   * Même distinction que pour l'ordonnance, et pour la même raison. `data`
+   * présent et vide veut dire « rien d'échu aujourd'hui », qui est une bonne
+   * nouvelle à annoncer. `data` absent veut dire que la séance mémoire n'est
+   * pas dans l'accès : l'écran n'affiche alors aucun compteur, parce qu'il n'y
+   * en a pas et qu'un zéro serait un chiffre fabriqué.
+   */
+  function rendues(e: Echeances | null | undefined): boolean {
+    return Array.isArray(e?.data)
+  }
+
+  return { echeances, ouvrirSeance, riendEchu, sansQuestionSoeur, rendues }
 }

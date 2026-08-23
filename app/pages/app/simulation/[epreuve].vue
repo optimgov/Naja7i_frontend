@@ -33,8 +33,33 @@ const localePath = useLocalePath()
 const { t } = useI18n()
 const { referentielEpreuve } = useCatalogue()
 const { ouvrirSimulation } = useTentative()
+const { acces } = useAcces()
 
 const codeEpreuve = computed(() => String(route.params.epreuve ?? ''))
+
+/*
+ * ─────────────────── LE MUR EST UN CHAMP, ET ICI IL FERME UN GESTE ──────────
+ *
+ * `simulator.full` ne ferme aucune lecture : le seuil se lit du référentiel
+ * public, et le rapport d'un examen blanc DÉJÀ passé ne porte aucun mur (lot
+ * 3A.9). Elle ferme l'OUVERTURE d'une nouvelle épreuve, et le serveur la
+ * refuse en 403 nommé.
+ *
+ * L'écran ne rendait donc pas ce refus — le commentaire d'origine disait « pas
+ * de bouton désactivé pour cause de droits », ce qui était vrai, mais le
+ * bouton était bien là et menait au 403. Il n'est plus rendu du tout.
+ */
+const { lu: accesLu, ouvre, enveloppeDe } = await acces()
+
+const peutLancer = computed(() => ouvre(CAPACITE.EXAMEN_BLANC))
+
+/**
+ * L'enveloppe de composition. `demande` reste nulle : c'est le référentiel qui
+ * fixe le nombre de questions d'un examen blanc, pas le candidat. On annonce
+ * donc le reliquat, et pas un coût qu'on ne connaît pas — l'inventer serait
+ * exactement ce que la règle interdit.
+ */
+const enveloppe = computed(() => enveloppeDe(CAPACITE.REPONDRE))
 
 const { data: referentiel, error: erreurReferentiel } = await referentielEpreuve(codeEpreuve.value)
 
@@ -238,18 +263,28 @@ useHead({ title: () => t('simulation.titre') })
         </div>
       </div>
 
-      <!-- Le mur payant est un champ, pas une route : pas de bouton désactivé
-           pour cause de droits. Ici le verrou est celui de l'ENVOI en cours,
-           qui est un état de la requête, pas un droit. -->
-      <button
-        v-if="!dureeInconnue"
-        type="button"
-        class="btn btn--grand"
-        :disabled="lancement"
-        @click="lancer"
-      >
-        {{ lancement ? t('simulation.lancement') : t('simulation.lancer') }}
-      </button>
+      <!-- L'état n'a pas pu être lu : on le dit plutôt que de proposer un geste
+           qu'on n'a pas pu vérifier. -->
+      <div v-if="!accesLu" class="alerte alerte--systeme" role="alert">
+        <span>{{ t('app.etat_illisible') }}</span>
+      </div>
+
+      <!-- L'examen blanc n'est pas dans l'accès. Le SEUIL reste lisible — il
+           dit ce que l'épreuve est, et cette lecture n'a jamais été murée —
+           mais le geste n'est pas rendu. Ni bouton désactivé, ni cadenas. -->
+      <AccesNonRendu v-else-if="!peutLancer" cle="simulation.non_rendu" />
+
+      <template v-else-if="!dureeInconnue">
+        <!-- LE COÛT, AVANT LE GESTE. Le référentiel fixe le nombre de
+             questions : on annonce le reliquat, jamais un coût supposé. -->
+        <CoutAnnonce :enveloppe="enveloppe" :demande="null" />
+
+        <!-- Le verrou du bouton est celui de l'ENVOI en cours, qui est un état
+             de la requête et non un droit. -->
+        <button type="button" class="btn btn--grand" :disabled="lancement" @click="lancer">
+          {{ lancement ? t('simulation.lancement') : t('simulation.lancer') }}
+        </button>
+      </template>
 
       <p class="avertissement">{{ t('simulation.avant_de_lancer') }}</p>
     </template>

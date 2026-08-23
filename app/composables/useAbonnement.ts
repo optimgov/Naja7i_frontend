@@ -15,6 +15,20 @@ import { ApiRequestError } from './useApi'
  * La règle du dépôt est tenue : `useApi` est le seul client.
  */
 
+/**
+ * Ce qu'une capacité OUVRE, dit par le serveur et dans la langue de la page.
+ *
+ * C'est le référentiel bilingue de `CapabilityRegistry` qui le sert. L'écran
+ * ne tient plus de correspondance code → libellé : une carte écrite dans un
+ * gabarit vieillit à la première capacité ajoutée, et affiche alors soit un
+ * code technique, soit rien.
+ */
+export interface DetailDeCapacite {
+  code: string
+  label: string
+  description: string
+}
+
 export interface Plan {
   code: string
   name: string
@@ -25,7 +39,10 @@ export interface Plan {
   duration_days: number | null
   /** Version contractuelle opaque à renvoyer lors de la souscription. */
   version_uuid: string
+  /** Les CODES, pour comparer. Jamais affichés : voir `capability_details`. */
   capabilities: string[]
+  /** Les mêmes, présentés. C'est ce que l'écran rend. */
+  capability_details: DetailDeCapacite[]
 }
 
 export interface Commande {
@@ -39,10 +56,77 @@ export interface Commande {
   plan?: { code: string, name: string }
 }
 
+/**
+ * La NATURE d'un droit, dite en mots du produit.
+ *
+ * Le serveur en sert le libellé (`source_label`) : on ne traduit pas ces trois
+ * codes ici. Le type les nomme quand même, parce qu'un écran a le droit de
+ * distinguer un sevrage annoncé d'un achat — pas pour l'écrire, pour le
+ * classer.
+ */
+export type NatureDeDroit = 'essai' | 'achetee' | 'transitoire'
+
+/**
+ * UNE LIGNE PAR DROIT, avec sa date propre — S-03.
+ *
+ * Le serveur groupe par (nature, échéance) et trie ce qui s'arrête d'abord en
+ * premier. L'écran RESTITUE cet ordre ; il ne le recalcule pas, et surtout il
+ * n'additionne rien : deux droits datés ne font pas une durée cumulée. Un
+ * « total » côté client serait un chiffre que personne n'a décidé.
+ */
+export interface LigneDeDroit {
+  source: NatureDeDroit | string
+  /** Le mot du produit, servi traduit. Jamais le code brut à l'écran. */
+  source_label: string
+  /** `null` = sans terme. On l'écrit, on ne fabrique pas de date. */
+  expires_at: string | null
+  capabilities: string[]
+}
+
+/**
+ * Une enveloppe de questions, et son reliquat RÉEL (lot 3B).
+ *
+ * `remaining` est dérivé côté serveur — `granted` moins les consommations. Il
+ * n'est ni recalculé, ni estimé, ni mis en cache ici : c'est le nombre que le
+ * candidat lit avant d'engager un geste, et c'est le même que celui qui le
+ * refusera.
+ *
+ * Une liste, jamais un total : deux enveloppes sur des portées distinctes ne
+ * s'additionnent pas (ADR-0031).
+ */
+export interface Enveloppe {
+  capability: string
+  unit: string
+  /** L'unité en toutes lettres, servie par le serveur. */
+  unit_label: string
+  granted: number
+  remaining: number
+  expires_at: string | null
+  source: NatureDeDroit | string
+  source_label: string
+}
+
+/** Les trois états d'ADR-0033. Le serveur tranche, l'écran ne déduit pas. */
+export type EtatCommercial = 'actif' | 'essai' | 'epuise'
+
 export interface EtatAbonnement {
   capabilities: string[]
   /** Par capacité. `null` pour une capacité sans terme. */
   expires_at: Record<string, string | null>
+  /** L'état commercial, tranché par le serveur (ADR-0033). */
+  etat: EtatCommercial
+  /** Son libellé, servi traduit. */
+  etat_label: string
+  /**
+   * LA SORTIE D'UN COMPTE ÉPUISÉ, dite par le serveur.
+   *
+   * `null` hors de l'état `epuise`. Un compte épuisé ne doit jamais se
+   * retrouver devant une page vide sans issue — c'est le pire écran du
+   * produit, et cette phrase est la moitié serveur de la réponse.
+   */
+  sortie: string | null
+  droits: LigneDeDroit[]
+  quotas: Enveloppe[]
   pending_orders: number
 }
 

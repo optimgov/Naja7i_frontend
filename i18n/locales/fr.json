@@ -289,7 +289,17 @@
     "commencer_titre": "Commencer votre préparation",
     "commencer_texte": "Choisissez l’épreuve que vous préparez. L’écran suivant dit ce que le diagnostic mesure — et ce qu’il ne mesure pas — avant qu’aucune question ne soit tirée.",
     "commencer_aucune": "Aucune épreuve n’est ouverte au diagnostic pour l’instant. Le catalogue dit lesquelles le seront.",
-    "voir_catalogue": "Parcourir le catalogue des concours"
+    "voir_catalogue": "Parcourir le catalogue des concours",
+    "etat_illisible": "L’état de votre compte n’a pas pu être lu. Certaines actions n’apparaissent donc pas ; réessayez dans un instant.",
+    "issue_abonnement": "Voir mon abonnement",
+    "issue_offres": "Voir les offres",
+    "historique_titre": "Ce que vous avez déjà passé",
+    "historique_texte": "Vos séries, vos corrections et vos rapports d’examen blanc restent à vous. Rien n’en a été effacé.",
+    "genre_diagnostic": "Diagnostic",
+    "genre_training": "Entraînement ciblé",
+    "genre_review": "Séance de révision",
+    "genre_mirror": "Question miroir",
+    "genre_simulation": "Examen blanc"
   },
   "diagnostic": {
     "oeil": "Diagnostic",
@@ -310,7 +320,8 @@
     "lancement": "Ouverture…",
     "en_cours_titre": "Une série est déjà en cours",
     "en_cours_texte": "Vous la reprendrez là où vous l’avez laissée.",
-    "indisponible": "Le diagnostic n'est pas encore disponible pour cette épreuve : la banque de questions est en cours de constitution."
+    "indisponible": "Le diagnostic n'est pas encore disponible pour cette épreuve : la banque de questions est en cours de constitution.",
+    "non_rendu": "Aucune nouvelle série ne peut être composée avec votre accès actuel. Vos séries passées et leurs corrections restent consultables."
   },
   "passation": {
     "question_sur": "Question {n} sur {total}",
@@ -357,7 +368,8 @@
     "urgence": "Priorité",
     "travailler": "S’entraîner sur ce domaine",
     "decouvrir": "Découvrir ce domaine",
-    "vide": "Rien à ordonner pour l’instant : l’ordonnance se fonde sur vos réponses."
+    "vide": "Rien à ordonner pour l’instant : l’ordonnance se fonde sur vos réponses.",
+    "non_rendue": "L’ordonnance ne fait pas partie de votre accès. Votre maîtrise, elle, continue d’être mesurée à chaque série."
   },
   "correction": {
     "titre": "Correction",
@@ -412,7 +424,8 @@
     "court_titre": "Série plus courte que demandée",
     "court_texte": "{served} questions servies sur {requested} demandées — c’est tout ce que le périmètre contient. La série n’est jamais complétée hors du domaine visé.",
     "resservies": "Dont {n} déjà réussies, resservies faute de questions neuves.",
-    "pas_une_note": "Série d’entraînement : le résultat n’est pas représentatif du concours."
+    "pas_une_note": "Série d’entraînement : le résultat n’est pas représentatif du concours.",
+    "non_rendu": "L’entraînement ciblé ne fait pas partie de votre accès."
   },
   "revisions": {
     "oeil": "Mémoire",
@@ -434,7 +447,8 @@
     "lancement": "Ouverture…",
     "aucune_epreuve": "Passez d’abord un diagnostic : les rendez-vous naissent de vos erreurs.",
     "resservies_identiques": "Dont {n} servies avec l’énoncé déjà vu, faute de question sœur.",
-    "couvertes": "Causes couvertes : {n}"
+    "couvertes": "Causes couvertes : {n}",
+    "non_rendues": "Les rendez-vous de révision ne font pas partie de votre accès. Vos échéances sont conservées : elles vous seront rendues si votre accès les ouvre."
   },
   "miroir": {
     "action": "Vérifier sur une autre question",
@@ -511,7 +525,8 @@
     "vers_ordonnance": "Voir mon ordonnance",
     "vers_entrainement": "M’entraîner sur mes points faibles",
     "vers_correction": "Revoir les questions une à une",
-    "duree_h": "{h} h"
+    "duree_h": "{h} h",
+    "non_rendu": "L’examen blanc ne fait pas partie de votre accès. Les rapports de ceux que vous avez déjà passés restent consultables."
   },
   "opportunites": {
     "titre": "Opportunités",
@@ -658,10 +673,6 @@
     "sans_terme": "sans limite de durée",
     "n_jours": "pour {n} jour | pour {n} jours",
     "choisir": "Choisir cette offre",
-    "gain_cause": "Les causes de vos erreurs, sans limite",
-    "gain_entrainement": "L’entraînement ciblé sur vos points faibles",
-    "gain_simulateur": "Les examens blancs, chronométrés et notés",
-    "gain_attestation": "L’attestation de niveau",
     "moyen_titre": "Comment payer",
     "moyen_texte": "Le paiement en ligne par carte n’est pas encore ouvert. En attendant, l’abonnement s’active par un code cadeau : contactez-nous, réglez par virement, et vous recevez un code à saisir dans votre espace.",
     "moyen_note": "Un code saisi est validé par notre équipe sous 48 heures ouvrées. Votre abonnement démarre à la validation, jamais avant : vous ne payez pas notre délai."
@@ -669,9 +680,6 @@
   "abonnement": {
     "oeil": "Mon compte",
     "titre": "Mon abonnement",
-    "actif": "Abonnement actif",
-    "gratuit": "Compte gratuit",
-    "gratuit_texte": "La correction expliquée et le diagnostic sont ouverts. Les causes d’erreur, elles, sont comptées.",
     "sans_terme": "Sans limite de durée.",
     "jusqu_au": "Jusqu’au {date}.",
     "attente_titre": "Votre code est en cours de validation",
@@ -690,7 +698,12 @@
     "statut_honoree": "honorée",
     "statut_annulee": "non aboutie",
     "statut_expiree": "expirée",
-    "voir_offres": "Voir toutes les offres"
+    "voir_offres": "Voir toutes les offres",
+    "etat_illisible": "L’état de votre compte n’a pas pu être lu. Réessayez dans un instant.",
+    "droits_titre": "Vos accès en cours",
+    "droits_texte": "Une ligne par accès, avec sa date propre. Deux accès ne se cumulent pas en une seule durée : celui qui se termine en premier est en haut.",
+    "enveloppes_titre": "Vos questions restantes",
+    "reliquat": "{n} sur {total} {unite}"
   },
   "dossier": {
     "navigation": "Mon dossier",
@@ -789,5 +802,16 @@
     "couvrira_titre": "Ce que couvrira la politique définitive",
     "couvrira_texte": "Finalités et bases légales de chaque traitement, durées de conservation, sous-traitants et hébergement, vos droits d'accès, de rectification, d'opposition et de suppression, et la manière de les exercer.",
     "version": "Version provisoire · 20 août 2026"
+  },
+  "cout": {
+    "reste": "Il vous reste {n} {unite}.",
+    "utilisera": "Cette série utilisera {n} de vos {reliquat} {unite} restantes.",
+    "insuffisant": "Vos {demande} questions demandées dépassent ce qu’il vous reste : la série en comptera {n}.",
+    "epuisee": "Vos questions sont épuisées.",
+    "voir_abonnement": "Voir mon abonnement"
+  },
+  "acces": {
+    "retour_tableau": "Revenir à ma préparation",
+    "voir_offres": "Voir les offres"
   }
 }

@@ -18,58 +18,73 @@ import { ApiRequestError } from '~/composables/useApi'
  * « Votre code est en cours de validation » — pas « votre abonnement est
  * actif ». Le coupon a deux temps, le second est humain, et taire le délai
  * produirait un candidat qui recharge sa correction en boucle sans comprendre.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * UNE LIGNE PAR DROIT, ET AUCUN TOTAL — S-03, pas 1 de M-009
+ *
+ * Cet écran affichait UNE date : la plus proche échéance, toutes capacités
+ * confondues, sous « votre abonnement est actif jusqu'au 14 mars ». Le
+ * raisonnement écrit ici était qu'un candidat ne veut pas faire le calcul
+ * lui-même. Il était faux, et le droit transitoire l'a rendu visible : un
+ * compte peut porter le même jour un palier gratuit SANS TERME et un accès de
+ * transition de soixante jours. La date unique effaçait alors la seule chose
+ * qui demandait une décision — ce qui s'arrête, et quand.
+ *
+ * Le serveur rend maintenant `droits` : une ligne par (nature, échéance),
+ * triée par ce qui ferme d'abord, le sans-terme en dernier. L'écran RESTITUE
+ * cette liste. Il n'additionne rien, il ne résume rien, il ne recompose aucune
+ * date — deux droits datés ne font pas une durée cumulée, et un « total »
+ * serait un chiffre que personne n'a décidé.
+ *
+ * L'ESSAI CLÔTURÉ NE SE ROUVRE PAS. Il n'apparaît nulle part comme une offre à
+ * reprendre : `droits` ne porte que des droits ACTIFS, et le catalogue exclut
+ * le porteur du gratuit (`enVente`). Un essai clos se lit dans l'état du
+ * compte — un passé — et la seule sortie est d'acheter (ADR-0033).
  */
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const localePath = useLocalePath()
-const { plans, etat, commandes, saisirCoupon } = useAbonnement()
+const { plans, commandes, saisirCoupon } = useAbonnement()
+const { acces } = useAcces()
 
 const { data: offres } = await plans()
-const { data: monEtat, refresh: rafraichirEtat, error: erreurEtat } = await etat()
 const { data: mesCommandes, refresh: rafraichirCommandes } = await commandes()
 
-const capacites = computed(() => (erreurEtat.value ? [] : monEtat.value?.capabilities ?? []))
-const abonne = computed(() => capacites.value.length > 0)
+const {
+  lu: accesLu,
+  etat: etatCompte,
+  etatLabel,
+  sortie,
+  droits,
+  quotas,
+  rafraichir: rafraichirEtat,
+} = await acces()
 
 const enAttente = computed(() =>
   (mesCommandes.value ?? []).filter(c => c.status === 'en_attente'),
 )
 
 /**
- * L'ÉCHÉANCE LA PLUS PROCHE, et pas une par capacité à l'écran.
+ * Une date d'échéance, en toutes lettres et dans la langue de la page.
  *
- * Le contrat en rend une par capacité — c'est juste, un candidat peut tenir
- * deux droits de deux plans. Mais un écran qui aligne quatre dates demande au
- * candidat de faire lui-même le calcul qui l'intéresse : « jusqu'à quand
- * suis-je couvert ». On montre donc la plus proche, qui est la seule qui
- * l'oblige à agir.
+ * `null` reste `null` : un droit sans terme n'a pas de date, et lui en
+ * fabriquer une — même « illimité » écrit comme une date — mentirait sur sa
+ * nature. L'appelant écrit alors la phrase qui convient.
  *
- * `null` pour une capacité sans terme l'emporte : elle ne se réduit pas.
+ * `-u-nu-latn` : chiffres latins en arabe, comme partout (D-F54).
  */
-const echeance = computed(() => {
-  const dates = Object.values(monEtat.value?.expires_at ?? {})
+function dateEnClair(iso: string | null): string | null {
+  if (!iso) return null
 
-  if (dates.length === 0) return null
-  if (dates.some(d => d === null)) return 'sans_terme'
-
-  return (dates as string[]).sort()[0] ?? null
-})
-
-const { locale } = useI18n()
-
-const echeanceEnClair = computed(() => {
-  if (echeance.value === null || echeance.value === 'sans_terme') return null
-
-  const d = new Date(echeance.value)
+  const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return null
 
-  /* `-u-nu-latn` : chiffres latins en arabe, comme partout (D-F54). */
   return d.toLocaleDateString(locale.value === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-MA', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
-})
+}
 
 /* Le plan choisi depuis `/tarifs`, s'il y en a un : on le met en avant plutôt
  * que de laisser le candidat le rechercher dans la liste. */
@@ -150,20 +165,70 @@ useHead({ title: () => t('abonnement.titre') })
     <p class="oeil">{{ t('abonnement.oeil') }}</p>
     <h1 class="titre-page">{{ t('abonnement.titre') }}</h1>
 
-    <!-- ─────────────────────── L'ÉTAT ─────────────────────── -->
-    <section class="etat" :class="{ 'etat--actif': abonne }">
+    <!-- ─────────────────────── L'ÉTAT ───────────────────────
+         Le libellé vient du serveur (ADR-0033) : « Essai en cours », « Forfait
+         actif », « Forfait terminé ». L'écran ne le déduit plus du nombre de
+         capacités — une déduction qui rangeait un compte épuisé et un compte
+         d'essai dans la même case « gratuit ». -->
+    <section v-if="accesLu" class="etat" :data-etat="etatCompte">
       <p class="etat__ligne">
-        <span class="etat__marque" aria-hidden="true">{{ abonne ? '✓' : '○' }}</span>
-        <strong>{{ abonne ? t('abonnement.actif') : t('abonnement.gratuit') }}</strong>
+        <strong dir="auto">{{ etatLabel }}</strong>
       </p>
+      <p v-if="sortie" class="etat__detail" dir="auto">{{ sortie }}</p>
+    </section>
 
-      <p v-if="abonne && echeance === 'sans_terme'" class="etat__detail">
-        {{ t('abonnement.sans_terme') }}
-      </p>
-      <p v-else-if="abonne && echeanceEnClair" class="etat__detail">
-        {{ t('abonnement.jusqu_au', { date: echeanceEnClair }) }}
-      </p>
-      <p v-else-if="!abonne" class="etat__detail">{{ t('abonnement.gratuit_texte') }}</p>
+    <div v-else class="alerte alerte--systeme" role="alert">
+      <span>{{ t('abonnement.etat_illisible') }}</span>
+    </div>
+
+    <!-- ───────────────── VOS DROITS, LIGNE À LIGNE — S-03 ─────────────────
+         Une ligne par droit, avec sa nature dite en mots du produit et sa date
+         propre. Aucune addition : deux droits datés ne font pas une durée
+         cumulée. L'ordre est celui du serveur — ce qui s'arrête d'abord se lit
+         d'abord, le sans-terme ferme la liste. -->
+    <section v-if="droits.length" class="bloc">
+      <h2>{{ t('abonnement.droits_titre') }}</h2>
+      <p class="bloc__texte">{{ t('abonnement.droits_texte') }}</p>
+
+      <ul class="droits">
+        <li v-for="(droit, rang) in droits" :key="`${droit.source}-${droit.expires_at ?? 'sans'}-${rang}`" class="droit">
+          <span class="droit__nature" dir="auto">{{ droit.source_label }}</span>
+
+          <!-- La date propre du droit. Sans terme, on l'écrit — on ne comble
+               pas avec une date, et on ne laisse pas la case vide. -->
+          <span v-if="dateEnClair(droit.expires_at)" class="droit__echeance">
+            {{ t('abonnement.jusqu_au', { date: dateEnClair(droit.expires_at) }) }}
+          </span>
+          <span v-else class="droit__echeance droit__echeance--sans">
+            {{ t('abonnement.sans_terme') }}
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ───────────── LES ENVELOPPES, AVEC LEUR RELIQUAT RÉEL ─────────────
+         Une par droit, jamais additionnées (ADR-0031) : un renouvellement crée
+         une enveloppe neuve, et un seul nombre effacerait la question qui
+         compte — laquelle se vide en premier. Le reliquat est dérivé côté
+         serveur au lot 3B ; l'écran ne le recalcule pas. -->
+    <section v-if="quotas.length" class="bloc">
+      <h2>{{ t('abonnement.enveloppes_titre') }}</h2>
+
+      <ul class="enveloppes">
+        <li v-for="(q, rang) in quotas" :key="`${q.capability}-${rang}`" class="enveloppe-ligne">
+          <span class="enveloppe-ligne__reliquat">
+            {{ t('abonnement.reliquat', {
+              n: nombre(q.remaining),
+              total: nombre(q.granted),
+              unite: q.unit_label,
+            }) }}
+          </span>
+          <span class="enveloppe-ligne__source" dir="auto">{{ q.source_label }}</span>
+          <span v-if="dateEnClair(q.expires_at)" class="enveloppe-ligne__echeance">
+            {{ t('abonnement.jusqu_au', { date: dateEnClair(q.expires_at) }) }}
+          </span>
+        </li>
+      </ul>
     </section>
 
     <!-- ─────────── LES COMMANDES EN ATTENTE — dites comme telles ─────────── -->
@@ -248,17 +313,43 @@ useHead({ title: () => t('abonnement.titre') })
   border-radius: var(--r-m);
 }
 
-/* L'état est porté par le MOT et par la marque ; la couleur ne fait que
-   redoubler — même règle que l'échéance des annonces. */
-.etat--actif { border-color: var(--peda-juste); }
+/* L'état est porté par le MOT servi par le serveur ; la couleur ne fait que
+   redoubler — même règle que l'échéance des annonces. `data-etat` est aussi la
+   prise de la recette : elle lit l'état rendu, elle ne le devine pas. */
+.etat[data-etat="actif"] { border-color: var(--peda-juste); }
+.etat[data-etat="epuise"] { border-color: var(--peda-remede); }
 
 .etat__ligne { display: flex; gap: var(--e-2); align-items: baseline; margin: 0; }
-.etat__marque { font-weight: 800; }
-/* La BORDURE prend `--peda-juste` — un aplat n'a pas de seuil de lisibilité —
-   mais le signe se lit, donc il prend `--peda-juste-texte`. Mesuré : le premier
-   rendait 4,3:1, sous le seuil de 4,5. */
-.etat--actif .etat__marque { color: var(--peda-juste-texte); }
 .etat__detail { margin: 0; font-size: var(--t-sm); color: var(--texte-doux); }
+
+/* --- Les droits, ligne à ligne (S-03) --- */
+
+.droits, .enveloppes {
+  display: grid;
+  gap: var(--e-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.droit, .enveloppe-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-4);
+  align-items: baseline;
+  padding: var(--e-3) var(--e-4);
+  font-size: var(--t-sm);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--r);
+}
+
+.droit__nature, .enveloppe-ligne__reliquat { flex: 1 1 14rem; font-weight: 700; }
+.droit__echeance, .enveloppe-ligne__echeance { color: var(--texte-doux); }
+/* Un droit sans terme n'est pas une date manquante : il se lit comme un fait,
+   pas comme une case vide. */
+.droit__echeance--sans { font-style: italic; }
+.enveloppe-ligne__source { color: var(--texte-doux); }
 
 .attente {
   margin-block-end: var(--e-4);

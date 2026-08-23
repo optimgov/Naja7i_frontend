@@ -1356,3 +1356,87 @@ une surface d'injection.
 TEXTE, avec son `{n}` et son pluriel, et le gabarit décide de la graisse. La
 règle tient, la graisse revient. Vérifié à la sortie serveur :
 `<b>1</b> poste`, `<b>95</b> postes` — pluriel conservé, aucun HTML en message.
+
+## D-F70 — Le mur est un champ : `me/subscription` lu sur cinq écrans, et pourquoi ce n'est pas une sonde
+
+**Contexte.** M-009 interdit « d'ajouter un appel à l'ouverture d'un écran pour
+savoir si c'est permis : la réponse porte déjà le champ ou ne le porte pas ».
+Le lot 3A.9 tient cette promesse pour trois capacités sur cinq —
+`remediation.plan` et `memory.sessions` retirent un champ de la réponse déjà
+demandée, `mastery.detail` rabote la carte à ses racines. L'écran lit, il ne
+demande rien de plus.
+
+**Le problème mesuré.** Deux capacités échappent au raisonnement :
+`series.targeted` et `simulator.full` ne ferment **aucune lecture**. Elles
+ferment une action, refusée en 403 nommé (`MurPayant::refus`). Aucune réponse
+ne porte donc de champ à leur sujet. Un tableau de bord qui continuait à
+proposer « s'entraîner sur un point faible » à un compte d'essai construisait
+exactement la porte que la mission interdit : elle montre, et n'ouvre qu'après
+le clic, en refus.
+
+**Décision.** Lire `me/subscription`, et s'en servir — mais seulement sur les
+écrans qui l'appellent **pour une autre raison que la permission** :
+
+| Écran | La raison qui n'est pas la permission |
+|---|---|
+| `/app` | l'état commercial et la SORTIE d'un compte épuisé (ADR-0033) |
+| `/app/abonnement` | les droits ligne à ligne et les enveloppes (S-03) |
+| `/app/diagnostic/*` · `/app/entrainement/*` · `/app/simulation/*` | le reliquat, pour annoncer le coût avant le geste (S-10) |
+
+Les trois écrans qui n'ont aucune de ces raisons — ordonnance, révisions,
+maîtrise — ne l'appellent pas : ils lisent la présence du champ dans leur
+propre réponse.
+
+**Justification.** L'interdit vise la SONDE — l'appel supplémentaire dont le
+seul objet serait la permission. Ici la réponse était déjà nécessaire, et
+`capabilities` en est un champ. Le coût réseau est nul : `useAsyncData` indexe
+par clé, les cinq écrans demandent `abonnement.etat`, et il n'y a qu'un
+aller-retour, transmis au navigateur par la charge utile du rendu serveur.
+
+**Ce qu'on saurait faire autrement, et pourquoi on ne l'a pas fait.** Le
+serveur pourrait retirer un champ de plus sur ces deux capacités — par exemple
+ne pas rendre le seuil de l'examen blanc. Ce serait un changement de contrat,
+donc un lot backend, et M-009 interdit d'y toucher. À revoir si le contrat
+gagne un jour un champ qui porte ces deux gestes.
+
+## D-F71 — `min(demande, reliquat)` : la seule arithmétique de droit faite côté client
+
+**Contexte.** La mission interdit « d'inventer un calcul de droit côté client »
+et exige, dans la même page, que « si le reliquat ne couvre pas la demande,
+l'écran annonce ce qui sera réellement composé, avant le clic ».
+
+**Décision.** `CoutAnnonce` calcule `min(demande, reliquat)`, et rien d'autre.
+
+**Justification.** Ce n'est pas un second avis sur le droit, c'est la
+restitution d'une garantie que le lot 3B a écrite et fait accepter : « le
+client connaît le total qu'il va demander et lit le reliquat courant ; le coût
+prévu est `min(total, remaining)`, et le serveur garantit qu'aucune composition
+ne dépassera » (M-008, hypothèse 2, verdict ACCEPTÉ). Les deux nombres viennent
+du serveur et de la saisie du candidat ; aucun n'est estimé, aucun n'est mis en
+cache.
+
+**Ce qui la rendrait caduque.** Une route « coût prévu » côté serveur. M-008 la
+chiffre à « un pas d'une heure » et ne l'a pas construite, faute d'écran qui la
+demande. Cet écran existe désormais : c'est un candidat naturel pour un lot
+ultérieur, et il retirerait ce `min` d'ici.
+
+## D-F72 — `AccesNonRendu` : une sortie, et surtout pas un cadenas
+
+**Contexte.** La règle du lot est catégorique : là où une action se trouvait, on
+ne met rien — ni bouton grisé, ni carte floutée, ni « passez au palier
+supérieur ». Les écrans la tiennent en ne rendant pas le geste. Restait le
+candidat qui tape l'adresse, ou dont le signet pointe sur `/app/revisions` le
+lendemain de l'expiration : il arrivait sur une page dont tout le contenu avait
+disparu.
+
+**Décision.** Un composant de PAGE, jamais posé à la place d'un bouton, qui
+constate en une phrase et rend deux chemins — le tableau de bord et le
+catalogue.
+
+**Justification.** La mission nomme la page sans issue « le pire écran du
+produit », et la règle des portes veut qu'un écran qui se ferme dise où aller.
+Le composant ne nomme aucun palier, n'affiche aucun prix et ne promet rien :
+le palier se nomme au catalogue et sur l'écran d'abonnement, les deux endroits
+où le candidat est venu pour ça. La distinction tient à la PLACE — au niveau de
+la page, jamais à l'emplacement du geste — et c'est elle qui sépare une sortie
+d'un cadenas.

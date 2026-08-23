@@ -33,11 +33,28 @@ definePageMeta({ layout: 'app', middleware: 'auth' })
 const route = useRoute()
 const localePath = useLocalePath()
 const { t } = useI18n()
-const { ordonnance, estAngleMort } = useOrdonnance()
+const { ordonnance, estAngleMort, rendue } = useOrdonnance()
 const { sansConclusion } = useMaitrise()
 
 const code = computed(() => String(route.params.epreuve ?? ''))
 const { data } = await ordonnance(code, 20)
+
+/**
+ * L'ORDONNANCE A-T-ELLE ÉTÉ RENDUE ? — lot 3A.9
+ *
+ * L'ordonnance est une PRESCRIPTION, c'est-à-dire le service vendu. Sans
+ * `remediation.plan`, le champ n'est pas dans le rendu : ni `data`, ni
+ * `meta.disclaimer`, qui qualifie une ordonnance qu'il n'y a pas.
+ *
+ * L'écran affichait alors « votre ordonnance se remplira avec vos réponses »
+ * et proposait un diagnostic — un conseil pédagogique inventé à la place d'une
+ * fonction non souscrite, et le seul geste de la page menait à une série que
+ * le compte pouvait très bien ne pas pouvoir composer.
+ *
+ * Rendue et vide reste rendue et vide : c'est un candidat qui n'a pas encore
+ * assez répondu, et cet état-là garde sa porte.
+ */
+const ordonnanceRendue = computed(() => rendue(data.value))
 
 const lignes = computed(() => data.value?.data ?? [])
 const disclaimer = computed(() => data.value?.meta?.disclaimer ?? null)
@@ -53,9 +70,14 @@ useHead({ title: t('ordonnance.titre') })
     <!-- Servi par le serveur, affiché sans retouche. Aucun repli en dur. -->
     <p v-if="disclaimer" class="disclaimer" dir="auto">{{ disclaimer }}</p>
 
+    <!-- L'ordonnance n'est pas dans l'accès : le champ est absent, et l'écran
+         ne dessine rien à sa place — ni liste vide, ni invitation à passer un
+         diagnostic. La page garde une issue, elle ne se termine jamais close. -->
+    <AccesNonRendu v-if="!ordonnanceRendue" cle="ordonnance.non_rendue" />
+
     <!-- Aucune ligne : l'ordonnance se nourrit des réponses, et il n'y en a pas
          encore. On le dit, et on offre le geste qui la remplit. -->
-    <div v-if="!lignes.length" class="alerte alerte--info vide" role="status">
+    <div v-else-if="!lignes.length" class="alerte alerte--info vide" role="status">
       <span>{{ t('ordonnance.vide') }}</span>
       <NuxtLink class="lien-second" :to="localePath(`/app/diagnostic/${code}`)">
         {{ t('diagnostic.lancer') }}

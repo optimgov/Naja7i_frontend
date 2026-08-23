@@ -48,9 +48,24 @@ export interface LigneOrdonnance {
   remediation: { uuid: string; title: string; estimated_minutes: number | null } | null
 }
 
+/**
+ * L'ordonnance — ou son ABSENCE, qui n'est pas une ordonnance vide.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * `data` EST FACULTATIF, ET C'EST TOUT LE LOT 3A.9
+ *
+ * Sans `remediation.plan`, le serveur ne rend NI `data`, NI `meta.disclaimer` :
+ * le champ n'est pas vidé, il est absent. La réponse se réduit à
+ * `{"meta":{"exam_code":"…"}}`.
+ *
+ * Le type le dit, parce que le `?? []` qui traînait dans les écrans effaçait la
+ * distinction : un tableau vide se lit « nous n'avons rien trouvé pour vous »
+ * — faux et décourageant — là où l'absence se lit « ce n'est pas dans votre
+ * accès », ce qui est vrai. Un `data?: […]` force chaque appelant à choisir.
+ */
 export interface Ordonnance {
-  data: LigneOrdonnance[]
-  meta: { disclaimer?: string } & Record<string, unknown>
+  data?: LigneOrdonnance[]
+  meta: { exam_code?: string, disclaimer?: string } & Record<string, unknown>
 }
 
 /** Bornes du contrat : `limit` va de 1 à 20, défaut 5. */
@@ -90,5 +105,19 @@ export function useOrdonnance() {
     return ligne.reason === 'jamais_evalue'
   }
 
-  return { ordonnance, estAngleMort }
+  /**
+   * L'ordonnance a-t-elle été RENDUE ?
+   *
+   * À distinguer d'« elle est vide ». Rendue et vide, c'est un candidat qui n'a
+   * pas encore assez répondu : on le dit, et on offre le diagnostic qui la
+   * remplit. Non rendue, c'est une capacité que le palier n'ouvre pas : on ne
+   * dessine rien du tout — ni liste vide, ni compteur, ni promesse.
+   *
+   * On teste `data`, pas sa longueur. La nuance est la raison d'être du lot.
+   */
+  function rendue(o: Ordonnance | null | undefined): boolean {
+    return Array.isArray(o?.data)
+  }
+
+  return { ordonnance, estAngleMort, rendue }
 }
