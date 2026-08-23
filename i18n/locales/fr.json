@@ -425,7 +425,8 @@
     "court_texte": "{served} questions servies sur {requested} demandées — c’est tout ce que le périmètre contient. La série n’est jamais complétée hors du domaine visé.",
     "resservies": "Dont {n} déjà réussies, resservies faute de questions neuves.",
     "pas_une_note": "Série d’entraînement : le résultat n’est pas représentatif du concours.",
-    "non_rendu": "L’entraînement ciblé ne fait pas partie de votre accès."
+    "non_rendu": "L’entraînement ciblé ne fait pas partie de votre accès.",
+    "nombre_bornes": "De {min} à {max} questions."
   },
   "revisions": {
     "oeil": "Mémoire",

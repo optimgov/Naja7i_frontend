@@ -90,6 +90,24 @@ const domaineChoisi = ref<string | null>(
   domaines.value.some((l) => l.node_uuid === domaineDemande.value) ? domaineDemande.value : null,
 )
 
+/**
+ * LES BORNES DU CONTRAT, NOMMÉES — et plus écrites dans le gabarit.
+ *
+ * L'aide sous le champ disait « 5 – 40 » en toutes lettres, dans le HTML : un
+ * SEUIL en dur dans un composant, et un texte visible hors clé de traduction.
+ * Les deux sont interdits par M-009, et le second se voyait aussi à l'usage —
+ * le tiret demi-cadratin ne se réordonne pas en RTL, où l'arabe attend « 40 –
+ * 5 » lu de droite à gauche.
+ *
+ * Elles restent du CODE, et c'est juste : ce sont les bornes que le serveur
+ * valide (`between:5,40`), pas un réglage de produit. Aucune réponse ne les
+ * porte, et les deviner serait pire. Même traitement que `LIMITE_MIN` et
+ * `LIMITE_MAX` dans `useOrdonnance`. Le jour où le contrat les expose, elles
+ * viendront de lui — il n'y aura qu'un endroit à changer.
+ */
+const TOTAL_MIN = 5
+const TOTAL_MAX = 40
+
 const total = ref(15)
 
 const lancement = ref(false)
@@ -235,12 +253,14 @@ useHead({ title: t('entrainement.titre') })
             v-model.number="total"
             class="champ__saisie config__nombre"
             type="number"
-            min="5"
-            max="40"
+            :min="TOTAL_MIN"
+            :max="TOTAL_MAX"
             step="1"
           >
           <!-- Bornes du contrat, dites plutôt que subies en 422. -->
-          <span class="champ__aide">5 – 40</span>
+          <span class="champ__aide">
+            {{ t('entrainement.nombre_bornes', { min: TOTAL_MIN, max: TOTAL_MAX }) }}
+          </span>
         </label>
       </div>
 
