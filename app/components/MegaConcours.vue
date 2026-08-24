@@ -48,9 +48,25 @@ const props = defineProps<{ filieres: Filiere[], illisible: boolean }>()
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-/** Les trois premières familles PUBLIÉES, dans l'ordre du contrat. */
+/**
+ * TOUTES les familles publiées, dans l'ordre du contrat — M-021, pas 3.
+ *
+ * Cette fonction rendait `slice(0, 3)`. Le plafond était SILENCIEUX : le
+ * panneau montrait trois familles sur quatre, et rien ne le disait, pendant que
+ * `/concours` en annonçait quatre deux clics plus loin. Mesuré sur la
+ * préproduction — un candidat qui prépare COPS ouvrait le menu, ne trouvait pas
+ * sa famille, et pouvait conclure que le produit ne la couvre pas.
+ *
+ * Le dépôt tient déjà ce principe ailleurs : FRONT-4 éprouve « aucun plafond
+ * silencieux » sur la liste des révisions. Ce lot l'étend au menu.
+ *
+ * ON MONTRE TOUT plutôt que d'annoncer un reste. Le catalogue porte dix
+ * familles réparties sur trois filières — quatre au plus par colonne : il n'y a
+ * rien à tronquer. Le jour où une filière en porterait quinze, la question se
+ * reposera, et elle se posera sur un nombre mesuré, pas sur une précaution.
+ */
 function familles(filiere: Filiere) {
-  return (filiere.families ?? []).slice(0, 3)
+  return filiere.families ?? []
 }
 
 /** Une préparation existe-t-elle dans cette filière ? Voir l'en-tête. */

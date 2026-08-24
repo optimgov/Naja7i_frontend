@@ -245,8 +245,21 @@ const optionsFiliere = computed(
   () => compter('filiere', a => [a.naja7i.filiere ?? ''], filiere.value),
 )
 const optionsType = computed(() => compter('type', a => [a.type], type.value))
+/*
+ * TOUTES LES RÉGIONS QUI PORTENT UNE ANNONCE — M-021, pas 3.
+ *
+ * Cette ligne portait `.slice(0, 10)`. Le Maroc en compte DOUZE : deux régions
+ * pouvaient donc disparaître du rail de filtres sans un mot, et un candidat de
+ * l'une des deux n'avait aucun moyen de filtrer sur la sienne. Le plafond ne
+ * mordait pas sur les données d'exemple — cinq régions — ce qui est la
+ * définition d'un défaut qui attend son heure.
+ *
+ * `compter()` ne rend déjà que les valeurs à au moins une annonce, plus celle
+ * qui est active : la liste est donc bornée par les données, pas par un nombre
+ * écrit ici. C'est la bonne borne.
+ */
 const optionsRegion = computed(
-  () => compter('region', a => a.regions, region.value).slice(0, 10),
+  () => compter('region', a => a.regions, region.value),
 )
 
 // ─────────────────────────────────────────── l'état vide, actionnable

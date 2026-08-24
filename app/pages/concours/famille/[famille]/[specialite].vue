@@ -52,6 +52,13 @@ const concoursOuverts = computed(() => {
     .filter(a => estOuverte(a))
     .filter(a => a.naja7i.prep_slug === filiereVisee.value || a.naja7i.filiere === 'education')
     .sort((x, y) => (x.jours ?? 9999) - (y.jours ?? 9999))
+    /* PLAFOND ASSUMÉ, ET C'EST CE QUI LE REND HONNÊTE — M-021, pas 3.
+     *
+     * Trois annonces, les plus proches de leur clôture. Ce bloc est un aperçu,
+     * pas une liste : le lien « toutes les opportunités » le suit
+     * immédiatement dans le gabarit, et mène au listing complet avec ses
+     * filtres. Un plafond dont la sortie est offerte n'est pas un plafond
+     * muet — le silence seul est interdit. */
     .slice(0, 3)
 })
 </script>
