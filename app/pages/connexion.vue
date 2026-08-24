@@ -4,7 +4,7 @@ import { ApiRequestError } from '~/composables/useApi'
 definePageMeta({ layout: 'auth', middleware: 'guest' })
 
 const { t } = useI18n()
-const { login } = useAuth()
+const { login, isStaff } = useAuth()
 const localePath = useLocalePath()
 const route = useRoute()
 
@@ -24,6 +24,11 @@ async function soumettre() {
 
   try {
     await login(form.email, form.password, form.remember)
+
+    if (isStaff.value) {
+      await navigateTo('/admin', { external: true })
+      return
+    }
 
     /*
      * ON REVIENT OÙ L'ON ALLAIT — `?suite=`.

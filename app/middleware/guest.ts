@@ -10,12 +10,14 @@
  * cela, `?suite=/fr/connexion` ferait tourner cette garde en rond.
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { isAuthenticated, fetchMe } = useAuth()
+  const { isAuthenticated, isStaff, fetchMe } = useAuth()
   const localePath = useLocalePath()
 
   if (!isAuthenticated.value) await fetchMe()
 
   if (isAuthenticated.value) {
+    if (isStaff.value) return navigateTo('/admin', { external: true })
+
     return navigateTo(suiteInterne(to.query.suite) ?? localePath('/app'))
   }
 })

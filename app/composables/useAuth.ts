@@ -28,6 +28,8 @@ export function useAuth() {
 
   const isAuthenticated = computed(() => user.value !== null)
   const needsVerification = computed(() => user.value !== null && !user.value.email_verified)
+  const isStaff = computed(() => user.value?.roles?.some(role => role !== 'candidat') ?? false)
+  const isCandidate = computed(() => user.value?.roles?.includes('candidat') ?? false)
 
   async function fetchMe(): Promise<void> {
     try {
@@ -100,6 +102,8 @@ export function useAuth() {
     pendingLegal: readonly(pendingLegal),
     isAuthenticated,
     needsVerification,
+    isStaff,
+    isCandidate,
     fetchMe,
     register,
     login,

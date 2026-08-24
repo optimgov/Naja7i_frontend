@@ -14,7 +14,7 @@
  * `?suite=`, et il était côté garde, pas côté écran.
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { isAuthenticated, needsVerification, fetchMe } = useAuth()
+  const { isAuthenticated, needsVerification, isStaff, fetchMe } = useAuth()
   const localePath = useLocalePath()
 
   if (!isAuthenticated.value) {
@@ -23,6 +23,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (!isAuthenticated.value) {
     return navigateTo(avecSuite(localePath('/connexion'), to.fullPath))
+  }
+
+  if (isStaff.value) {
+    return navigateTo('/admin', { external: true })
   }
 
   if (needsVerification.value && !to.path.includes('verifier-email')) {

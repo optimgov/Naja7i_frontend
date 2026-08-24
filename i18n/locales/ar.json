@@ -707,6 +707,9 @@
     "enveloppes_titre": "الأسئلة المتبقية لديك",
     "reliquat": "{n} من أصل {total} {unite}"
   },
+  "administration": {
+    "navigation": "الإدارة"
+  },
   "reclamations": {
     "navigation": "الشكايات",
     "oeil": "المساعدة والتتبّع",

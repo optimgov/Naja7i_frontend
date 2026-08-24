@@ -6,7 +6,7 @@ definePageMeta({ layout: 'auth' })
 const { t } = useI18n()
 const route = useRoute()
 const localePath = useLocalePath()
-const { user, verifyEmail, resendVerification, fetchMe } = useAuth()
+const { user, isStaff, verifyEmail, resendVerification, fetchMe } = useAuth()
 
 type Etat = 'verification' | 'reussi' | 'echec' | 'attente'
 
@@ -52,7 +52,7 @@ const depuisRoute = suiteInterne(route.query.suite)
 if (depuisRoute) memoire.value = depuisRoute
 
 const suite = computed(() => depuisRoute ?? suiteInterne(memoire.value))
-const destination = computed(() => suite.value ?? localePath('/app'))
+const destination = computed(() => isStaff.value ? '/admin' : (suite.value ?? localePath('/app')))
 
 /** Le relais a servi : on le retire. Il n'a pas à survivre à son usage. */
 function oublierSuite(): void {
@@ -114,7 +114,10 @@ useHead({ title: t('verification.titre') })
 
       <!-- Le candidat repart OÙ IL ALLAIT, pas sur un tableau de bord générique.
            `oublierSuite` retire le relais au moment où il sert. -->
-      <NuxtLink :to="destination" class="btn" @click="oublierSuite">
+      <a v-if="isStaff" href="/admin" class="btn" @click="oublierSuite">
+        {{ t('administration.navigation') }}
+      </a>
+      <NuxtLink v-else :to="destination" class="btn" @click="oublierSuite">
         {{ suite ? t('verification.continuer_suite') : t('verification.continuer') }}
       </NuxtLink>
     </template>

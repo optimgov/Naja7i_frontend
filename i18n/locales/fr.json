@@ -707,6 +707,9 @@
     "enveloppes_titre": "Vos questions restantes",
     "reliquat": "{n} sur {total} {unite}"
   },
+  "administration": {
+    "navigation": "Administration"
+  },
   "reclamations": {
     "navigation": "Réclamations",
     "oeil": "Aide et suivi",

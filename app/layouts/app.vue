@@ -13,7 +13,7 @@
 const { locale, locales, t } = useI18n()
 const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
-const { logout } = useAuth()
+const { logout, isCandidate, isStaff } = useAuth()
 
 const autre = computed(() => (locale.value === 'fr' ? 'ar' : 'fr'))
 const nomAutre = computed(() => locales.value.find((l) => l.code === autre.value)?.name ?? '')
@@ -62,10 +62,13 @@ watch(
         </NuxtLink>
 
         <div class="appli__actions">
-          <NuxtLink :to="localePath('/app/reclamations')" class="btn btn--discret">
+          <NuxtLink v-if="isCandidate" :to="localePath('/app/reclamations')" class="btn btn--discret">
             {{ t('reclamations.navigation') }}
           </NuxtLink>
-          <NuxtLink :to="localePath('/app/mon-dossier')" class="btn btn--discret">
+          <a v-if="isStaff" href="/admin" class="btn btn--discret">
+            {{ t('administration.navigation') }}
+          </a>
+          <NuxtLink v-if="isCandidate" :to="localePath('/app/mon-dossier')" class="btn btn--discret">
             {{ t('dossier.navigation') }}
           </NuxtLink>
           <BasculeTheme />
