@@ -77,6 +77,20 @@ jobs:
       - name: Vérifier la condition de public
         run: node scripts/verifier-condition-de-public.mjs
 
+      # L'arabe accorde le nom compté selon le nombre : deux formes, celles du
+      # français, produisaient « 30 أيام », qui est fauté. Ce contrôle tient la
+      # FORME des clés — quatre branches — et vérifie que la règle est branchée
+      # dans la configuration, sans quoi les branches ne serviraient à rien.
+      - name: Vérifier les quantités arabes
+        run: node scripts/verifier-quantites-arabes.mjs
+
+      # Le panneau « Concours » montrait trois familles sur quatre sans le dire,
+      # pendant que /concours en annonçait quatre. Un candidat qui prépare COPS
+      # ne trouvait pas sa famille au menu. Aucune liste rendue ne se tronque
+      # en silence — un plafond assumé reste permis, le silence non.
+      - name: Vérifier qu’aucun plafond n’est muet
+        run: node scripts/verifier-plafonds-muets.mjs
+
       - name: Compiler
         run: npm run build
         env:
