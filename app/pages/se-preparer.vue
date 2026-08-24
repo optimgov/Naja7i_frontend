@@ -195,6 +195,7 @@ useSeoCatalogue({
                 :duree="dureeDe(epreuve.code)"
                 :langues="null"
                 :domaines="domainesDe(epreuve.code)"
+                :disponible="epreuve.diagnostic_ready"
               />
             </div>
 

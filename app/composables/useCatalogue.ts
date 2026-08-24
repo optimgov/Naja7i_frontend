@@ -27,7 +27,12 @@ export interface Famille {
   sessions?: Session[]
   /* Trois épreuves distinctes par famille CRMEF, de coefficients 8, 12 et 20 :
      c'est la correction structurelle du PAS-4.1, et elle manquait au type. */
-  exams?: Array<{ code: string; name: string; coefficient: number | null }>
+  exams?: Array<{
+    code: string
+    name: string
+    coefficient: number | null
+    diagnostic_ready: boolean
+  }>
   taxonomy?: { levels: Array<{ depth: number; name: string }> }
 }
 
@@ -150,6 +155,7 @@ export interface EpreuveOuverte {
   code: string
   name: string
   coefficient: number | null
+  diagnostic_ready: boolean
   famille: { slug: string; name: string }
 }
 

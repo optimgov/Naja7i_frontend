@@ -18,14 +18,17 @@
  * `middleware: 'auth'` — un visiteur non connecté est conduit à la connexion,
  * ce qui est la vérité de ce chemin, pas un cul-de-sac.
  */
-defineProps<{
+withDefaults(defineProps<{
   code: string
   nom: string
   coefficient: number | null
   duree: number | null
   langues: string[] | null
   domaines: Array<{ code: string; name: string; weight_percent: number | null }>
-}>()
+  disponible?: boolean
+}>(), {
+  disponible: true,
+})
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -54,9 +57,10 @@ const localePath = useLocalePath()
     </div>
 
     <p class="epreuve__acte">
-      <NuxtLink class="lien-second epreuve__porte" :to="localePath(`/app/diagnostic/${code}`)">
+      <NuxtLink v-if="disponible" class="lien-second epreuve__porte" :to="localePath(`/app/diagnostic/${code}`)">
         {{ t('catalogue.commencer_diagnostic') }}
       </NuxtLink>
+      <span v-else class="epreuve__indisponible">{{ t('diagnostic.indisponible') }}</span>
     </p>
   </article>
 </template>
@@ -88,4 +92,5 @@ const localePath = useLocalePath()
 
 /* 44 px de cible tactile, comme toutes les portes de ce lot. */
 .epreuve__porte { display: inline-flex; align-items: center; min-block-size: 44px; font-size: var(--t-sm); }
+.epreuve__indisponible { color: var(--texte-doux); font-size: var(--t-sm); }
 </style>
