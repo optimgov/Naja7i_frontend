@@ -50,6 +50,11 @@ export default defineNuxtConfig({
     defaultLocale: 'fr',
     strategy: 'prefix',          // /fr/... et /ar/... — les liens d'e-mail en dépendent
     langDir: 'locales',
+
+    /* L'ACCORD DU NOM COMPTÉ EN ARABE — sans ce fichier, `vue-i18n` applique la
+     * règle du français aux deux langues, et « 30 jours » s'écrit « 30 أيام »,
+     * qui est fauté. Voir M-021, pas 4. */
+    vueI18n: './vue-i18n.options.ts',
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'naja7i_locale',
