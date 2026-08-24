@@ -56,6 +56,10 @@ const PREUVES = ['autopsie', 'distracteurs', 'assise'] as const
  *  aucune n'annonce une fonctionnalité, un délai ou un prix qui n'existe pas. */
 const FAQ = ['officiel', 'compte', 'gratuit', 'sources', 'paiement'] as const
 
+/* Faux tant que la réponse de `/demonstration/correction` n'a pas prouvé
+   qu'elle porte réellement une question. Le CTA ne devance jamais le contenu. */
+const demonstrationDisponible = ref(false)
+
 /**
  * « Essayer la question » — V4 §4.2 : le premier geste ne change pas de page.
  *
@@ -129,7 +133,10 @@ useSeoCatalogue({
         <!-- `tabindex="-1"` rend la cible focusable par le lien de fragment sans
              l'insérer dans l'ordre de tabulation. -->
         <div id="demonstration" tabindex="-1" class="ancre-demonstration">
-          <ProofDemonstration contexte="accueil" />
+          <ProofDemonstration
+            contexte="accueil"
+            @disponibilite="demonstrationDisponible = $event"
+          />
         </div>
 
         <!--
@@ -154,7 +161,12 @@ useSeoCatalogue({
           <!-- V4 §4.2 : le premier geste est de RÉPONDRE, sur place. Un
                bouton et non un lien de fragment — l'action déplace le focus
                dans la page, elle ne navigue pas. -->
-          <button type="button" class="btn btn--grand heros__essayer" @click="essayerLaQuestion">
+          <button
+            v-if="demonstrationDisponible"
+            type="button"
+            class="btn btn--grand heros__essayer"
+            @click="essayerLaQuestion"
+          >
             {{ t('accueil.action_principale') }}
           </button>
           <NuxtLink class="lien-second" :to="localePath('/se-preparer')">

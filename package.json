@@ -12,6 +12,7 @@
     "locales": "node scripts/verifier-locales.mjs",
     "echeances": "node scripts/verifier-echeances.mjs",
     "disponibilite": "node scripts/verifier-disponibilite.mjs",
+    "promesses": "node scripts/verifier-promesses-publiques.mjs",
     "publics": "node scripts/verifier-condition-de-public.mjs",
     "quantites": "node scripts/verifier-quantites-arabes.mjs",
     "plafonds": "node scripts/verifier-plafonds-muets.mjs",

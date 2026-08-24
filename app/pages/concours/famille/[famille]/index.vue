@@ -59,6 +59,12 @@ function domainesRacines(noeuds: unknown): NoeudMatrice[] {
   return (noeuds as NoeudMatrice[]).filter((n) => n.depth === 0)
 }
 
+/** La disponibilité vient de la fiche de famille, jamais du succès de la
+ * lecture de la matrice. Une matrice lisible peut avoir une banque vide. */
+function diagnosticDisponible(code: string): boolean {
+  return concours.value?.exams?.find(epreuve => epreuve.code === code)?.diagnostic_ready === true
+}
+
 useSeoCatalogue({
   title: concours.value.name,
   description: concours.value.description ?? t('catalogue.description_index'),
@@ -130,6 +136,7 @@ useSeoCatalogue({
           :duree="Number(epreuve.meta?.duration_minutes) || null"
           :langues="(epreuve.meta?.languages_allowed as string[]) ?? null"
           :domaines="domainesRacines(epreuve.data)"
+          :disponible="diagnosticDisponible(epreuve.code)"
         />
       </div>
       <p class="note">{{ t('catalogue.note_sources') }}</p>

@@ -67,6 +67,10 @@ interface Demonstration {
   remediation: { title: string; estimated_minutes: number | null } | null
 }
 
+const emit = defineEmits<{
+  disponibilite: [disponible: boolean]
+}>()
+
 withDefaults(
   defineProps<{
     /** Ce que l'on propose APRÈS la correction. Seule chose que le contexte pilote. */
@@ -102,13 +106,21 @@ const { data, error } = await useAsyncData(
 
 const demo = computed(() => data.value?.data ?? null)
 
+/* Le héros ne promet le geste que si cette même réponse porte une vraie
+   question. Une réponse vide ou mal formée reste un état indisponible. */
+const disponible = computed(() =>
+  !error.value && contientQuestionDemonstration(demo.value),
+)
+
+watch(disponible, valeur => emit('disponibilite', valeur), { immediate: true })
+
 /** Vide si le serveur ne la fournit pas. Aucune valeur de substitution. */
 const mention = computed(() => data.value?.meta?.notice?.trim() ?? '')
 
 /* Véracité, non identité : selon les versions, `useAsyncData` place `null` ou
    `undefined` dans `error` en cas de succès — comparer à `null` faisait
    basculer le bloc en repli alors que l'API répondait. */
-const indisponible = computed(() => Boolean(error.value) || demo.value === null)
+const indisponible = computed(() => !disponible.value)
 
 // ────────────────────────────────────────────────────── l'interaction
 

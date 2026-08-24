@@ -68,6 +68,13 @@ jobs:
       - name: Vérifier les trois états de disponibilité
         run: node scripts/verifier-disponibilite.mjs
 
+      # Une réponse HTTP réussie mais vide ne constitue pas une démonstration,
+      # et un rattachement d'annonce ancien ne doit jamais fabriquer une 404.
+      # Ce contrôle tient ensemble le CTA public, les slugs actuels et le
+      # filtrage exact des annonces sur une page de spécialité.
+      - name: Vérifier les promesses publiques
+        run: npm run promesses
+
       # La condition de public décide DEUX choses d'un coup : ce que l'écran dit,
       # et si le bouton d'achat existe. Elle est injouable dans un navigateur —
       # le catalogue ne porte qu'une seule catégorie de public, donc le cas

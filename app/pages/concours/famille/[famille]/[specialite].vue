@@ -2,7 +2,7 @@
 definePageMeta({ layout: 'public' })
 
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const famille = route.params.famille as string
 const slug = route.params.specialite as string
@@ -22,6 +22,19 @@ useSeoCatalogue({
 
 const ouverte = computed(() => matiere.value?.availability === 'open')
 
+/* `open` publie la fiche pilote ; il ne prouve pas que la banque porte une
+ * correction. La porte vers l'accueil n'existe que si l'API en sert une. */
+const api = useApi()
+const { data: demonstration, error: erreurDemonstration } = await useAsyncData(
+  () => `demonstration:disponibilite:${locale.value}`,
+  () => api.get<{ data: unknown }>('/demonstration/correction', { locale: locale.value }),
+  { watch: [locale] },
+)
+const demonstrationDisponible = computed(() =>
+  !erreurDemonstration.value
+  && contientQuestionDemonstration(demonstration.value?.data),
+)
+
 /*
  * L'ENCART « CONCOURS OUVERTS » — P6.
  *
@@ -31,10 +44,10 @@ const ouverte = computed(() => matiere.value?.availability === 'open')
  * jours, sans avoir à retourner au tapis.
  *
  * LE RATTACHEMENT VIENT DU COLLECTEUR, pas d'une correspondance de texte sur
- * le nom de la spécialité. `naja7i.filiere` est le champ prévu pour cela, et
- * il porte le motif du rattachement — rapprocher « Mathématiques » de
- * « mathématiques » dans un titre d'annonce produirait des faux positifs que
- * personne ne pourrait expliquer.
+ * le nom de la spécialité. `naja7i.prep_slug` est le champ prévu pour cela :
+ * il désigne soit toute la famille, soit cette spécialité précise. Le champ
+ * générique `filiere` ne suffit pas — il ferait remonter ici tous les concours
+ * de l'éducation, même ceux d'une autre matière.
  *
  * TROIS AU PLUS, les plus proches. L'encart annonce, il ne remplace pas le
  * tapis — qui est à un clic.
@@ -42,15 +55,19 @@ const ouverte = computed(() => matiere.value?.availability === 'open')
 const { annonces } = useOpportunites()
 const { data: charge, error: erreurAnnonces } = await annonces()
 
-/** La filière du collecteur qui correspond à cette famille de concours. */
-const filiereVisee = computed(() => matiere.value?.family?.slug ?? famille)
+/** Les deux rattachements recevables : famille entière ou spécialité exacte. */
+const familleVisee = computed(() => matiere.value?.family?.slug ?? famille)
+const specialiteVisee = computed(() => `${familleVisee.value}/${slug}`)
 
 const concoursOuverts = computed(() => {
   if (erreurAnnonces.value || !charge.value) return []
 
   return charge.value.data
     .filter(a => estOuverte(a))
-    .filter(a => a.naja7i.prep_slug === filiereVisee.value || a.naja7i.filiere === 'education')
+    .filter(a =>
+      a.naja7i.prep_slug === familleVisee.value
+      || a.naja7i.prep_slug === specialiteVisee.value,
+    )
     .sort((x, y) => (x.jours ?? 9999) - (y.jours ?? 9999))
     /* PLAFOND ASSUMÉ, ET C'EST CE QUI LE REND HONNÊTE — M-021, pas 3.
      *
@@ -87,12 +104,12 @@ const concoursOuverts = computed(() => {
          FRONT-1 avait corrigé le même lien sur l'accueil en le remplaçant par
          une ancre vers la démonstration, qui est la correction expliquée qu'il
          promet ; la page de spécialité était restée en arrière. -->
-    <div v-if="ouverte" class="actes">
+    <div v-if="ouverte && demonstrationDisponible" class="actes">
       <NuxtLink class="btn btn--grand" :to="`${localePath('/')}#demonstration`">
         {{ t('catalogue.voir_correction') }}
       </NuxtLink>
     </div>
-    <div v-else class="attente">
+    <div v-else-if="!ouverte" class="attente">
       <p>{{ t('catalogue.specialite_en_attente') }}</p>
     </div>
 

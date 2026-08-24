@@ -1414,7 +1414,7 @@
     },
     "naja7i": {
       "filiere": "education",
-      "prep_slug": "crmef/francais",
+      "prep_slug": "crmef/langue-francaise-secondaire",
       "has_prep": true,
       "match_reason": "CRMEF — Français — motif « enseignement secondaire.{0,40}fran[çc]ais » + organisme concordant",
       "confidence": 0.92
@@ -1466,7 +1466,7 @@
     },
     "naja7i": {
       "filiere": "education",
-      "prep_slug": "crmef/mathematiques",
+      "prep_slug": "crmef/mathematiques-secondaire",
       "has_prep": true,
       "match_reason": "CRMEF — Mathématiques — motif « enseignement secondaire.{0,40}math » + organisme concordant",
       "confidence": 0.92

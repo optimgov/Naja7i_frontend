@@ -18,17 +18,16 @@
  * `middleware: 'auth'` — un visiteur non connecté est conduit à la connexion,
  * ce qui est la vérité de ce chemin, pas un cul-de-sac.
  */
-withDefaults(defineProps<{
+defineProps<{
   code: string
   nom: string
   coefficient: number | null
   duree: number | null
   langues: string[] | null
   domaines: Array<{ code: string; name: string; weight_percent: number | null }>
-  disponible?: boolean
-}>(), {
-  disponible: true,
-})
+  /** Obligatoire : l'absence d'information ne vaut jamais disponibilité. */
+  disponible: boolean
+}>()
 
 const { t } = useI18n()
 const localePath = useLocalePath()
