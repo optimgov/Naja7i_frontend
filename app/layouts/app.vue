@@ -62,6 +62,9 @@ watch(
         </NuxtLink>
 
         <div class="appli__actions">
+          <NuxtLink :to="localePath('/app/reclamations')" class="btn btn--discret">
+            {{ t('reclamations.navigation') }}
+          </NuxtLink>
           <NuxtLink :to="localePath('/app/mon-dossier')" class="btn btn--discret">
             {{ t('dossier.navigation') }}
           </NuxtLink>

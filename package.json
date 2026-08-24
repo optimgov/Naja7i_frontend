@@ -16,6 +16,7 @@
     "quantites": "node scripts/verifier-quantites-arabes.mjs",
     "plafonds": "node scripts/verifier-plafonds-muets.mjs",
     "dossier": "node scripts/verifier-mon-dossier.mjs",
+    "reclamations": "node scripts/verifier-reclamations.mjs",
     "audit": "node scripts/auditer-ecrans.mjs --sombre \"[data-bascule-theme]\"",
     "audit:ci": "node scripts/auditer-ecrans.mjs --ci --sombre \"[data-bascule-theme]\"",
     "contraste": "node scripts/recette-contraste-interactif.mjs --complet",
