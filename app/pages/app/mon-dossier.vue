@@ -6,7 +6,7 @@ definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t, locale, setLocale } = useI18n()
 const localePath = useLocalePath()
-const { user, refresh } = useAuth()
+const { user, refresh, isCandidate } = useAuth()
 const { profil, actes, modifierCompte, modifierProfil, modifierMotDePasse } = useMonDossier()
 const { data: profilPrepare, pending: profilCharge, error: profilErreur } = await profil()
 const { data: actesJuridiques, pending: actesCharges, error: actesErreur } = await actes()
@@ -14,6 +14,10 @@ const { epreuvesOuvertes } = useCatalogue()
 const { data: epreuves, pending: epreuvesChargees, error: epreuvesErreur } = await epreuvesOuvertes()
 
 const compte = reactive({
+  first_name: user.value?.first_name ?? '',
+  last_name: user.value?.last_name ?? '',
+  academic_level: user.value?.academic_level ?? '',
+  address: user.value?.address ?? '',
   email: user.value?.email ?? '',
   phone: user.value?.phone ?? '',
   locale: user.value?.locale ?? 'fr' as 'fr' | 'ar',
@@ -58,6 +62,12 @@ async function enregistrerCompte(): Promise<void> {
   const langueAvant = locale.value
   try {
     await modifierCompte({
+      first_name: compte.first_name.trim(),
+      last_name: compte.last_name.trim(),
+      ...(isCandidate.value ? {
+        academic_level: compte.academic_level.trim(),
+        address: compte.address.trim(),
+      } : {}),
       email: compte.email.trim(),
       phone: compte.phone.trim() || null,
       locale: compte.locale,
@@ -131,6 +141,10 @@ useHead({ title: () => t('dossier.titre') })
       <div v-if="erreurCompte" class="alerte alerte--systeme" role="alert" dir="auto">{{ erreurCompte }}</div>
       <div v-if="succesCompte" class="alerte alerte--succes" role="status">{{ t('dossier.compte_succes') }}</div>
       <form class="dossier__formulaire" novalidate @submit.prevent="enregistrerCompte">
+        <label class="champ"><span class="champ__label">{{ t('champs.prenom') }}</span><input v-model="compte.first_name" class="champ__saisie" autocomplete="given-name" required :aria-invalid="Boolean(erreursCompte.first_name)"><span v-if="erreursCompte.first_name" class="champ__erreur" dir="auto">{{ erreursCompte.first_name }}</span></label>
+        <label class="champ"><span class="champ__label">{{ t('champs.nom') }}</span><input v-model="compte.last_name" class="champ__saisie" autocomplete="family-name" required :aria-invalid="Boolean(erreursCompte.last_name)"><span v-if="erreursCompte.last_name" class="champ__erreur" dir="auto">{{ erreursCompte.last_name }}</span></label>
+        <label v-if="isCandidate" class="champ"><span class="champ__label">{{ t('champs.niveau_academique') }}</span><input v-model="compte.academic_level" class="champ__saisie" required :aria-invalid="Boolean(erreursCompte.academic_level)"><span v-if="erreursCompte.academic_level" class="champ__erreur" dir="auto">{{ erreursCompte.academic_level }}</span></label>
+        <label v-if="isCandidate" class="champ"><span class="champ__label">{{ t('champs.adresse') }}</span><textarea v-model="compte.address" class="champ__saisie" autocomplete="street-address" rows="2" required dir="auto" :aria-invalid="Boolean(erreursCompte.address)" /><span v-if="erreursCompte.address" class="champ__erreur" dir="auto">{{ erreursCompte.address }}</span></label>
         <label class="champ">
           <span class="champ__label">{{ t('champs.email') }}</span>
           <input v-model="compte.email" class="champ__saisie" type="email" autocomplete="email" required :aria-invalid="Boolean(erreursCompte.email)">
@@ -142,6 +156,7 @@ useHead({ title: () => t('dossier.titre') })
           <input v-model="compte.phone" class="champ__saisie" type="tel" autocomplete="tel" :aria-invalid="Boolean(erreursCompte.phone)">
           <span v-if="erreursCompte.phone" class="champ__erreur" dir="auto">{{ erreursCompte.phone }}</span>
           <span v-else-if="user?.phone" class="champ__aide">{{ user.phone_verified ? t('dossier.verifie') : t('dossier.non_verifie') }}</span>
+          <span v-else class="champ__aide">{{ t('dossier.telephone_facultatif') }}</span>
         </label>
         <label class="champ">
           <span class="champ__label">{{ t('dossier.langue') }}</span>

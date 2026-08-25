@@ -57,6 +57,10 @@ export function useMonDossier() {
     api.get<{ data: ActeJuridique[] }>('/me/legal'), { transform: response => response.data })
 
   const modifierCompte = (payload: {
+    first_name: string
+    last_name: string
+    academic_level?: string
+    address?: string
     email: string
     phone: string | null
     locale: 'fr' | 'ar'

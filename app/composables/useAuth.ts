@@ -1,5 +1,9 @@
 export interface CandidateUser {
   uuid: string
+  first_name: string | null
+  last_name: string | null
+  academic_level: string | null
+  address: string | null
   email: string
   phone: string | null
   locale: 'fr' | 'ar'
@@ -7,6 +11,7 @@ export interface CandidateUser {
   email_verified: boolean
   phone_verified?: boolean
   roles?: string[]
+  role_labels?: string[]
 }
 
 interface MeResponse {
@@ -43,6 +48,10 @@ export function useAuth() {
   }
 
   async function register(payload: {
+    first_name: string
+    last_name: string
+    academic_level: string
+    address: string
     email: string
     password: string
     password_confirmation: string

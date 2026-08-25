@@ -13,7 +13,15 @@
 const { locale, locales, t } = useI18n()
 const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
-const { logout, isCandidate, isStaff } = useAuth()
+const { logout, isCandidate, isStaff, user } = useAuth()
+
+const { data: abonnement } = await useAsyncData('entete:abonnement', async () => {
+  if (!isCandidate.value) return null
+  const response = await useApi().get<{ data: { etat_label: string } }>('/me/subscription')
+  return response.data
+})
+
+const nomComplet = computed(() => [user.value?.first_name, user.value?.last_name].filter(Boolean).join(' '))
 
 const autre = computed(() => (locale.value === 'fr' ? 'ar' : 'fr'))
 const nomAutre = computed(() => locales.value.find((l) => l.code === autre.value)?.name ?? '')
@@ -61,15 +69,22 @@ watch(
           <LogoNaja7i />
         </NuxtLink>
 
+        <nav class="appli__navigation" :aria-label="t('navigation.espace_candidat')">
+          <NuxtLink :to="localePath('/app')">{{ t('navigation.tableau_de_bord') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate" :to="localePath('/concours')">{{ t('navigation.barre_concours') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate" :to="localePath('/se-preparer')">{{ t('navigation.barre_preparer') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate" :to="localePath('/app/revisions')">{{ t('navigation.revisions') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate" :to="localePath('/app/abonnement')">{{ t('navigation.abonnement') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate" :to="localePath('/app/reclamations')">{{ t('reclamations.navigation') }}</NuxtLink>
+          <a v-if="isStaff" href="/admin">{{ t('administration.navigation') }}</a>
+        </nav>
+
         <div class="appli__actions">
-          <NuxtLink v-if="isCandidate" :to="localePath('/app/reclamations')" class="btn btn--discret">
-            {{ t('reclamations.navigation') }}
-          </NuxtLink>
-          <a v-if="isStaff" href="/admin" class="btn btn--discret">
-            {{ t('administration.navigation') }}
-          </a>
-          <NuxtLink v-if="isCandidate" :to="localePath('/app/mon-dossier')" class="btn btn--discret">
-            {{ t('dossier.navigation') }}
+          <NuxtLink :to="localePath('/app/mon-dossier')" class="identite-session">
+            <strong v-if="nomComplet" dir="auto">{{ nomComplet }}</strong>
+            <span v-if="user?.role_labels?.length" dir="auto">{{ user.role_labels.join(' · ') }}</span>
+            <span v-if="isCandidate && user?.address" dir="auto">{{ user.address }}</span>
+            <span v-if="isCandidate && abonnement?.etat_label" dir="auto">{{ abonnement.etat_label }}</span>
           </NuxtLink>
           <BasculeTheme />
 
@@ -141,8 +156,15 @@ watch(
   gap: var(--e-2);
 }
 
+.appli__navigation { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--e-3); }
+.appli__navigation a { color: var(--texte); font-size: var(--t-s); font-weight: 650; text-decoration: none; }
+.appli__navigation a:hover, .appli__navigation a.router-link-active { color: var(--accent); text-decoration: underline; text-underline-offset: .3em; }
+.identite-session { display: grid; max-inline-size: 17rem; padding: var(--e-2) var(--e-3); border: 1px solid var(--bordure); border-radius: var(--r-s); color: var(--texte); font-size: var(--t-xs); line-height: 1.35; text-decoration: none; }
+.identite-session span { overflow: hidden; color: var(--texte-doux); text-overflow: ellipsis; white-space: nowrap; }
+
 @media (max-width: 40rem) {
-  .appli__barre { align-items: flex-start; }
+  .appli__barre { align-items: flex-start; flex-direction: column; }
+  .appli__navigation { justify-content: flex-start; }
   .appli__actions { justify-content: flex-end; }
 }
 

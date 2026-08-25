@@ -4,6 +4,10 @@
     "precision": "Chaque correction explique pourquoi la bonne réponse est juste, et pourquoi chaque autre option est fausse."
   },
   "champs": {
+    "prenom": "Prénom",
+    "nom": "Nom",
+    "niveau_academique": "Niveau académique",
+    "adresse": "Adresse",
     "email": "Adresse e-mail",
     "mot_de_passe": "Mot de passe",
     "confirmation": "Confirmer le mot de passe"
@@ -83,6 +87,10 @@
   "navigation": {
     "aller_au_contenu": "Aller au contenu",
     "principale": "Navigation principale",
+    "espace_candidat": "Navigation de l’espace personnel",
+    "tableau_de_bord": "Tableau de bord",
+    "revisions": "Révisions",
+    "abonnement": "Forfait",
     "connexion": "Se connecter",
     "mentions": "© {annee} Naja7i — préparation aux concours de la fonction publique marocaine.",
     "barre_accueil": "Accueil",
@@ -762,6 +770,7 @@
     "intro": "Retrouvez et mettez à jour les informations qui vous concernent.",
     "coordonnees": "Identité et coordonnées",
     "telephone": "Téléphone",
+    "telephone_facultatif": "Facultatif. Vous pourrez l’ajouter plus tard.",
     "langue": "Langue de l’interface",
     "verifie": "Coordonnée confirmée",
     "non_verifie": "Coordonnée à confirmer",

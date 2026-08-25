@@ -14,6 +14,10 @@ const route = useRoute()
 const suite = computed(() => suiteInterne(route.query.suite))
 
 const form = reactive({
+  first_name: '',
+  last_name: '',
+  academic_level: '',
+  address: '',
   email: '',
   password: '',
   password_confirmation: '',
@@ -62,6 +66,31 @@ useHead({ title: t('inscription.titre') })
     </div>
 
     <form novalidate @submit.prevent="soumettre">
+      <div class="identite">
+        <label class="champ">
+          <span class="champ__label">{{ t('champs.prenom') }}</span>
+          <input v-model="form.first_name" class="champ__saisie" autocomplete="given-name" required :aria-invalid="Boolean(erreurs.first_name)">
+          <span v-if="erreurs.first_name" class="champ__erreur" dir="auto">{{ erreurs.first_name }}</span>
+        </label>
+        <label class="champ">
+          <span class="champ__label">{{ t('champs.nom') }}</span>
+          <input v-model="form.last_name" class="champ__saisie" autocomplete="family-name" required :aria-invalid="Boolean(erreurs.last_name)">
+          <span v-if="erreurs.last_name" class="champ__erreur" dir="auto">{{ erreurs.last_name }}</span>
+        </label>
+      </div>
+
+      <label class="champ">
+        <span class="champ__label">{{ t('champs.niveau_academique') }}</span>
+        <input v-model="form.academic_level" class="champ__saisie" autocomplete="off" required :aria-invalid="Boolean(erreurs.academic_level)">
+        <span v-if="erreurs.academic_level" class="champ__erreur" dir="auto">{{ erreurs.academic_level }}</span>
+      </label>
+
+      <label class="champ">
+        <span class="champ__label">{{ t('champs.adresse') }}</span>
+        <textarea v-model="form.address" class="champ__saisie" autocomplete="street-address" rows="2" required dir="auto" :aria-invalid="Boolean(erreurs.address)" />
+        <span v-if="erreurs.address" class="champ__erreur" dir="auto">{{ erreurs.address }}</span>
+      </label>
+
       <label class="champ">
         <span class="champ__label">{{ t('champs.email') }}</span>
         <input
@@ -154,6 +183,9 @@ useHead({ title: t('inscription.titre') })
   color: var(--texte-doux);
   font-size: var(--t-s);
 }
+
+.identite { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-3); }
+@media (max-width: 34rem) { .identite { grid-template-columns: 1fr; } }
 
 .actes {
   padding: var(--e-3);
