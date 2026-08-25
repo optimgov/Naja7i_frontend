@@ -11,7 +11,7 @@ const { specialite } = useCatalogue()
 const { data: matiere, error } = await specialite(famille, slug)
 
 if (error.value || !matiere.value) {
-  throw createError({ statusCode: 404, statusMessage: t('catalogue.introuvable'), fatal: true })
+  throw erreurDeChargement(error.value, t('catalogue.introuvable'))
 }
 
 useSeoCatalogue({

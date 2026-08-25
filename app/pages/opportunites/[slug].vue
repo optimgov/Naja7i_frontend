@@ -51,7 +51,7 @@ const route = useRoute()
 const localePath = useLocalePath()
 
 const { annonces } = useOpportunites()
-const { data: charge } = await annonces()
+const { data: charge, error: erreurCharge } = await annonces()
 
 const slug = computed(() => String(route.params.slug ?? ''))
 
@@ -60,9 +60,13 @@ const annonce = computed<Annonce | null>(
 )
 
 /* Slug inconnu → 404 RENDU PAR LE SERVEUR. Une page vide répondant 200 se
- * ferait indexer comme une fiche valide. */
-if (!annonce.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Annonce introuvable', fatal: true })
+ * ferait indexer comme une fiche valide.
+ *
+ * Mais le tapis d'annonces qui ne se charge PAS n'est pas un slug inconnu :
+ * `charge` est alors vide et toute fiche paraîtrait introuvable, y compris
+ * celles qui existent. L'erreur de chargement est donc relayée telle quelle. */
+if (erreurCharge.value || !annonce.value) {
+  throw erreurDeChargement(erreurCharge.value, t('catalogue.introuvable'))
 }
 
 const a = computed(() => annonce.value!)

@@ -11,7 +11,7 @@ const { famille } = useCatalogue()
 const { data: concours, error } = await famille(slug)
 
 if (error.value || !concours.value) {
-  throw createError({ statusCode: 404, statusMessage: t('catalogue.introuvable'), fatal: true })
+  throw erreurDeChargement(error.value, t('catalogue.introuvable'))
 }
 
 /**

@@ -12,7 +12,7 @@ const { data: porte, error } = await filiere(slug)
 // Une filière non publiée répond 404, jamais 403 : un 403 confirmerait son
 // existence et laisserait deviner le catalogue à venir.
 if (error.value || !porte.value) {
-  throw createError({ statusCode: 404, statusMessage: t('catalogue.introuvable'), fatal: true })
+  throw erreurDeChargement(error.value, t('catalogue.introuvable'))
 }
 
 useSeoCatalogue({
