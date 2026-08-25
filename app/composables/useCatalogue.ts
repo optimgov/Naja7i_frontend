@@ -143,7 +143,9 @@ export function useCatalogue() {
       return fiches
         .filter((f): f is Famille => f !== null)
         .flatMap((f) =>
-          (f.exams ?? []).map((e) => ({ ...e, famille: { slug: f.slug, name: f.name } })),
+          (f.exams ?? [])
+            .filter((e) => e.diagnostic_ready)
+            .map((e) => ({ ...e, famille: { slug: f.slug, name: f.name } })),
         )
     })
 
