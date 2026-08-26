@@ -165,7 +165,7 @@ useHead({ title: t('correction.titre') })
            l'ouvrir. Il mène maintenant aux offres.
            La règle du dépôt tient : soit l'action est proposée, soit elle
            n'existe pas dans le rendu. Rien n'est désactivé. -->
-      <NuxtLink class="lien-second" :to="localePath('/tarifs')">
+      <NuxtLink class="lien-second" :to="{ path: localePath('/tarifs'), query: { espace: 'candidat' } }">
         {{ t('correction.cause_fermee_action') }}
       </NuxtLink>
     </div>

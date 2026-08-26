@@ -1,9 +1,10 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'public' })
+definePageMeta({ layout: 'public', middleware: 'preparation' })
 
 const route = useRoute()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const { vers } = useLienEspaceCandidat()
 const famille = route.params.famille as string
 const slug = route.params.specialite as string
 
@@ -85,7 +86,7 @@ const concoursOuverts = computed(() => {
     <nav class="fil" :aria-label="t('catalogue.fil_ariane')">
       <NuxtLink :to="localePath('/')">{{ t('catalogue.accueil') }}</NuxtLink>
       <span aria-hidden="true">/</span>
-      <NuxtLink :to="localePath(`/concours/famille/${famille}`)">
+      <NuxtLink :to="vers(`/concours/famille/${famille}`)">
         {{ matiere.family?.name ?? famille }}
       </NuxtLink>
       <span aria-hidden="true">/</span>

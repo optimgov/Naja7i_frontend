@@ -211,10 +211,10 @@ useHead({ title: t('app.titre') })
         <NuxtLink class="btn" :to="localePath('/app/abonnement')">
           {{ t('app.issue_abonnement') }}
         </NuxtLink>
-        <NuxtLink class="lien-second" :to="localePath('/tarifs')">
+        <NuxtLink class="lien-second" :to="{ path: localePath('/tarifs'), query: { espace: 'candidat' } }">
           {{ t('app.issue_offres') }}
         </NuxtLink>
-        <NuxtLink class="lien-second" :to="localePath('/concours')">
+        <NuxtLink class="lien-second" :to="{ path: localePath('/concours'), query: { espace: 'candidat' } }">
           {{ t('app.voir_catalogue') }}
         </NuxtLink>
         <NuxtLink class="lien-second" :to="localePath('/app/mon-dossier')">
@@ -263,7 +263,7 @@ useHead({ title: t('app.titre') })
         <p v-else class="debut__aucune">{{ t('app.commencer_aucune') }}</p>
       </template>
 
-      <NuxtLink class="lien-second" :to="localePath('/concours')">
+      <NuxtLink class="lien-second" :to="{ path: localePath('/concours'), query: { espace: 'candidat' } }">
         {{ t('app.voir_catalogue') }}
       </NuxtLink>
     </section>

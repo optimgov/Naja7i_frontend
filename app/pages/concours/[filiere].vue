@@ -1,9 +1,10 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'public' })
+definePageMeta({ layout: 'public', middleware: 'preparation' })
 
 const route = useRoute()
 const { t } = useI18n()
 const localePath = useLocalePath()
+const { vers } = useLienEspaceCandidat()
 const slug = route.params.filiere as string
 
 const { filiere } = useCatalogue()
@@ -27,7 +28,7 @@ useSeoCatalogue({
     <nav class="fil" :aria-label="t('catalogue.fil_ariane')">
       <NuxtLink :to="localePath('/')">{{ t('catalogue.accueil') }}</NuxtLink>
       <span aria-hidden="true">/</span>
-      <NuxtLink :to="localePath('/concours')">{{ t('catalogue.concours') }}</NuxtLink>
+      <NuxtLink :to="vers('/concours')">{{ t('catalogue.concours') }}</NuxtLink>
       <span aria-hidden="true">/</span>
       <span aria-current="page">{{ porte.name }}</span>
     </nav>
@@ -39,7 +40,7 @@ useSeoCatalogue({
       <CarteConcours
         v-for="famille in porte.families"
         :key="famille.uuid"
-        :to="localePath(`/concours/famille/${famille.slug}`)"
+        :to="vers(`/concours/famille/${famille.slug}`)"
         :titre="famille.name"
         :texte="famille.description"
         :meta="famille.authority"

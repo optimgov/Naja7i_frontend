@@ -294,7 +294,7 @@ useHead({ title: () => t('abonnement.titre') })
       </ul>
     </section>
 
-    <NuxtLink class="lien-second" :to="localePath('/tarifs')">
+    <NuxtLink class="lien-second" :to="{ path: localePath('/tarifs'), query: { espace: 'candidat' } }">
       {{ t('abonnement.voir_offres') }}
     </NuxtLink>
   </div>

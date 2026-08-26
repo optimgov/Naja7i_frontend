@@ -1,8 +1,9 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'public' })
+definePageMeta({ layout: 'public', middleware: 'preparation' })
 
 const { t } = useI18n()
 const localePath = useLocalePath()
+const { vers } = useLienEspaceCandidat()
 const { filieres } = useCatalogue()
 const { data: portes } = await filieres()
 
@@ -28,7 +29,7 @@ useSeoCatalogue({
       <CarteConcours
         v-for="porte in portes"
         :key="porte.uuid"
-        :to="localePath(`/concours/${porte.slug}`)"
+        :to="vers(`/concours/${porte.slug}`)"
         :titre="porte.name"
         :texte="porte.tagline"
         :disponibilite="porte.availability"

@@ -9,6 +9,7 @@ const page = readFileSync('app/pages/app/mon-dossier.vue', 'utf8')
 const inscription = readFileSync('app/pages/inscription.vue', 'utf8')
 const garde = readFileSync('app/middleware/auth.ts', 'utf8')
 const layout = readFileSync('app/layouts/app.vue', 'utf8')
+const preparation = readFileSync('app/middleware/preparation.ts', 'utf8')
 const fr = JSON.parse(readFileSync('i18n/locales/fr.json', 'utf8'))
 const ar = JSON.parse(readFileSync('i18n/locales/ar.json', 'utf8'))
 
@@ -61,6 +62,21 @@ for (const ancienChamp of ['given-name', 'family-name', 'street-address']) {
 assert.ok(garde.includes('onboarding_complete'), 'la garde privée doit imposer le dossier initial')
 assert.ok(garde.includes("'/app/mon-dossier'"), 'la garde doit conduire vers Mon dossier')
 assert.ok(layout.includes('dossierComplet'), 'la navigation privée doit rester fermée pendant le dossier initial')
+assert.ok(layout.includes("localePath('/concours'), query: { espace: 'candidat' }"), 'le catalogue doit garder le chrome candidat')
+
+for (const chemin of [
+  'app/pages/concours/index.vue',
+  'app/pages/concours/[filiere].vue',
+  'app/pages/concours/famille/[famille]/index.vue',
+  'app/pages/concours/famille/[famille]/[specialite].vue',
+  'app/pages/tarifs.vue',
+  'app/pages/se-preparer.vue',
+]) {
+  const source = readFileSync(chemin, 'utf8')
+  assert.ok(source.includes("middleware: 'preparation'"), `${chemin} doit accepter le chrome candidat`)
+}
+
+assert.ok(preparation.includes("to.query.espace !== 'candidat'"), 'le parcours public doit rester public et indexable')
 
 for (const cle of [
   'parcours_enregistrer',

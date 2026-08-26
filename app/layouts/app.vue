@@ -72,7 +72,7 @@ watch(
 
         <nav class="appli__navigation" :aria-label="t('navigation.espace_candidat')">
           <NuxtLink v-if="!isCandidate || dossierComplet" :to="localePath('/app')">{{ t('navigation.tableau_de_bord') }}</NuxtLink>
-          <NuxtLink v-if="isCandidate && dossierComplet" :to="localePath('/concours')">{{ t('navigation.barre_concours') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate && dossierComplet" :to="{ path: localePath('/concours'), query: { espace: 'candidat' } }">{{ t('navigation.barre_concours') }}</NuxtLink>
           <NuxtLink v-if="isCandidate && dossierComplet" :to="{ path: localePath('/se-preparer'), query: { espace: 'candidat' } }">{{ t('navigation.barre_preparer') }}</NuxtLink>
           <NuxtLink v-if="isCandidate && dossierComplet" :to="localePath('/app/revisions')">{{ t('navigation.revisions') }}</NuxtLink>
           <NuxtLink v-if="isCandidate && dossierComplet" :to="localePath('/app/abonnement')">{{ t('navigation.abonnement') }}</NuxtLink>

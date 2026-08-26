@@ -62,7 +62,7 @@ import type { ProfilPrepare } from '~/composables/useMonDossier'
  * silence, et sur un prix affiché la divergence n'est pas une gêne : c'est une
  * promesse rompue.
  */
-definePageMeta({ layout: 'public' })
+definePageMeta({ layout: 'public', middleware: 'preparation' })
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()

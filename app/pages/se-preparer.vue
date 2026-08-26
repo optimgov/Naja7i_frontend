@@ -53,6 +53,7 @@ definePageMeta({ layout: 'public', middleware: 'preparation' })
 
 const { t } = useI18n()
 const localePath = useLocalePath()
+const { vers } = useLienEspaceCandidat()
 
 const { epreuvesOuvertes } = useCatalogue()
 const { data: epreuves, error: erreurCatalogue } = await epreuvesOuvertes()
@@ -158,7 +159,7 @@ useSeoCatalogue({
              liste vide qui se lirait « rien n'est ouvert ». -->
         <template v-if="illisible">
           <p class="preparer__vide">{{ t('preparer.catalogue_illisible') }}</p>
-          <NuxtLink class="btn btn--fantome" :to="localePath('/concours')">
+          <NuxtLink class="btn btn--fantome" :to="vers('/concours')">
             {{ t('preparer.voir_catalogue') }}
           </NuxtLink>
         </template>
@@ -166,7 +167,7 @@ useSeoCatalogue({
         <!-- Catalogue lu, et réellement vide. C'est un fait, il s'énonce. -->
         <template v-else-if="aucune">
           <p class="preparer__vide">{{ t('preparer.aucune_epreuve') }}</p>
-          <NuxtLink class="btn btn--fantome" :to="localePath('/concours')">
+          <NuxtLink class="btn btn--fantome" :to="vers('/concours')">
             {{ t('preparer.voir_catalogue') }}
           </NuxtLink>
         </template>
@@ -200,7 +201,7 @@ useSeoCatalogue({
             </div>
 
             <p class="preparer__famille-lien">
-              <NuxtLink class="lien-second" :to="localePath(`/concours/famille/${famille.slug}`)">
+              <NuxtLink class="lien-second" :to="vers(`/concours/famille/${famille.slug}`)">
                 {{ t('preparer.voir_famille') }}
               </NuxtLink>
             </p>
@@ -246,7 +247,7 @@ useSeoCatalogue({
         <!-- AUCUN PRIX ICI. Les offres sont servies par `/plans` et rendues par
              `/tarifs` ; un tarif recopié dans un gabarit vieillit en silence, et
              sur un prix affiché la divergence est une promesse rompue. -->
-        <NuxtLink class="btn btn--fantome" :to="localePath('/tarifs')">
+        <NuxtLink class="btn btn--fantome" :to="vers('/tarifs')">
           {{ t('preparer.frontiere_lien') }}
         </NuxtLink>
       </div>

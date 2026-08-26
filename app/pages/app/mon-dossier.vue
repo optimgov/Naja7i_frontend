@@ -223,7 +223,7 @@ useHead({ title: () => t('dossier.titre') })
           </label>
           <button class="btn" type="submit" :disabled="envoiParcours">{{ envoiParcours ? t('dossier.parcours_envoi') : t('dossier.parcours_enregistrer') }}</button>
         </form>
-        <NuxtLink class="lien-second dossier__porte" :to="localePath('/se-preparer')">{{ t('dossier.voir_preparations') }}</NuxtLink>
+        <NuxtLink class="lien-second dossier__porte" :to="{ path: localePath('/se-preparer'), query: { espace: 'candidat' } }">{{ t('dossier.voir_preparations') }}</NuxtLink>
       </template>
     </section>
 
