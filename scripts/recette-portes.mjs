@@ -131,6 +131,24 @@ async function portesDuCorps() {
 console.log('1. inscription par le formulaire public')
 
 await page.goto(`${BASE}/fr/inscription`, { waitUntil: 'networkidle' })
+
+/*
+ * LES QUATRE CHAMPS DE QUALIFICATION, obligatoires depuis `280e08c`.
+ *
+ * Le formulaire est `novalidate` : ce n'est pas le navigateur qui refusait,
+ * c'est l'API qui rendait 422 et la page qui restait en place. Le symptôme
+ * était donc un `waitForURL` en délai dépassé — vingt secondes d'attente d'une
+ * navigation qui ne pouvait pas venir, sans un mot sur la cause.
+ *
+ * Sélection par `autocomplete`, seul attribut stable de ces champs : ils n'ont
+ * ni `id` ni `name`, et leur libellé est traduit. Les sept valeurs de la page
+ * sont distinctes, `off` compris.
+ */
+await page.fill('input[autocomplete="given-name"]', 'Recette')
+await page.fill('input[autocomplete="family-name"]', 'Automatique')
+await page.fill('input[autocomplete="off"]', 'Licence')
+await page.fill('textarea[autocomplete="street-address"]', 'Adresse de recette, Rabat')
+
 await page.fill('input[type="email"]', EMAIL)
 const motsDePasse = page.locator('input[type="password"]')
 await motsDePasse.nth(0).fill(MOT_DE_PASSE)
@@ -144,7 +162,27 @@ await cases.nth(0).check()
 await cases.nth(1).check()
 
 await page.click('button[type="submit"]')
-await page.waitForURL('**/verifier-email**', { timeout: 20000 })
+
+/*
+ * L'ATTENTE NUE NE DIT RIEN DE CE QU'ELLE ATTEND.
+ *
+ * Un `waitForURL` qui expire annonce « Timeout 20000ms exceeded » et laisse
+ * chercher : le serveur est lent ? le bouton n'a pas répondu ? Ici la cause
+ * était un refus de validation resté à l'écran, dont le formulaire affiche
+ * pourtant le motif, champ par champ. On le lit avant de renoncer.
+ */
+try {
+  await page.waitForURL('**/verifier-email**', { timeout: 20000 })
+} catch (e) {
+  const motifs = await page.locator('.champ__erreur').allTextContents()
+  throw new Error(
+    'inscription refusée — la page n’a pas quitté le formulaire'
+    + (motifs.length
+      ? ` — motifs affichés : ${motifs.map(m => m.trim()).filter(Boolean).join(' · ')}`
+      : ' — aucun motif affiché, voir la réponse de l’API')
+    + `\n${e.message}`,
+  )
+}
 
 const jeton = await jetonDeVerification(EMAIL, MAILPIT)
 if (!jeton) {
