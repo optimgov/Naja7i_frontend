@@ -194,6 +194,19 @@ async function preparer({ cle, email, motDePasse, palier, role }) {
   const creation = await neuf.appel('/api/v1/auth/register', {
     method: 'POST',
     body: {
+      /*
+       * LES QUATRE CHAMPS DE QUALIFICATION SONT OBLIGATOIRES depuis `280e08c`
+       * (« qualifier les comptes et invitations »). Les omettre rend un 422, et
+       * la recette n'obtenait alors aucun jeton de vérification — l'échec
+       * tombait dix lignes plus loin, sur une phrase qui parlait de jeton.
+       *
+       * Ils sont ici parce que `RegisterRequest` les exige, pas parce qu'ils
+       * servent au scénario : la recette ne mesure rien sur eux.
+       */
+      first_name: 'Recette',
+      last_name: 'Automatique',
+      academic_level: 'Licence',
+      address: 'Adresse de recette, Rabat',
       email,
       password: motDePasse,
       password_confirmation: motDePasse,
@@ -204,8 +217,34 @@ async function preparer({ cle, email, motDePasse, palier, role }) {
     },
   })
 
-  if (creation.statut >= 400 && creation.corps?.error?.code !== 'VALIDATION_FAILED') {
-    throw new Error(`compte ${cle} : création refusée — ${creation.statut} ${creation.texte.slice(0, 200)}`)
+  /*
+   * LA TOLÉRANCE EST RESSERRÉE À CE QU'ELLE VISAIT.
+   *
+   * Elle acceptait TOUT `VALIDATION_FAILED`, alors qu'elle n'existe que pour un
+   * cas : le compte existe déjà d'une exécution précédente, et l'unicité de
+   * l'adresse le refuse. En avalant les autres, elle a masqué la rupture de
+   * contrat ci-dessus pendant deux jours et déplacé l'échec loin de sa cause.
+   *
+   * Un refus qui ne porte que sur `email` reste donc toléré ; tout autre champ
+   * en défaut arrête la recette et se nomme.
+   */
+  if (creation.statut >= 400) {
+    /* `details` voyage en TABLEAU `[{field, messages}]`, mais le client d'API
+     * accepte aussi le dictionnaire `{champ: [messages]}` — on lit les deux
+     * plutôt que de dépendre d'un détail de sérialisation. */
+    const details = creation.corps?.error?.details
+    const champs = Array.isArray(details)
+      ? details.map(d => d?.field).filter(Boolean)
+      : Object.keys(details ?? {})
+    const seulementEmail = champs.length > 0 && champs.every(f => f === 'email')
+
+    if (creation.corps?.error?.code !== 'VALIDATION_FAILED' || !seulementEmail) {
+      throw new Error(
+        `compte ${cle} : création refusée — ${creation.statut}`
+        + (champs.length ? ` — champ(s) en défaut : ${champs.join(', ')}` : '')
+        + ` — ${creation.texte.slice(0, 200)}`,
+      )
+    }
   }
 
   const jeton = await jetonDeVerification(email, MAILPIT)
