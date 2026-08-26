@@ -99,10 +99,28 @@ $membre = function (string $email, string $codeRole): User {
     return $user;
 };
 
+/*
+ * LES TROIS RÔLES ÉDITORIAUX N'EXISTENT PLUS, ET C'EST CE QUI TENAIT LA RECETTE
+ * ROUGE DEPUIS LE 24 AOÛT.
+ *
+ * La migration `000810` (« unifier les profils éditoriaux v1.1 ») a fondu
+ * `auteur`, `reviseur` et `editeur` dans `expert_pedagogue` et posé
+ * `roles.is_active = false` sur les trois. Ils survivent en base pour
+ * l'historique des appartenances, mais `PermissionResolver` ne leur accorde
+ * plus rien : un compte monté dessus se connecte normalement puis se voit
+ * refuser le premier acte. D'où l'échec observé — `403 PERMISSION_DENIED` sur
+ * la vérification de source, qui exige `questions.review`.
+ *
+ * TROIS COMPTES DISTINCTS SONT CONSERVÉS, un par acte. Ce n'est plus une
+ * contrainte du modèle — `8a8b6e9` a aussi retiré la garde « le relecteur n'est
+ * jamais l'auteur » — mais la recette reste plus lisible quand chaque acte
+ * porte un nom, et elle redeviendra probante sans réécriture si la séparation
+ * des actes est rétablie.
+ */
 $comptes = [
-    'auteur' => ['email' => 'editorial.auteur@naja7i.test', 'role' => 'auteur'],
-    'reviseur' => ['email' => 'editorial.relecteur@naja7i.test', 'role' => 'reviseur'],
-    'editeur' => ['email' => 'editorial.valideur@naja7i.test', 'role' => 'editeur'],
+    'auteur' => ['email' => 'editorial.auteur@naja7i.test', 'role' => 'expert_pedagogue'],
+    'reviseur' => ['email' => 'editorial.relecteur@naja7i.test', 'role' => 'expert_pedagogue'],
+    'editeur' => ['email' => 'editorial.valideur@naja7i.test', 'role' => 'expert_pedagogue'],
 ];
 
 foreach ($comptes as $cle => $definition) {
