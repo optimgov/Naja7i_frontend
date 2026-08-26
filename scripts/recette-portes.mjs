@@ -132,23 +132,6 @@ console.log('1. inscription par le formulaire public')
 
 await page.goto(`${BASE}/fr/inscription`, { waitUntil: 'networkidle' })
 
-/*
- * LES QUATRE CHAMPS DE QUALIFICATION, obligatoires depuis `280e08c`.
- *
- * Le formulaire est `novalidate` : ce n'est pas le navigateur qui refusait,
- * c'est l'API qui rendait 422 et la page qui restait en place. Le symptôme
- * était donc un `waitForURL` en délai dépassé — vingt secondes d'attente d'une
- * navigation qui ne pouvait pas venir, sans un mot sur la cause.
- *
- * Sélection par `autocomplete`, seul attribut stable de ces champs : ils n'ont
- * ni `id` ni `name`, et leur libellé est traduit. Les sept valeurs de la page
- * sont distinctes, `off` compris.
- */
-await page.fill('input[autocomplete="given-name"]', 'Recette')
-await page.fill('input[autocomplete="family-name"]', 'Automatique')
-await page.fill('input[autocomplete="off"]', 'Licence')
-await page.fill('textarea[autocomplete="street-address"]', 'Adresse de recette, Rabat')
-
 await page.fill('input[type="email"]', EMAIL)
 const motsDePasse = page.locator('input[type="password"]')
 await motsDePasse.nth(0).fill(MOT_DE_PASSE)
@@ -192,6 +175,22 @@ if (!jeton) {
 }
 
 await page.goto(`${BASE}/fr/verifier-email?token=${jeton}`, { waitUntil: 'networkidle' })
+
+/* Le compte neuf passe par son dossier avant de recevoir la navigation. La
+ * recette remplit cette porte par l'interface : elle protège ainsi le parcours
+ * que le candidat emprunte réellement, pas seulement le contrat API. */
+await page.waitForURL('**/app/mon-dossier**', { timeout: 20000 })
+await page.fill('input[autocomplete="given-name"]', 'Recette')
+await page.fill('input[autocomplete="family-name"]', 'Automatique')
+await page.fill('input[autocomplete="off"]', 'Licence')
+await page.fill('textarea[autocomplete="street-address"]', 'Adresse de recette, Rabat')
+await page.fill('input[autocomplete="tel"]', '+212612345678')
+await page.locator('form').nth(0).locator('button[type="submit"]').click()
+await page.locator('.alerte--succes').first().waitFor({ state: 'visible' })
+
+await page.locator('select').nth(1).selectOption(CODE_EPREUVE)
+await page.locator('form').nth(1).locator('button[type="submit"]').click()
+await page.waitForURL('**/app', { timeout: 20000 })
 
 console.log('2. le tableau de bord d’un compte sans aucune tentative')
 await page.goto(`${BASE}/fr/app`, { waitUntil: 'networkidle' })

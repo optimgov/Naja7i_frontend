@@ -14,6 +14,7 @@ const { locale, locales, t } = useI18n()
 const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
 const { logout, isCandidate, isStaff, user } = useAuth()
+const dossierComplet = computed(() => user.value?.onboarding_complete ?? false)
 
 const { data: abonnement } = await useAsyncData('entete:abonnement', async () => {
   if (!isCandidate.value) return null
@@ -70,12 +71,13 @@ watch(
         </NuxtLink>
 
         <nav class="appli__navigation" :aria-label="t('navigation.espace_candidat')">
-          <NuxtLink :to="localePath('/app')">{{ t('navigation.tableau_de_bord') }}</NuxtLink>
-          <NuxtLink v-if="isCandidate" :to="localePath('/concours')">{{ t('navigation.barre_concours') }}</NuxtLink>
-          <NuxtLink v-if="isCandidate" :to="localePath('/se-preparer')">{{ t('navigation.barre_preparer') }}</NuxtLink>
-          <NuxtLink v-if="isCandidate" :to="localePath('/app/revisions')">{{ t('navigation.revisions') }}</NuxtLink>
-          <NuxtLink v-if="isCandidate" :to="localePath('/app/abonnement')">{{ t('navigation.abonnement') }}</NuxtLink>
-          <NuxtLink v-if="isCandidate" :to="localePath('/app/reclamations')">{{ t('reclamations.navigation') }}</NuxtLink>
+          <NuxtLink v-if="!isCandidate || dossierComplet" :to="localePath('/app')">{{ t('navigation.tableau_de_bord') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate && dossierComplet" :to="localePath('/concours')">{{ t('navigation.barre_concours') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate && dossierComplet" :to="{ path: localePath('/se-preparer'), query: { espace: 'candidat' } }">{{ t('navigation.barre_preparer') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate && dossierComplet" :to="localePath('/app/revisions')">{{ t('navigation.revisions') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate && dossierComplet" :to="localePath('/app/abonnement')">{{ t('navigation.abonnement') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate && dossierComplet" :to="localePath('/app/reclamations')">{{ t('reclamations.navigation') }}</NuxtLink>
+          <NuxtLink v-if="isCandidate && !dossierComplet" :to="localePath('/app/mon-dossier')">{{ t('dossier.navigation') }}</NuxtLink>
           <a v-if="isStaff" href="/admin">{{ t('administration.navigation') }}</a>
         </nav>
 

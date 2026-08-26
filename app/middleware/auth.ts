@@ -14,7 +14,7 @@
  * `?suite=`, et il était côté garde, pas côté écran.
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { isAuthenticated, needsVerification, isStaff, fetchMe } = useAuth()
+  const { isAuthenticated, needsVerification, isStaff, isCandidate, user, fetchMe } = useAuth()
   const localePath = useLocalePath()
 
   if (!isAuthenticated.value) {
@@ -31,5 +31,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (needsVerification.value && !to.path.includes('verifier-email')) {
     return navigateTo(avecSuite(localePath('/verifier-email'), to.fullPath))
+  }
+
+  const dossier = localePath('/app/mon-dossier')
+  if (isCandidate.value && !user.value?.onboarding_complete && to.path !== dossier) {
+    return navigateTo(avecSuite(dossier, to.fullPath))
   }
 })

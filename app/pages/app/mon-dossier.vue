@@ -6,7 +6,10 @@ definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t, locale, setLocale } = useI18n()
 const localePath = useLocalePath()
+const route = useRoute()
 const { user, refresh, isCandidate } = useAuth()
+const suite = computed(() => suiteInterne(route.query.suite))
+const dossierInitial = computed(() => isCandidate.value && !user.value?.onboarding_complete)
 const { profil, actes, modifierCompte, modifierProfil, modifierMotDePasse } = useMonDossier()
 const { data: profilPrepare, pending: profilCharge, error: profilErreur } = await profil()
 const { data: actesJuridiques, pending: actesCharges, error: actesErreur } = await actes()
@@ -45,6 +48,13 @@ const envoiMotDePasse = ref(false)
 const epreuve = computed(() => profilPrepare.value?.exam_code ?? null)
 const emailModifie = computed(() => compte.email.trim() !== (user.value?.email ?? ''))
 
+async function poursuivreSiComplet(): Promise<void> {
+  await refresh()
+  if (user.value?.onboarding_complete) {
+    await navigateTo(suite.value ?? localePath('/app'))
+  }
+}
+
 function libelleActe(acte: { document_kind: string }): string {
   const connus: Record<string, string> = {
     terms: t('dossier.acte_terms'),
@@ -69,11 +79,11 @@ async function enregistrerCompte(): Promise<void> {
         address: compte.address.trim(),
       } : {}),
       email: compte.email.trim(),
-      phone: compte.phone.trim() || null,
+      phone: compte.phone.trim(),
       locale: compte.locale,
       current_password: compte.current_password || null,
     })
-    await refresh()
+    await poursuivreSiComplet()
     compte.current_password = ''
     succesCompte.value = true
     if (langueAvant !== compte.locale) await setLocale(compte.locale)
@@ -98,6 +108,7 @@ async function enregistrerParcours(): Promise<void> {
     parcours.objective = response.data.objective ?? ''
     parcours.target_date = response.data.target_date ?? ''
     succesParcours.value = true
+    await poursuivreSiComplet()
   } catch (error: unknown) {
     if (error instanceof ApiRequestError) {
       erreursParcours.value = error.fieldErrors
@@ -134,7 +145,10 @@ useHead({ title: () => t('dossier.titre') })
   <div class="enveloppe dossier">
     <p class="oeil">{{ t('dossier.oeil') }}</p>
     <h1 class="titre-page">{{ t('dossier.titre') }}</h1>
-    <p class="dossier__intro">{{ t('dossier.intro') }}</p>
+    <p class="dossier__intro">{{ t(dossierInitial ? 'dossier.intro_obligatoire' : 'dossier.intro') }}</p>
+    <div v-if="dossierInitial" class="alerte" role="status">
+      {{ t('dossier.obligatoire') }}
+    </div>
 
     <section class="dossier__bloc">
       <h2>{{ t('dossier.coordonnees') }}</h2>
@@ -153,10 +167,10 @@ useHead({ title: () => t('dossier.titre') })
         </label>
         <label class="champ">
           <span class="champ__label">{{ t('dossier.telephone') }}</span>
-          <input v-model="compte.phone" class="champ__saisie" type="tel" autocomplete="tel" :aria-invalid="Boolean(erreursCompte.phone)">
+          <input v-model="compte.phone" class="champ__saisie" type="tel" autocomplete="tel" inputmode="tel" required placeholder="06 12 34 56 78" :aria-invalid="Boolean(erreursCompte.phone)">
           <span v-if="erreursCompte.phone" class="champ__erreur" dir="auto">{{ erreursCompte.phone }}</span>
           <span v-else-if="user?.phone" class="champ__aide">{{ user.phone_verified ? t('dossier.verifie') : t('dossier.non_verifie') }}</span>
-          <span v-else class="champ__aide">{{ t('dossier.telephone_facultatif') }}</span>
+          <span v-else class="champ__aide">{{ t('dossier.telephone_marocain') }}</span>
         </label>
         <label class="champ">
           <span class="champ__label">{{ t('dossier.langue') }}</span>

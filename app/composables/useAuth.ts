@@ -10,6 +10,7 @@ export interface CandidateUser {
   status: string
   email_verified: boolean
   phone_verified?: boolean
+  onboarding_complete: boolean
   roles?: string[]
   role_labels?: string[]
 }
@@ -48,10 +49,6 @@ export function useAuth() {
   }
 
   async function register(payload: {
-    first_name: string
-    last_name: string
-    academic_level: string
-    address: string
     email: string
     password: string
     password_confirmation: string

@@ -62,7 +62,7 @@ export function useMonDossier() {
     academic_level?: string
     address?: string
     email: string
-    phone: string | null
+    phone: string
     locale: 'fr' | 'ar'
     current_password: string | null
   }) =>

@@ -1440,3 +1440,23 @@ le palier se nomme au catalogue et sur l'écran d'abonnement, les deux endroits
 où le candidat est venu pour ça. La distinction tient à la PLACE — au niveau de
 la page, jamais à l'emplacement du geste — et c'est elle qui sépare une sortie
 d'un cadenas.
+
+## D-F73 — Le compte s'ouvre vite, le dossier ouvre la navigation
+
+**Décision du propriétaire, 26 août 2026.** L'inscription ne demande que ce qui
+crée le compte et recueille les actes juridiques. Après vérification de
+l'adresse, un candidat dont `/me.onboarding_complete` est faux est conduit vers
+« Mon dossier » ; les autres entrées privées ne sont pas rendues avant que son
+identité, son mobile marocain et l'épreuve préparée soient enregistrés. La
+destination choisie avant l'inscription voyage dans `?suite=` et reprend dès
+que le dossier devient complet.
+
+**Téléphone.** Le mobile est obligatoire dans ce dossier initial. L'interface
+annonce 06/07 ; le serveur accepte la saisie locale ou `+212`, normalise et
+reste seul juge de la valeur.
+
+**Deux contextes pour une même porte.** `/se-preparer` reste publique et
+indexable. Le lien du gabarit candidat lui ajoute `?espace=candidat` : son
+middleware conserve alors le gabarit privé au lieu de remplacer brutalement
+l'en-tête par la navigation publique. Le contenu n'est pas dupliqué et le
+visiteur anonyme ne paie aucun appel d'authentification supplémentaire.

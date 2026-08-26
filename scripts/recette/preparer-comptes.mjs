@@ -169,7 +169,28 @@ export const COMPTES = [
   },
 ]
 
-async function preparer({ cle, email, motDePasse, palier, role }) {
+async function completerDossier(sac, index) {
+  const compte = await sac.appel('/api/v1/me/account', {
+    method: 'PATCH',
+    body: {
+      first_name: 'Recette',
+      last_name: 'Automatique',
+      academic_level: 'Licence',
+      address: 'Adresse de recette, Rabat',
+      phone: `+2126000009${String(index).padStart(2, '0')}`,
+      locale: 'fr',
+    },
+  })
+  if (compte.statut >= 400) throw new Error(`dossier : compte refusé — ${compte.statut} ${compte.texte.slice(0, 200)}`)
+
+  const profil = await sac.appel('/api/v1/me/profile', {
+    method: 'PUT',
+    body: { exam_code: 'CRMEF-FR-SPEC-2025', objective: null, target_date: null },
+  })
+  if (profil.statut >= 400) throw new Error(`dossier : parcours refusé — ${profil.statut} ${profil.texte.slice(0, 200)}`)
+}
+
+async function preparer({ cle, email, motDePasse, palier, role }, index) {
   const sac = client(API)
   await sac.ouvrir()
 
@@ -182,6 +203,7 @@ async function preparer({ cle, email, motDePasse, palier, role }) {
   if (connexion.statut < 400) {
     const moi = await sac.appel('/api/v1/me')
     if (moi.statut < 400 && moi.corps?.data?.email_verified) {
+      if (!moi.corps?.data?.onboarding_complete) await completerDossier(sac, index)
       console.log(`  ${cle} · palier ${palier} · déjà présent (${email})`)
       console.log(`      ${role}`)
       return { cle, email, motDePasse, palier, role, uuid: moi.corps.data.uuid }
@@ -194,19 +216,6 @@ async function preparer({ cle, email, motDePasse, palier, role }) {
   const creation = await neuf.appel('/api/v1/auth/register', {
     method: 'POST',
     body: {
-      /*
-       * LES QUATRE CHAMPS DE QUALIFICATION SONT OBLIGATOIRES depuis `280e08c`
-       * (« qualifier les comptes et invitations »). Les omettre rend un 422, et
-       * la recette n'obtenait alors aucun jeton de vérification — l'échec
-       * tombait dix lignes plus loin, sur une phrase qui parlait de jeton.
-       *
-       * Ils sont ici parce que `RegisterRequest` les exige, pas parce qu'ils
-       * servent au scénario : la recette ne mesure rien sur eux.
-       */
-      first_name: 'Recette',
-      last_name: 'Automatique',
-      academic_level: 'Licence',
-      address: 'Adresse de recette, Rabat',
       email,
       password: motDePasse,
       password_confirmation: motDePasse,
@@ -259,13 +268,15 @@ async function preparer({ cle, email, motDePasse, palier, role }) {
     throw new Error(`compte ${cle} : vérification refusée — ${verif.statut} ${verif.texte.slice(0, 200)}`)
   }
 
+  await completerDossier(neuf, index)
+
   console.log(`  ${cle} · palier ${palier} · créé et vérifié (${email})`)
   console.log(`      ${role}`)
   return { cle, email, motDePasse, palier, role, uuid: verif.corps?.data?.uuid ?? null }
 }
 
 const prets = []
-for (const compte of COMPTES) prets.push(await preparer(compte))
+for (const [index, compte] of COMPTES.entries()) prets.push(await preparer(compte, index))
 
 writeFileSync(SORTIE, JSON.stringify(prets, null, 2))
 console.log(`  → ${SORTIE}`)

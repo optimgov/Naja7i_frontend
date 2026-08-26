@@ -49,7 +49,7 @@ import type { EpreuveOuverte } from '~/composables/useCatalogue'
  * routes `me/diagnostics/{code}` portent `auth:sanctum` ET `verified.api` —
  * promettre « quelques secondes » serait faux d'une étape entière.
  */
-definePageMeta({ layout: 'public' })
+definePageMeta({ layout: 'public', middleware: 'preparation' })
 
 const { t } = useI18n()
 const localePath = useLocalePath()
