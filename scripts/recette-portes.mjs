@@ -178,7 +178,11 @@ await page.goto(`${BASE}/fr/verifier-email?token=${jeton}`, { waitUntil: 'networ
 
 /* Le compte neuf passe par son dossier avant de recevoir la navigation. La
  * recette remplit cette porte par l'interface : elle protège ainsi le parcours
- * que le candidat emprunte réellement, pas seulement le contrat API. */
+ * que le candidat emprunte réellement, pas seulement le contrat API. La page
+ * de vérification confirme d'abord le succès : le candidat choisit ensuite de
+ * continuer, elle ne le téléporte pas pendant qu'il lit la confirmation. */
+await page.locator('.alerte--succes').waitFor({ state: 'visible', timeout: 20000 })
+await page.locator('a.btn').click()
 await page.waitForURL('**/app/mon-dossier**', { timeout: 20000 })
 await page.fill('input[autocomplete="given-name"]', 'Recette')
 await page.fill('input[autocomplete="family-name"]', 'Automatique')
