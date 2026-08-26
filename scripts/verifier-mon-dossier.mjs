@@ -50,6 +50,7 @@ for (const marqueur of [
   'current_password: compte.current_password || null',
   ':required="emailModifie"',
   'autocomplete="tel" inputmode="tel" required',
+  'name="academic_level"',
   'poursuivreSiComplet',
 ]) {
   assert.ok(page.includes(marqueur), `état ou erreur de champ absent : ${marqueur}`)
