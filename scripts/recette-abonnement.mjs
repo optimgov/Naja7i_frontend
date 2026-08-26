@@ -298,8 +298,8 @@ if (epuise.code !== 0) {
 
   /* Chemin 1 — navigation CLIENT depuis un écran authentifié. */
   await page.goto(`${BASE}/fr/app/abonnement`, { waitUntil: 'networkidle' })
-  await page.locator('a[href$="/tarifs"]').first().click()
-  await page.waitForURL('**/tarifs', { timeout: 20000 })
+  await page.locator('a[href*="/tarifs"]').first().click()
+  await page.waitForURL('**/tarifs**', { timeout: 20000 })
   await page.waitForSelector('.offre', { timeout: 15000 })
   const parNavigation = await etat()
 
