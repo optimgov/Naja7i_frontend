@@ -44,7 +44,10 @@ const ECRANS = [
   ['catalogue', '/concours'],
   ['filière', '/concours/sciences-education'],
   ['famille', '/concours/famille/crmef'],
-  ['spécialité', '/concours/famille/crmef/informatique'],
+  /* Le slug porte son parcours depuis la migration `000780` (DET-80/DET-101) :
+   * `informatique` seul répond 404 depuis, et l'audit mesurait alors la page
+   * d'erreur en l'étiquetant « spécialité » — vert, et sur le mauvais écran. */
+  ['spécialité', '/concours/famille/crmef/informatique-secondaire'],
   ['connexion', '/connexion'],
   ['inscription', '/inscription'],
   ['mot de passe oublié', '/mot-de-passe-oublie'],
