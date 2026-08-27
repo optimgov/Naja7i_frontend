@@ -1715,9 +1715,15 @@ html[dir='rtl'] .annonce__titre { letter-spacing: normal; line-height: 1.45; }
 @media (pointer: coarse) {
   .recherche-globale__declencheur,
   .plus__declencheur,
-  .btn--discret {
+  .btn--discret,
+  .publique__logo {
     min-block-size: 44px;
   }
+
+  /* Le logo mesurait 114 × 28 : large, donc facile a viser horizontalement,
+     mais mince. Un pouce qui vise verticalement le manque. Il reste le chemin
+     le plus court vers l'accueil sur les ecrans ou la barre basse est absente. */
+  .publique__logo { display: inline-flex; align-items: center; }
 
   /* Le déclencheur réduit à son icône a besoin des deux dimensions : sans
      `min-inline-size`, la hauteur seule en fait un rectangle inatteignable. */
