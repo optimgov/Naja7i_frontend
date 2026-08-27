@@ -238,9 +238,24 @@ if (lancer('php', artisan('migrate', '--force'), { cwd: BACKEND, env }) !== 0) {
  * En intégration continue la base est neuve à chaque exécution : le semis y a
  * toujours lieu. Sur un poste, il n'a lieu qu'une fois.
  */
+/*
+ * ON INTERROGE CE QUE `CatalogueSeeder` PRODUIT, PAS « UN CATALOGUE ».
+ *
+ * Cette sonde comptait TOUTES les filières. Elle demandait donc « y a-t-il un
+ * catalogue ? » alors qu'elle voulait savoir « ce semis-là est-il déjà passé ? ».
+ * Les deux questions coïncidaient tant que `CatalogueSeeder` était le seul à
+ * créer des filières.
+ *
+ * Il ne l'est plus : la migration `univers_lycee` en pose une (ADR-0038). Sur
+ * une base NEUVE, le compte valait donc déjà 1, le semis était sauté, et la
+ * recette échouait trois étapes plus loin sur « l'épreuve CRMEF-FR-SPEC-2025
+ * est absente » — un message qui ne désigne pas sa cause.
+ *
+ * La filière `sciences-education` est le CRMEF, et elle ne vient que d'ici.
+ */
 const compteFilieres = spawnSync(
   'php',
-  artisan('tinker', '--execute', 'echo \\DB::table("filieres")->count();'),
+  artisan('tinker', '--execute', 'echo \\DB::table("filieres")->where("slug","sciences-education")->count();'),
   { cwd: BACKEND, env, encoding: 'utf8' },
 )
 
