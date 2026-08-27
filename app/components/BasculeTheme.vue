@@ -86,6 +86,18 @@ const { t } = useI18n()
   background: var(--surface-douce);
 }
 
+/*
+ * LE PLANCHER TACTILE, ici et pas seulement dans `commun.css`.
+ *
+ * La feuille scopée de ce composant l'emporte sur la règle globale — son
+ * sélecteur porte l'attribut de portée, donc une spécificité supérieure. La
+ * même règle est donc écrite aux deux endroits, et chacune renvoie à l'autre.
+ * Voir `assets/css/commun.css` §24 pour la mesure qui l'a motivée.
+ */
+@media (pointer: coarse) {
+  .bascule-theme { min-block-size: 44px; min-inline-size: 44px; justify-content: center; }
+}
+
 .bascule-theme:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

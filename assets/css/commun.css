@@ -1689,3 +1689,45 @@ html[dir='rtl'] .annonce__titre { letter-spacing: normal; line-height: 1.45; }
 @media (max-width: 47.99rem) {
   .bandeau-echeance__rang { padding-block: 0.35rem; gap: var(--e-1) var(--e-3); }
 }
+
+/* --------------------------------- 24. Le plancher des cibles tactiles
+ *
+ * MESURÉ SUR LA PRÉPRODUCTION, PAS SUPPOSÉ. Un balayage de quatorze écrans
+ * sur deux tailles de téléphone (375 et 393 px) donne un résultat propre sur
+ * l'essentiel — aucun débordement horizontal nulle part, balise `viewport`
+ * partout, et la barre de navigation basse à 75 × 62 px, largement au-dessus
+ * des recommandations.
+ *
+ * Le défaut est ailleurs, et il est contenu : LES QUATRE COMMANDES DE
+ * L'EN-TÊTE partagent toutes `min-block-size: 34px`. C'est confortable à la
+ * souris, c'est sous le plancher de 44 px au doigt. Le pire est le
+ * déclencheur de recherche, qui perd son mot sous 30 rem et tombe à 26 px de
+ * large : une pastille de la taille d'un ongle.
+ *
+ * POURQUOI `pointer: coarse` ET NON UNE LARGEUR. La contrainte vient du
+ * doigt, pas de l'écran. Une tablette large se touche aussi, et une fenêtre
+ * étroite au bureau se clique encore à la souris — la corréler à la largeur
+ * viserait à côté dans les deux sens.
+ *
+ * `.bascule-theme` porte la même règle dans son propre composant : sa feuille
+ * scopée l'emporterait sur celle-ci. Les deux se lisent ensemble.
+ */
+@media (pointer: coarse) {
+  .recherche-globale__declencheur,
+  .plus__declencheur,
+  .btn--discret {
+    min-block-size: 44px;
+  }
+
+  /* Le déclencheur réduit à son icône a besoin des deux dimensions : sans
+     `min-inline-size`, la hauteur seule en fait un rectangle inatteignable. */
+  .recherche-globale__declencheur {
+    min-inline-size: 44px;
+    justify-content: center;
+  }
+
+  /* Le pied donnait 18 px de lien pour 11 px d'écart. On épaissit la ligne
+     plutôt que d'agrandir le texte : le pied reste secondaire, ses cibles
+     cessent d'être des fils. */
+  .pied__liste li { padding-block: 0.72rem; }
+}
