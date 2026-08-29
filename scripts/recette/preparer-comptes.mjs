@@ -169,15 +169,47 @@ export const COMPTES = [
   },
 ]
 
+/*
+ * LE NIVEAU ACADÉMIQUE EST DEMANDÉ À L'API, PAS ÉCRIT ICI.
+ *
+ * Il valait « Licence » en dur. Le champ est devenu une liste fermée le
+ * 29 août — un lycéen se voyait sinon imposer un concours du CRMEF pour
+ * débloquer son dossier — et la recette s'est arrêtée sur un 422 dont la
+ * cause était une chaîne recopiée dans un script.
+ *
+ * On lit donc la liste que le serveur sert, et on prend un niveau POST-BAC :
+ * ces comptes préparent un concours, et c'est cette branche-là que la recette
+ * doit traverser. Un niveau de lycée dispenserait d'épreuve et sauterait
+ * précisément l'étape suivante.
+ */
+let niveauDeRecette = null
+
+async function niveauPostBac(sac) {
+  if (niveauDeRecette) return niveauDeRecette
+
+  const reponse = await sac.appel('/api/v1/catalogue/niveaux-academiques')
+  const niveau = (reponse.corps?.data ?? []).find((n) => !n.lycee)
+
+  if (!niveau) throw new Error('dossier : aucun niveau post-bac servi par le catalogue')
+
+  niveauDeRecette = niveau.code
+  return niveauDeRecette
+}
+
 async function completerDossier(sac, index) {
   const compte = await sac.appel('/api/v1/me/account', {
     method: 'PATCH',
     body: {
       first_name: 'Recette',
       last_name: 'Automatique',
-      academic_level: 'Licence',
+      academic_level: await niveauPostBac(sac),
       address: 'Adresse de recette, Rabat',
-      phone: `+2126000009${String(index).padStart(2, '0')}`,
+      /* LE TÉLÉPHONE SUIT L'HORODATAGE, comme l'e-mail. Il ne portait que
+       * l'index : les comptes jetables d'une exécution gardaient donc leur
+       * numéro, et la suivante s'arrêtait sur « ce numéro est déjà utilisé »
+       * alors qu'elle demandait un compte neuf. La recette n'était rejouable
+       * qu'après une remise à zéro de la base, ce qu'elle ne dit nulle part. */
+      phone: `+2126${HORODATAGE.slice(-6)}${String(index).padStart(2, '0')}`,
       locale: 'fr',
     },
   })

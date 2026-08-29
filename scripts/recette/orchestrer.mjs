@@ -141,10 +141,24 @@ function lancer(commande, args, options = {}) {
  * quand ils échouent ; une exception, elle, se reconnaît à son nom.
  */
 function preparer(fichier, envSupp = {}) {
+  /*
+   * L'ENTRÉE STANDARD EST FERMÉE, ET C'EST UN CORRECTIF.
+   *
+   * `spawnSync` ouvre par défaut un TUBE sur l'entrée du fils et ne le ferme
+   * pas. Tinker exécute alors le fichier, puis PsySH ouvre sa boucle
+   * interactive et attend une ligne qui n'arrivera jamais : le processus
+   * dormait dans `stream_select`, à 0 % de processeur, et la recette restait
+   * suspendue sans un mot — vingt-quatre minutes lors du relevé du 29 août.
+   *
+   * Le défaut est intermittent : selon le moment où Node ferme le tube, le
+   * même appel se termine parfois normalement. C'est ce qui l'a rendu long à
+   * voir, et c'est la raison de le fermer explicitement plutôt que d'espérer.
+   */
   const r = spawnSync('php', artisan('tinker', `${ICI}/${fichier}`), {
     cwd: BACKEND,
     encoding: 'utf8',
     env: { ...env, ...envSupp },
+    stdio: ['ignore', 'pipe', 'pipe'],
   })
 
   const sortie = ((r.stdout ?? '') + (r.stderr ?? '')).trim()
@@ -318,6 +332,42 @@ if (!(await repond(`${API}/up`, 2, 500))) {
   apiSousProfilRecette = true
 } else {
   console.log('  API déjà en marche — profil de limitation inconnu, la pause est maintenue')
+}
+
+/*
+ * ─────────────────────────────────────────────── un exécutant de file
+ *
+ * POURQUOI CE BLOC EXISTE, ET CE QU'IL A CASSÉ EN SON ABSENCE.
+ *
+ * Les notifications d'inscription — vérification d'e-mail, réinitialisation,
+ * invitation — sont passées en file le 29 août : le SMTP répondait au bout de
+ * son délai de connexion PENDANT la requête, et l'inscription rendait 500
+ * (DET-14). Depuis, plus personne ne poste le message tant qu'aucun exécutant
+ * ne tourne.
+ *
+ * La recette lit le jeton de vérification dans Mailpit. Sans exécutant, aucun
+ * message n'arrive, et elle s'arrête sur « aucun jeton de vérification reçu » —
+ * un message qui accuse l'inscription alors que la faute est ici.
+ *
+ * ON N'ÉCRIT PAS `QUEUE_CONNECTION=sync` POUR CONTOURNER. La production a un
+ * exécutant ; une recette qui exécuterait les tâches dans la requête ne
+ * vérifierait pas la même chaîne, et laisserait passer une tâche non
+ * sérialisable — exactement la classe de panne que la mise en file introduit.
+ *
+ * `--stop-when-empty` est écarté : les tâches naissent APRÈS le démarrage.
+ * L'exécutant vit le temps de la recette et part avec elle, comme l'API.
+ */
+const fileResolue = spawnSync(
+  'php',
+  artisan('tinker', '--execute', 'echo config("queue.default");'),
+  { cwd: BACKEND, env, encoding: 'utf8' },
+).stdout?.trim()
+
+if (fileResolue === 'sync') {
+  console.log('  file « sync » — les tâches s’exécutent dans la requête, aucun exécutant à lancer')
+} else {
+  console.log(`  file « ${fileResolue || 'inconnue'} » — démarrage d’un exécutant (sans lui, aucun e-mail ne part)`)
+  lancerEnFond('php', artisan('queue:work', '--tries=1', '--sleep=1'), { cwd: BACKEND, env })
 }
 
 // ─────────────────────────────────────────────────────── banque de recette

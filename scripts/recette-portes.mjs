@@ -55,7 +55,15 @@ const BASE = process.env.BASE_URL || 'http://localhost:3000'
 const MAILPIT = process.env.MAILPIT_URL || 'http://localhost:8025'
 const SORTIE = process.env.SORTIE || '/tmp/recette-portes'
 
-const EMAIL = `recette.portes.${Date.now()}@naja7i.test`
+const HORODATAGE = String(Date.now())
+const EMAIL = `recette.portes.${HORODATAGE}@naja7i.test`
+/* LE TÉLÉPHONE SUIT L'HORODATAGE, comme l'e-mail. Il valait `+212612345678`
+ * en dur : le numéro est unique en base, si bien que le compte d'une exécution
+ * précédente — ou n'importe quel compte de test l'ayant pris — faisait échouer
+ * la suivante sur un 422 muet, l'écran restant simplement sans alerte de
+ * succès. Le scénario devenait alors dépendant d'une base propre, ce qu'il ne
+ * dit nulle part. */
+const TELEPHONE = `+2126${HORODATAGE.slice(-8)}`
 const MOT_DE_PASSE = 'Recette-PORTES-2026!'
 
 const resultats = []
@@ -186,13 +194,19 @@ await page.locator('a.btn').click()
 await page.waitForURL('**/app/mon-dossier**', { timeout: 20000 })
 await page.fill('input[autocomplete="given-name"]', 'Recette')
 await page.fill('input[autocomplete="family-name"]', 'Automatique')
-await page.fill('input[name="academic_level"]', 'Licence')
+/* LE NIVEAU EST UNE LISTE FERMÉE depuis le 29 août — un lycéen se voyait
+ * sinon imposer un concours du CRMEF pour débloquer son dossier. On choisit
+ * un niveau POST-BAC : c'est la branche que ce scénario doit traverser, celle
+ * où l'épreuve reste exigée. */
+await page.selectOption('select[name="academic_level"]', 'licence')
 await page.fill('textarea[autocomplete="street-address"]', 'Adresse de recette, Rabat')
-await page.fill('input[autocomplete="tel"]', '+212612345678')
+await page.fill('input[autocomplete="tel"]', TELEPHONE)
 await page.locator('form').nth(0).locator('button[type="submit"]').click()
 await page.locator('.alerte--succes').first().waitFor({ state: 'visible' })
 
-await page.locator('select').nth(1).selectOption(CODE_EPREUVE)
+/* PAR NOM, PAS PAR RANG. `nth(1)` désignait l'épreuve tant qu'il n'y avait
+ * que deux listes ; l'arrivée du niveau en a fait la langue, en silence. */
+await page.selectOption('select[name="exam_code"]', CODE_EPREUVE)
 await page.locator('form').nth(1).locator('button[type="submit"]').click()
 await page.waitForURL('**/app', { timeout: 20000 })
 
