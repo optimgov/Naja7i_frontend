@@ -307,7 +307,15 @@
     "genre_training": "Entraînement ciblé",
     "genre_review": "Séance de révision",
     "genre_mirror": "Question miroir",
-    "genre_simulation": "Examen blanc"
+    "genre_simulation": "Examen blanc",
+    "lyceen_constat": "Votre programme du lycée est en préparation.",
+    "lyceen_titre": "Ce que vous pouvez faire dès maintenant",
+    "lyceen_texte": "Les chapitres de votre année et de votre filière sont en cours de relecture par des enseignants. Tant qu’ils ne sont pas ouverts, la plateforme ne mesure rien sur votre programme — elle ne vous proposera pas d’exercices tirés au hasard. Vous les trouverez ici dès leur ouverture.",
+    "lyceen_essayer": "Essayer une question corrigée",
+    "lyceen_concours": "Voir les concours, à titre informatif",
+    "decouvrir_texte": "Avant de commencer, vous pouvez voir à quoi ressemble une correction, ou lire ce que change un accès complet.",
+    "decouvrir_demonstration": "Voir une question corrigée",
+    "decouvrir_abonnement": "Ce que change un accès complet"
   },
   "diagnostic": {
     "oeil": "Diagnostic",
@@ -811,7 +819,16 @@
     "acte_terms": "Conditions générales d’utilisation",
     "acte_privacy": "Politique de confidentialité",
     "acte_marketing": "Préférence marketing",
-    "acte_generique": "Document juridique"
+    "acte_generique": "Document juridique",
+    "niveau_choisir": "Choisir votre niveau",
+    "niveau_aide": "Votre niveau décide de ce que la plateforme vous propose : un élève du lycée prépare son année scolaire, les autres préparent un concours.",
+    "niveaux_indisponibles": "La liste des niveaux n’a pas pu être chargée. Rechargez la page dans un instant.",
+    "reste_a_faire": "Il reste à renseigner :",
+    "reste_rien": "Tout est renseigné. Enregistrez pour accéder à votre espace.",
+    "obligatoire_lyceen": "Votre identité, votre mobile marocain et votre niveau scolaire sont nécessaires avant de poursuivre.",
+    "parcours_lyceen": "Préparer un concours (facultatif)",
+    "parcours_lyceen_note": "Vous êtes au lycée : votre programme suit votre niveau, vous n’avez aucun concours à déclarer. Ce bloc n’est là que si vous voulez découvrir un concours à titre informatif.",
+    "epreuve_aucune": "Aucun pour l’instant"
   },
   "invitation": {
     "titre": "Activer mon compte professionnel",
@@ -875,5 +892,133 @@
   "acces": {
     "retour_tableau": "Revenir à ma préparation",
     "voir_offres": "Voir les offres"
+  },
+  "guide": {
+    "gestes": "Ce que vous pouvez faire ici",
+    "vide": "Si rien ne s’affiche",
+    "repere_sur": "Repère sur {sujet}",
+    "app_accueil": {
+      "titre": "À quoi sert cette page ?",
+      "role": "C’est votre point de départ. Elle rassemble l’épreuve que vous préparez, ce que la plateforme vous conseille de réviser aujourd’hui, et les rendez-vous mémoire arrivés à échéance.",
+      "gestes": [
+        "Passez un diagnostic si vous n’en avez pas encore : c’est lui qui alimente tout le reste.",
+        "Suivez la révision du jour quand il y en a une.",
+        "Ouvrez votre carte de maîtrise pour voir où vous en êtes, domaine par domaine."
+      ],
+      "vide": [
+        "Rien n’est encore mesuré : personne ne peut vous conseiller avant votre premier diagnostic.",
+        "Rien à réviser aujourd’hui : ce n’est pas une panne, c’est que rien n’est arrivé à échéance."
+      ]
+    },
+    "dossier": {
+      "titre": "Pourquoi ces informations ?",
+      "role": "Votre dossier ouvre l’accès à la plateforme et sert à vous joindre. Votre niveau décide de ce qui vous est proposé : au lycée, vous préparez votre année scolaire ; après le bac, vous préparez un concours.",
+      "gestes": [
+        "Renseignez ce qui est demandé — la liste ci-dessus dit exactement ce qui manque encore.",
+        "Choisissez la langue dans laquelle la plateforme vous parle ; elle change tout, y compris ces guides.",
+        "Changer votre adresse e-mail demande votre mot de passe : c’est ce qui protège votre compte."
+      ]
+    },
+    "diagnostic": {
+      "titre": "Qu’est-ce qu’un diagnostic ?",
+      "role": "Une série de questions qui situe vos points forts et vos points faibles par domaine. Elle ne prédit pas votre réussite au concours, et aucun écran ne le fera : ce n’est pas de la prudence, c’est que personne ne peut le savoir.",
+      "gestes": [
+        "Lisez ce qui est mesuré et combien de temps cela prend, avant de lancer.",
+        "Répondez sans chercher ailleurs : un résultat flatté ne sert à rien, c’est vous qu’il trompe.",
+        "Dites à chaque question si vous êtes sûr, hésitant, ou si vous devinez — c’est ce qui rend la mesure juste."
+      ]
+    },
+    "entrainement": {
+      "titre": "Comment s’entraîner utilement",
+      "role": "Une série ciblée sur ce que votre ordonnance a relevé. Vous choisissez les domaines, ou vous laissez la plateforme reprendre l’ordre qu’elle vous a déjà proposé.",
+      "gestes": [
+        "Commencez par le premier domaine de la liste : c’est celui qui pèse le plus.",
+        "Réduisez la longueur de la série plutôt que de l’abandonner en cours — une série finie compte, une série abandonnée non.",
+        "Revenez sur votre carte de maîtrise après quelques séries pour voir le déplacement."
+      ],
+      "vide": [
+        "Aucun domaine n’est proposé : il faut d’abord un diagnostic pour savoir quoi cibler."
+      ]
+    },
+    "maitrise": {
+      "titre": "Comment lire votre carte de maîtrise",
+      "role": "Chaque domaine porte votre niveau observé. Un domaine sans score n’est pas un zéro : c’est qu’il n’y a pas encore assez de réponses pour conclure quoi que ce soit.",
+      "gestes": [
+        "Repérez les domaines sans score : ce sont vos angles morts, pas vos échecs.",
+        "Comparez les domaines entre eux plutôt que de viser un chiffre absolu.",
+        "Ouvrez un entraînement ciblé sur le domaine le plus faible."
+      ],
+      "vide": [
+        "Rien n’est encore mesuré : passez un diagnostic, la carte se remplit ensuite."
+      ]
+    },
+    "ordonnance": {
+      "titre": "Ce que la plateforme vous conseille",
+      "role": "L’ordonnance classe ce qu’il vous reste à travailler, du plus utile au moins urgent. Elle s’appuie sur vos réponses passées, et elle change quand elles changent.",
+      "gestes": [
+        "Traitez les lignes dans l’ordre : il n’est pas décoratif.",
+        "Lisez le motif de chaque ligne — il dit pourquoi ce domaine remonte.",
+        "Lancez l’entraînement directement depuis la ligne qui vous intéresse."
+      ],
+      "vide": [
+        "Rien à conseiller pour l’instant : il faut d’abord des réponses à analyser."
+      ]
+    },
+    "revisions": {
+      "titre": "Pourquoi revenir sur du déjà vu",
+      "role": "On oublie ce qu’on ne revoit pas. La plateforme vous ramène sur une notion juste avant que vous ne l’oubliiez, à des intervalles qui s’allongent : quelques jours, puis une semaine, puis davantage.",
+      "gestes": [
+        "Faites les rendez-vous du jour : ce sont eux qui fixent ce que vous avez déjà appris.",
+        "Un rendez-vous réussi deux fois de suite s’espace de lui-même.",
+        "S’il y en a plus que vous ne pouvez en faire, le compte restant est affiché — rien n’est caché."
+      ],
+      "vide": [
+        "Rien d’échu aujourd’hui : ce n’est pas une panne. La date du prochain rendez-vous est indiquée."
+      ]
+    },
+    "abonnement": {
+      "titre": "Ce que votre accès ouvre",
+      "role": "Cette page dit ce à quoi vous avez droit aujourd’hui et jusqu’à quand. Elle lit vos droits réels, pas vos commandes : ce que vous voyez ici est exactement ce que la plateforme vous laissera faire.",
+      "gestes": [
+        "Vérifiez la date de fin avant de planifier une longue préparation.",
+        "Saisissez un coupon si vous en avez reçu un.",
+        "Un paiement en attente reste affiché comme tel : il n’ouvre rien tant qu’il n’est pas validé."
+      ]
+    },
+    "reclamations": {
+      "titre": "Quand et comment nous écrire",
+      "role": "Si quelque chose vous paraît faux — une question, une facturation, un accès — ouvrez une réclamation. Elle est lue par une personne, pas par un automate.",
+      "gestes": [
+        "Choisissez la catégorie : elle décide qui la reçoit.",
+        "Décrivez ce que vous attendiez et ce qui s’est passé ; une capture d’écran vaut dix lignes.",
+        "Suivez la réponse ici même — vous n’avez pas à rouvrir une seconde réclamation."
+      ],
+      "vide": [
+        "Vous n’avez ouvert aucune réclamation."
+      ]
+    },
+    "simulation": {
+      "titre": "Avant de lancer un examen blanc",
+      "role": "C’est la seule épreuve du produit qui vous engage pour plusieurs heures d’affilée, avec une échéance que le serveur fait respecter. On ne la lance pas par curiosité.",
+      "gestes": [
+        "Vérifiez la durée annoncée et assurez-vous d’avoir ce temps devant vous.",
+        "Il n’y a pas de pause : une fois lancée, l’horloge court même si vous fermez la page.",
+        "Le rapport détaillé arrive à la fin — pas pendant."
+      ]
+    },
+    "correction": {
+      "titre": "Comment lire votre correction",
+      "role": "Chaque option fausse porte deux choses distinctes : pourquoi elle est fausse, et pourquoi vous l’avez probablement choisie. La seconde est une hypothèse sur votre raisonnement, pas un verdict.",
+      "gestes": [
+        "Lisez d’abord pourquoi votre réponse était fausse, avant de regarder la bonne.",
+        "L’hypothèse sur la cause est là pour vous faire réfléchir ; si elle ne correspond pas à ce que vous avez pensé, elle n’a pas raison contre vous.",
+        "Signalez la question si elle vous paraît incorrecte : c’est ce qui les fait corriger."
+      ]
+    }
+  },
+  "aide": {
+    "objectif": "Une phrase pour vous, que vous relirez sur cet écran. Elle n’est lue par personne d’autre et ne change rien à ce qui vous est proposé.",
+    "date_cible": "La date de votre épreuve. Elle sert au calendrier de révisions : aucun nouveau rendez-vous n’est programmé dans les deux jours qui la précèdent, pour ne pas vous charger la veille.",
+    "score_absent": "Ce n’est pas un zéro. Il n’y a pas encore assez de réponses sur ce domaine pour en conclure quoi que ce soit — il faut au moins cinq réponses pour qu’un score s’affiche, et dix pour qu’il soit donné sans réserve."
   }
 }

@@ -149,7 +149,34 @@ export function useCatalogue() {
         )
     })
 
-  return { filieres, filiere, famille, specialite, calendrier, referentielEpreuve, epreuvesOuvertes }
+
+  /**
+   * LES NIVEAUX ACADÉMIQUES — servis, jamais recopiés.
+   *
+   * La tentation était d'écrire les neuf codes ici et leurs libellés dans les
+   * locales. Deux listes finissent toujours par diverger, et c'est le serveur
+   * qui valide : une valeur ajoutée côté client serait refusée à
+   * l'enregistrement, une valeur retirée côté serveur resterait proposée.
+   * Les libellés arrivent donc déjà traduits, dans la langue du compte.
+   */
+  const niveauxAcademiques = () =>
+    useAsyncData('catalogue:niveaux-academiques', async () => {
+      const reponse = await api.get<{ data: NiveauAcademique[] }>('/catalogue/niveaux-academiques')
+
+      return reponse.data
+    })
+
+  return { filieres, filiere, famille, specialite, calendrier, referentielEpreuve, epreuvesOuvertes, niveauxAcademiques }
+}
+
+/**
+ * Un niveau académique. `lycee` évite au client de redéduire la règle à partir
+ * du code — c'est le serveur qui sait lesquels sont des niveaux de lycée.
+ */
+export interface NiveauAcademique {
+  code: string
+  name: string
+  lycee: boolean
 }
 
 /** Une épreuve ouverte, avec la famille qui la porte — pour l'annoncer. */

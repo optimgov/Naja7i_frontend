@@ -67,6 +67,7 @@ useHead({ title: t('diagnostic.titre') })
   <div class="enveloppe">
     <p class="oeil">{{ t('diagnostic.oeil') }}</p>
     <h1 class="titre-page">{{ t('diagnostic.titre') }}</h1>
+    <GuideEcran cle="diagnostic" />
     <p class="chapeau">{{ t('diagnostic.intro') }}</p>
 
     <!-- Banque en cours de constitution : message du serveur, pas un code

@@ -160,6 +160,7 @@ useHead({ title: t('entrainement.titre') })
   <div class="enveloppe">
     <p class="oeil">{{ t('entrainement.oeil') }}</p>
     <h1 class="titre-page">{{ t('entrainement.titre') }}</h1>
+    <GuideEcran cle="entrainement" />
     <p class="chapeau">{{ t('entrainement.intro') }}</p>
 
     <!-- L'état du compte n'a pas pu être lu : on ne peut ni proposer le geste

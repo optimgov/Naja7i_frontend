@@ -11,6 +11,8 @@ export interface CandidateUser {
   email_verified: boolean
   phone_verified?: boolean
   onboarding_complete: boolean
+  /** Servi par l'API : un lycéen n'a pas de concours à déclarer. */
+  est_lyceen?: boolean
   roles?: string[]
   role_labels?: string[]
 }

@@ -33,6 +33,7 @@ useHead({ title: t('maitrise.titre') })
   <div class="enveloppe">
     <p class="oeil">{{ t('maitrise.oeil') }}</p>
     <h1 class="titre-page">{{ t('maitrise.titre') }}</h1>
+    <GuideEcran cle="maitrise" />
     <p class="chapeau">{{ t('maitrise.intro') }}</p>
 
     <p v-if="!domaines.length" class="alerte alerte--info" role="status">
@@ -65,6 +66,9 @@ useHead({ title: t('maitrise.titre') })
              contresens que la règle interdit. -->
         <p v-else class="domaine__sans-conclusion">
           {{ jamaisEvalue(d) ? t('maitrise.jamais_evalue') : t('maitrise.non_conclu') }}
+          <!-- « Pas de score » se lit spontanément comme « zéro ». Le repère
+               dit la différence, à l'endroit exact où la confusion naît. -->
+          <AideBulle :sujet="t('maitrise.titre')" :texte="t('aide.score_absent')" />
         </p>
 
         <!-- Ce qui fonde le score, systématiquement — y compris quand il n'y

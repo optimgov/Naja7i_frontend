@@ -116,6 +116,7 @@ useHead({ title: t('revisions.titre') })
   <div class="enveloppe">
     <p class="oeil">{{ t('revisions.oeil') }}</p>
     <h1 class="titre-page">{{ t('revisions.titre') }}</h1>
+    <GuideEcran cle="revisions" />
     <p class="chapeau">{{ t('revisions.intro') }}</p>
 
     <div v-if="!code" class="alerte alerte--info" role="status">

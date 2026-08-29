@@ -66,6 +66,7 @@ useHead({ title: t('ordonnance.titre') })
   <div class="enveloppe">
     <p class="oeil">{{ t('maitrise.oeil') }}</p>
     <h1 class="titre-page">{{ t('ordonnance.titre') }}</h1>
+    <GuideEcran cle="ordonnance" />
 
     <!-- Servi par le serveur, affiché sans retouche. Aucun repli en dur. -->
     <p v-if="disclaimer" class="disclaimer" dir="auto">{{ disclaimer }}</p>

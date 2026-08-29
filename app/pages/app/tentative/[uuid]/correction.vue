@@ -130,6 +130,7 @@ useHead({ title: t('correction.titre') })
   <div class="enveloppe">
     <p class="oeil">{{ t('correction.oeil') }}</p>
     <h1 class="titre-page">{{ t('correction.titre') }}</h1>
+    <GuideEcran cle="correction" />
 
     <!-- Règle 9bis : le cadrage AVANT le nombre. Un résultat d'entraînement
          annoncé après coup a déjà été lu comme une note. -->

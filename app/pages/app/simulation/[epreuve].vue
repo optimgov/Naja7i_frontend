@@ -146,6 +146,7 @@ useHead({ title: () => t('simulation.titre') })
   <div class="enveloppe">
     <p class="oeil">{{ t('simulation.oeil') }}</p>
     <h1 class="titre">{{ t('simulation.titre') }}</h1>
+    <GuideEcran cle="simulation" />
 
     <p v-if="epreuve" class="epreuve" dir="auto">{{ epreuve.name }}</p>
 

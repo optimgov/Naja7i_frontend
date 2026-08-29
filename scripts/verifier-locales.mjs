@@ -140,6 +140,41 @@ noter(
     : `aucune clé orpheline à l'appel — ${appelees.size} clés littérales vérifiées`,
 )
 
+/* --- 1 bis. Les guides d'écran ----------------------------------------- */
+/*
+ * I18N-05 — LA CLÉ D'UN GUIDE EST CONSTRUITE, DONC I18N-04 NE LA VOIT PAS.
+ *
+ * `<GuideEcran cle="maitrise" />` fait résoudre au composant
+ * `guide.maitrise.titre`, `.role` et `.gestes`. Aucune de ces trois chaînes
+ * n'apparaît littéralement dans une source : la règle précédente, qui ne lit
+ * que les littéraux, les ignore toutes. Une faute de frappe dans `cle` ne
+ * casserait donc rien — elle afficherait « guide.maitrisse.titre » à un
+ * candidat, en toutes lettres, et aucun contrôle ne rougirait.
+ *
+ * On relit donc les clés déclarées dans les gabarits, et on exige leur bloc.
+ */
+const guidesAppeles = new Map()
+
+for (const fichier of fichiersSources()) {
+  for (const m of readFileSync(fichier, 'utf8').matchAll(/<GuideEcran\s+cle="([a-z0-9_]+)"/g)) {
+    if (!guidesAppeles.has(m[1])) guidesAppeles.set(m[1], fichier)
+  }
+}
+
+const guidesIncomplets = [...guidesAppeles.entries()].flatMap(([cle, fichier]) =>
+  ['titre', 'role', 'gestes']
+    .filter((rubrique) => !definies.has(`guide.${cle}.${rubrique}`))
+    .map((rubrique) => `guide.${cle}.${rubrique} (${fichier})`),
+)
+
+noter(
+  guidesIncomplets.length === 0,
+  'I18N-05',
+  guidesIncomplets.length
+    ? `${guidesIncomplets.length} rubrique(s) de guide manquante(s) : ${guidesIncomplets.slice(0, 5).join(', ')}`
+    : `les ${guidesAppeles.size} guides d'écran ont leur titre, leur rôle et leurs gestes`,
+)
+
 /* --- 2. Propriétés logiques ------------------------------------------- */
 
 const PHYSIQUES = [

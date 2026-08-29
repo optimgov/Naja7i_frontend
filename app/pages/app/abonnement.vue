@@ -164,6 +164,7 @@ useHead({ title: () => t('abonnement.titre') })
   <div class="enveloppe abonnement">
     <p class="oeil">{{ t('abonnement.oeil') }}</p>
     <h1 class="titre-page">{{ t('abonnement.titre') }}</h1>
+    <GuideEcran cle="abonnement" />
 
     <!-- ─────────────────────── L'ÉTAT ───────────────────────
          Le libellé vient du serveur (ADR-0033) : « Essai en cours », « Forfait

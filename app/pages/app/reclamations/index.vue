@@ -118,6 +118,7 @@ useHead({ title: () => t('reclamations.titre') })
   <div class="enveloppe reclamations">
     <p class="oeil">{{ t('reclamations.oeil') }}</p>
     <h1 class="titre-page">{{ t('reclamations.titre') }}</h1>
+    <GuideEcran cle="reclamations" />
     <p class="chapeau">{{ t('reclamations.intro') }}</p>
 
     <section class="reclamations__creation" aria-labelledby="nouvelle-reclamation">

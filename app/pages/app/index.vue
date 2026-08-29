@@ -50,6 +50,19 @@ const { ordonnance, rendue } = useOrdonnance()
 const { echeances, rendues } = useMemoire()
 const { epreuvesOuvertes } = useCatalogue()
 const { acces } = useAcces()
+const { user } = useAuth()
+
+/*
+ * UN LYCÉEN N'EST PAS UN CANDIDAT AU CONCOURS, et cet écran le traitait comme
+ * tel. Sans diagnostic passé, il lisait « Vous n'avez pas encore passé de
+ * diagnostic », puis les trois épreuves du CRMEF, puis « Parcourir le catalogue
+ * des concours ». Un élève de tronc commun repartait donc de son tableau de
+ * bord avec, pour seul chemin, un concours de recrutement d'enseignants.
+ *
+ * Le drapeau vient du serveur — c'est lui qui tient la liste fermée des
+ * niveaux — et non d'une règle redéduite ici.
+ */
+const estLyceen = computed(() => Boolean(user.value?.est_lyceen))
 
 const {
   lu: accesLu,
@@ -192,6 +205,7 @@ useHead({ title: t('app.titre') })
 <template>
   <div class="enveloppe">
     <h1 class="titre-page">{{ t('app.titre') }}</h1>
+    <GuideEcran cle="app_accueil" />
 
     <!-- ─────────────── L'ÉTAT DU COMPTE, DIT PAR LE SERVEUR ───────────────
          Le libellé et la phrase de sortie viennent d'ADR-0033 ; ils ne sont ni
@@ -234,38 +248,75 @@ useHead({ title: t('app.titre') })
          un écran qui mesure offre le geste qui le remplit, et aucun état vide
          ne se termine sans un chemin cliquable. -->
     <section v-if="!epreuve" class="debut">
-      <p class="debut__constat" role="status">{{ t('app.aucun_diagnostic') }}</p>
+      <!--
+        LE LYCÉEN A SON PROPRE DÉBUT, et il dit la vérité.
 
-      <!-- Les portes ne s'ouvrent que si la composition est ouverte. Sans
-           `questions.answer`, le serveur refuse la série : proposer les
-           épreuves ferait découvrir le refus après le clic. -->
-      <template v-if="peutComposer">
-        <h2 class="debut__titre">{{ t('app.commencer_titre') }}</h2>
-        <p class="debut__texte">{{ t('app.commencer_texte') }}</p>
-
-        <!-- Chaque épreuve ouverte est un lien vers SON seuil : le candidat lit
-             ce qui est mesuré avant de lancer quoi que ce soit. -->
-        <ul v-if="portes.length" class="debut__liste">
-          <li v-for="porte in portes" :key="porte.code">
-            <NuxtLink class="debut__porte" :to="localePath(`/app/diagnostic/${porte.code}`)">
-              <span class="debut__nom" dir="auto">{{ porte.name }}</span>
-              <span class="debut__famille" dir="auto">{{ porte.famille.name }}</span>
-              <span v-if="porte.coefficient !== null" class="debut__coef">
-                {{ t('app.coefficient') }} {{ porte.coefficient }}
-              </span>
-            </NuxtLink>
-          </li>
-        </ul>
-
-        <!-- Catalogue illisible ou aucune famille ouverte : on n'invente aucune
-             épreuve, et la sortie vers le catalogue reste — c'est le seul endroit
-             qui dise la vérité sur ce qui ouvrira. -->
-        <p v-else class="debut__aucune">{{ t('app.commencer_aucune') }}</p>
+        Les arbres du lycée existent en base mais leur univers est en liste
+        d'attente : aucun chapitre n'est encore relu, aucune question n'est
+        encore publiée dessus. On ne lui promet donc pas un diagnostic qui
+        n'existe pas, et on ne lui vend surtout pas un accès à un contenu
+        absent — c'est pour cela que ce bloc n'ouvre AUCUNE porte d'achat, à la
+        différence de celui du candidat au concours. Il reçoit ce qui existe
+        réellement : une question corrigée à essayer, et les concours annoncés
+        pour ce qu'ils sont, informatifs.
+      -->
+      <template v-if="estLyceen">
+        <p class="debut__constat" role="status">{{ t('app.lyceen_constat') }}</p>
+        <h2 class="debut__titre">{{ t('app.lyceen_titre') }}</h2>
+        <p class="debut__texte">{{ t('app.lyceen_texte') }}</p>
+        <p class="debut__texte">
+          <NuxtLink class="btn" :to="localePath('/se-preparer')">{{ t('app.lyceen_essayer') }}</NuxtLink>
+        </p>
+        <NuxtLink class="lien-second" :to="{ path: localePath('/concours'), query: { espace: 'candidat' } }">
+          {{ t('app.lyceen_concours') }}
+        </NuxtLink>
       </template>
 
-      <NuxtLink class="lien-second" :to="{ path: localePath('/concours'), query: { espace: 'candidat' } }">
-        {{ t('app.voir_catalogue') }}
-      </NuxtLink>
+      <template v-else>
+          <p class="debut__constat" role="status">{{ t('app.aucun_diagnostic') }}</p>
+
+          <!-- Les portes ne s'ouvrent que si la composition est ouverte. Sans
+             `questions.answer`, le serveur refuse la série : proposer les
+             épreuves ferait découvrir le refus après le clic. -->
+          <template v-if="peutComposer">
+          <h2 class="debut__titre">{{ t('app.commencer_titre') }}</h2>
+          <p class="debut__texte">{{ t('app.commencer_texte') }}</p>
+
+          <!-- Chaque épreuve ouverte est un lien vers SON seuil : le candidat lit
+               ce qui est mesuré avant de lancer quoi que ce soit. -->
+          <ul v-if="portes.length" class="debut__liste">
+            <li v-for="porte in portes" :key="porte.code">
+              <NuxtLink class="debut__porte" :to="localePath(`/app/diagnostic/${porte.code}`)">
+                <span class="debut__nom" dir="auto">{{ porte.name }}</span>
+                <span class="debut__famille" dir="auto">{{ porte.famille.name }}</span>
+                <span v-if="porte.coefficient !== null" class="debut__coef">
+                  {{ t('app.coefficient') }} {{ porte.coefficient }}
+                </span>
+              </NuxtLink>
+            </li>
+          </ul>
+
+          <!-- Catalogue illisible ou aucune famille ouverte : on n'invente aucune
+               épreuve, et la sortie vers le catalogue reste — c'est le seul endroit
+               qui dise la vérité sur ce qui ouvrira. -->
+          <p v-else class="debut__aucune">{{ t('app.commencer_aucune') }}</p>
+        </template>
+
+        <!--
+          CE QU'UN COMPTE NEUF POUVAIT FAIRE N'ÉTAIT DIT NULLE PART. L'état vide
+          se terminait sur le catalogue seul : ni « à quoi ressemble une
+          correction », ni « comment obtenir plus que le palier gratuit ». Les
+          deux existent, et ce sont les deux gestes suivants d'un compte neuf.
+        -->
+        <p class="debut__texte">{{ t('app.decouvrir_texte') }}</p>
+        <div class="debut__issues">
+          <NuxtLink class="lien-second" :to="localePath('/se-preparer')">{{ t('app.decouvrir_demonstration') }}</NuxtLink>
+          <NuxtLink class="lien-second" :to="localePath('/app/abonnement')">{{ t('app.decouvrir_abonnement') }}</NuxtLink>
+          <NuxtLink class="lien-second" :to="{ path: localePath('/concours'), query: { espace: 'candidat' } }">
+            {{ t('app.voir_catalogue') }}
+          </NuxtLink>
+        </div>
+      </template>
     </section>
 
     <template v-else>
@@ -418,6 +469,8 @@ useHead({ title: t('app.titre') })
 </template>
 
 <style scoped>
+/* Les issues d'un compte neuf, en ligne et repliables — logique, jamais physique. */
+.debut__issues { display: flex; flex-wrap: wrap; gap: var(--e-4); margin-block-start: var(--e-4); }
 /* --- L'état du compte (ADR-0033) ---
    L'état est porté par le MOT servi par le serveur ; la bordure ne fait que
    redoubler. Même règle que l'échéance des annonces : jamais la couleur seule.
